@@ -27,7 +27,6 @@
   "depends": {
     "fabricloader": "*",
     "minecraft": "1.18.*",
-    "java": "*",
-    "fabric-item-groups-v0": "*"
+    "fabric-api": "*"
   }
 }
