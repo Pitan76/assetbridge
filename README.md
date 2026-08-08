@@ -42,3 +42,11 @@ mods/
 git tag -a v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 ```
+
+## ライセンス
+- MIT License
+
+## ツール
+- AIエージェント: Claude Opus 5.0
+- IDE: IntelliJ IDEA
+- ビルドツール: Gradle
