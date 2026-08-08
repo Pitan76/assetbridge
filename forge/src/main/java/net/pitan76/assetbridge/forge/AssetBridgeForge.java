@@ -1,7 +1,9 @@
 package net.pitan76.assetbridge.forge;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -10,12 +12,22 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
+import net.pitan76.assetbridge.block.BridgedItemGroup;
 
 import java.util.Map;
 
 @Mod(AssetBridge.MOD_ID)
 public final class AssetBridgeForge {
     public AssetBridgeForge() {
+        // Forge patches a String constructor into CreativeModeTab; the label becomes the
+        // translation key suffix, so it is kept identical to Fabric's tab id.
+        BridgedItemGroup.set(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.NAME) {
+            @Override
+            public ItemStack makeIcon() {
+                return BridgedItemGroup.icon();
+            }
+        });
+
         AssetBridge.init(FMLPaths.GAMEDIR.get());
 
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();

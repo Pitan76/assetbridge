@@ -2,7 +2,6 @@ package net.pitan76.assetbridge.block;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -19,9 +18,6 @@ import java.util.Map;
  * Builds the {@link Block} instances for the bridged assets. Construction happens in common
  * code; the actual registry call is left to each platform, because Fabric registers during
  * mod init while Forge registers from a registry event.
- *
- * <p>1.18.2's {@code CreativeModeTab.TABS} is a fixed-size array, so a dedicated tab is not
- * possible without a loader API. Bridged blocks go into the building blocks tab instead.
  */
 public final class BridgedBlocks {
     private static Map<ResourceLocation, Block> blocks = Collections.emptyMap();
@@ -42,7 +38,7 @@ public final class BridgedBlocks {
             }
             Block block = new Block(BlockBehaviour.Properties.of(Material.STONE).strength(1.5F, 6.0F));
             createdBlocks.put(id, block);
-            createdItems.put(id, new BlockItem(block, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
+            createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.get())));
         }
 
         blocks = Collections.unmodifiableMap(createdBlocks);

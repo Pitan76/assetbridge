@@ -17,7 +17,7 @@ mods/
 ```
 
 `assets/<namespace>/blockstates/*.json` が見つかったブロックが、元の名前空間のまま
-（例: `examplemod:foo`）登録され、クリエイティブの「建築ブロック」タブから取得できる。
+（例: `examplemod:foo`）登録され、クリエイティブの「Asset Bridge」タブから取得できる。
 外部MODのJavaコードは一切読み込まず、実行もしない。
 
 ## 処理の流れ
