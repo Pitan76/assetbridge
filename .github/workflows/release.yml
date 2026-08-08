@@ -33,7 +33,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/libs/*.jar
+            fabric/build/libs/*.jar
+            forge/build/libs/*.jar
+            neoforge/build/libs/*.jar
           body: |
             ${{ github.event.head_commit.message }}
           generate_release_notes: true
