@@ -31,7 +31,7 @@ public final class BridgedItems {
                 AssetBridge.LOGGER.warn("Skipping item with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
             }
-            created.put(id, new Item(new Item.Properties().tab(BridgedItemGroup.get())));
+            created.put(id, new Item(new Item.Properties().tab(BridgedItemGroup.items())));
         }
 
         items = Collections.unmodifiableMap(created);

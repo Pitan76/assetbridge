@@ -1,46 +1,67 @@
 package net.pitan76.assetbridge.block;
 
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
- * Holds the creative tab the bridged blocks are placed in.
+ * Holds the creative tabs the bridged content is placed in: one for blocks, one for items.
+ * They are kept apart because an item-heavy mod can contribute hundreds of entries, which
+ * would bury the blocks in a shared tab.
  *
- * <p>1.18.2's {@code CreativeModeTab.TABS} is a fixed-size vanilla array, so the tab itself
- * has to be built with loader-specific API (Forge patches in a {@code String} constructor,
- * Fabric API offers a builder). Each platform creates it and hands it over here before
- * {@link net.pitan76.assetbridge.AssetBridge#init} runs.
+ * <p>1.18.2's {@code CreativeModeTab.TABS} is a fixed-size vanilla array, so the tabs
+ * themselves have to be built with loader-specific API (Forge patches in a {@code String}
+ * constructor, Fabric API offers a builder). Each platform creates them and hands them over
+ * here before {@link net.pitan76.assetbridge.AssetBridge#init} runs.
  */
 public final class BridgedItemGroup {
-    /** Tab id used for the translation key and, on Fabric, the tab's resource location path. */
-    public static final String NAME = "blocks";
+    /** Tab ids, used for the translation keys and, on Fabric, the tabs' resource locations. */
+    public static final String BLOCKS = "blocks";
+    public static final String ITEMS = "items";
 
     @Nullable
-    private static CreativeModeTab tab;
+    private static CreativeModeTab blocksTab;
+    @Nullable
+    private static CreativeModeTab itemsTab;
 
     private BridgedItemGroup() {
     }
 
-    public static void set(CreativeModeTab tab) {
-        BridgedItemGroup.tab = tab;
+    public static void setBlocksTab(CreativeModeTab tab) {
+        blocksTab = tab;
     }
 
-    /** Falls back to the building blocks tab if a platform could not provide one. */
-    public static CreativeModeTab get() {
-        return tab != null ? tab : CreativeModeTab.TAB_BUILDING_BLOCKS;
+    public static void setItemsTab(CreativeModeTab tab) {
+        itemsTab = tab;
+    }
+
+    /** Falls back to a vanilla tab if a platform could not provide one. */
+    public static CreativeModeTab blocks() {
+        return blocksTab != null ? blocksTab : CreativeModeTab.TAB_BUILDING_BLOCKS;
+    }
+
+    public static CreativeModeTab items() {
+        return itemsTab != null ? itemsTab : CreativeModeTab.TAB_MISC;
     }
 
     /**
-     * Icon for the tab. Evaluated lazily by the renderer, so the bridged blocks already exist
-     * by the time this is called.
+     * Icons are evaluated lazily by the renderer, so the bridged content already exists by
+     * the time these are called.
      */
-    public static ItemStack icon() {
-        for (var item : BridgedBlocks.items().values()) {
-            return new ItemStack(item);
-        }
-        for (var item : BridgedItems.items().values()) {
+    public static ItemStack blocksIcon() {
+        return firstOf(BridgedBlocks.items().values());
+    }
+
+    public static ItemStack itemsIcon() {
+        return firstOf(BridgedItems.items().values());
+    }
+
+    private static ItemStack firstOf(Collection<? extends Item> candidates) {
+        for (Item item : candidates) {
             return new ItemStack(item);
         }
         return new ItemStack(Items.BRICKS);

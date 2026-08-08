@@ -36,7 +36,7 @@ public final class BridgedBlocks {
             }
             Block block = BridgedBlock.create(asset.states());
             createdBlocks.put(id, block);
-            createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.get())));
+            createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.blocks())));
         }
 
         blocks = Collections.unmodifiableMap(createdBlocks);

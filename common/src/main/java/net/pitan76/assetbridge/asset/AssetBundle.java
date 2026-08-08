@@ -9,7 +9,7 @@ import java.util.Map;
  * Everything Asset Bridge extracted from the external archives, already converted to
  * the format the running Minecraft version expects.
  */
-public final class AssetBundle {
+public class AssetBundle {
     private final Map<AssetPath, byte[]> resources = new HashMap<>();
     private final List<BridgedBlockAsset> blocks = new ArrayList<>();
     private final List<BridgedItemAsset> items = new ArrayList<>();

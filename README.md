@@ -18,7 +18,8 @@ mods/
 
 `assets/<namespace>/blockstates/*.json` が見つかったブロックと、
 `assets/<namespace>/models/item/*.json` が見つかったアイテムが、元の名前空間のまま
-（例: `examplemod:foo`）登録され、クリエイティブの「Asset Bridge」タブから取得できる。
+（例: `examplemod:foo`）登録され、クリエイティブの
+「Asset Bridge: ブロック」「Asset Bridge: アイテム」タブから取得できる。
 外部MODのJavaコードは一切読み込まず、実行もしない。
 
 同名のMODが既に導入されている場合、その名前空間はまるごとスキップする（本物が優先）。

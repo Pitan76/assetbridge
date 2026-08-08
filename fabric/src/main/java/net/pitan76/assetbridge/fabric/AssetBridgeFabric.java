@@ -17,10 +17,14 @@ import java.util.Map;
 public final class AssetBridgeFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        // The tab has to exist before the block items are built.
-        BridgedItemGroup.set(FabricItemGroupBuilder
-                .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.NAME))
-                .icon(BridgedItemGroup::icon)
+        // The tabs have to exist before the items are built.
+        BridgedItemGroup.setBlocksTab(FabricItemGroupBuilder
+                .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.BLOCKS))
+                .icon(BridgedItemGroup::blocksIcon)
+                .build());
+        BridgedItemGroup.setItemsTab(FabricItemGroupBuilder
+                .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.ITEMS))
+                .icon(BridgedItemGroup::itemsIcon)
                 .build());
 
         AssetBridge.init(FabricLoader.getInstance().getGameDir(),

@@ -10,9 +10,11 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 
-public final class AssetBridge {
+public class AssetBridge {
+    public static final String MOD_NAME = "Asset Bridge";
     public static final String MOD_ID = "assetbridge";
-    public static final Logger LOGGER = LoggerFactory.getLogger("Asset Bridge");
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 
     private static AssetBundle bundle = new AssetBundle();
 

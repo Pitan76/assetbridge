@@ -28,11 +28,17 @@ public final class AssetBridgeForge {
 
     public AssetBridgeForge() {
         // Forge patches a String constructor into CreativeModeTab; the label becomes the
-        // translation key suffix, so it is kept identical to Fabric's tab id.
-        BridgedItemGroup.set(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.NAME) {
+        // translation key suffix, so it is kept identical to Fabric's tab ids.
+        BridgedItemGroup.setBlocksTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.BLOCKS) {
             @Override
             public ItemStack makeIcon() {
-                return BridgedItemGroup.icon();
+                return BridgedItemGroup.blocksIcon();
+            }
+        });
+        BridgedItemGroup.setItemsTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.ITEMS) {
+            @Override
+            public ItemStack makeIcon() {
+                return BridgedItemGroup.itemsIcon();
             }
         });
 
