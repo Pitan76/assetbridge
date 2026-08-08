@@ -6,6 +6,8 @@ import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedProperty;
+import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.test.TestArchives;
 import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
@@ -52,17 +54,52 @@ class AssetPipelineTest {
     }
 
     @Test
-    void generatesASinglePropertyFreeBlockState() {
+    void passesTheBlockStateThroughAndRecoversItsProperties() {
         AssetBundle bundle = build(TestArchives.archive("example-mod.jar", 8, Map.of(
                 "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"facing=north\": {\"model\": \"examplemod:block/foo\"}}}"
+                "{\"variants\": {\"facing=north\": {\"model\": \"examplemod:block/north\", \"y\": 90},"
+                        + " \"facing=south\": {\"model\": \"examplemod:block/south\"}}}"
         )));
 
-        JsonObject generated = json(bundle, AssetPath.blockState("examplemod", "foo"));
-        JsonObject variants = generated.getAsJsonObject("variants");
+        JsonObject served = json(bundle, AssetPath.blockState("examplemod", "foo"));
+        JsonObject variants = served.getAsJsonObject("variants");
+
+        // Every variant survives, rotations included, so the block renders like the original.
+        assertEquals(Set.of("facing=north", "facing=south"), variants.keySet());
+        assertEquals(90, variants.getAsJsonObject("facing=north").get("y").getAsInt());
+
+        BridgedStateDefinition states = bundle.blocks().get(0).states();
+        assertEquals(List.of("facing"), states.properties().stream().map(BridgedProperty::name).toList());
+        assertEquals(List.of("north", "south"), states.properties().get(0).values());
+    }
+
+    @Test
+    void fallsBackToASingleVariantWhenAPropertyCannotBeRegistered() {
+        AssetBundle bundle = build(TestArchives.archive("example-mod.jar", 8, Map.of(
+                "assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"facing=north-east\": {\"model\": \"examplemod:block/foo\"}}}"
+        )));
+
+        // Serving the original would make the model loader fail on the unknown property.
+        JsonObject served = json(bundle, AssetPath.blockState("examplemod", "foo"));
+        assertEquals(Set.of(""), served.getAsJsonObject("variants").keySet());
+        assertEquals("examplemod:block/foo",
+                served.getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString());
+        assertTrue(bundle.blocks().get(0).states().isEmpty());
+    }
+
+    @Test
+    void rewritesLegacyBlockStatesSoTheyCanBePassedThrough() {
+        AssetBundle bundle = build(TestArchives.archive("old-mod.jar", 3, Map.of(
+                "assets/oldmod/blockstates/foo.json", "{\"variants\": {\"normal\": {\"model\": \"cube_all\"}}}"
+        )));
+
+        JsonObject served = json(bundle, AssetPath.blockState("oldmod", "foo"));
+        JsonObject variants = served.getAsJsonObject("variants");
 
         assertEquals(Set.of(""), variants.keySet());
-        assertEquals("examplemod:block/foo", variants.getAsJsonObject("").get("model").getAsString());
+        assertEquals("block/cube_all", variants.getAsJsonObject("").get("model").getAsString());
+        assertTrue(bundle.blocks().get(0).states().isEmpty());
     }
 
     @Test

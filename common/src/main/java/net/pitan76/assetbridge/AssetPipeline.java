@@ -6,10 +6,13 @@ import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.convert.AssetConverter;
+import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.PassthroughConverter;
 import net.pitan76.assetbridge.parse.BlockStateParser;
+import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
 import net.pitan76.assetbridge.util.Json;
 
 import java.nio.charset.StandardCharsets;
@@ -26,6 +29,7 @@ import java.util.function.Predicate;
  * so a 1.12 pack and a 1.20 pack can be loaded side by side.
  */
 public final class AssetPipeline {
+    private static final AssetConverter BLOCKSTATES = new BlockStateConverter();
     private static final AssetConverter MODELS = new ModelConverter();
     private static final AssetConverter BINARY = new PassthroughConverter();
 
@@ -70,7 +74,6 @@ public final class AssetPipeline {
         }
 
         for (BridgedBlockAsset block : bundle.blocks()) {
-            generateBlockState(bundle, block);
             generateItemModel(bundle, block);
         }
 
@@ -85,7 +88,8 @@ public final class AssetPipeline {
         if (name == null) return;
         String id = path.namespace() + ":" + name;
 
-        JsonObject json = Json.parse(new String(data, StandardCharsets.UTF_8));
+        byte[] converted = BLOCKSTATES.convert(path, data, version);
+        JsonObject json = converted == null ? null : Json.parse(new String(converted, StandardCharsets.UTF_8));
         if (json == null) {
             AssetBridge.LOGGER.warn("Skipping unreadable blockstate {} in {}", id, archive.fileName());
             return;
@@ -99,8 +103,23 @@ public final class AssetPipeline {
             AssetBridge.LOGGER.warn("Skipping duplicate block {} from {}", id, archive.fileName());
             return;
         }
+
+        BridgedStateDefinition states = BlockStatePropertyParser.parse(json);
+        if (states != null) {
+            // Every property can be registered, so the original blockstate resolves as-is.
+            bundle.putResource(path, converted);
+        } else {
+            // Passing it through would make the model loader fail on a property we cannot
+            // register, so fall back to a single property-free variant.
+            AssetBridge.LOGGER.warn("{} in {} uses properties Asset Bridge cannot register; "
+                    + "falling back to a single model", id, archive.fileName());
+            states = BridgedStateDefinition.empty();
+            bundle.putResource(path, Json.toString(BlockStateConverter.singleVariant(model))
+                    .getBytes(StandardCharsets.UTF_8));
+        }
+
         bundle.addBlock(new BridgedBlockAsset(path.namespace(), name, qualify(model, path.namespace()),
-                archive.fileName(), version));
+                states, archive.fileName(), version));
     }
 
     private static void convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, byte[] data,
@@ -111,19 +130,6 @@ public final class AssetPipeline {
             return;
         }
         bundle.putResource(path, converted);
-    }
-
-    /** A blockstate with no properties: exactly one variant, so the block renders without state handling. */
-    private static void generateBlockState(AssetBundle bundle, BridgedBlockAsset block) {
-        JsonObject variant = new JsonObject();
-        variant.addProperty("model", block.modelId());
-        JsonObject variants = new JsonObject();
-        variants.add("", variant);
-        JsonObject root = new JsonObject();
-        root.add("variants", variants);
-
-        bundle.putResource(AssetPath.blockState(block.namespace(), block.path()),
-                Json.toString(root).getBytes(StandardCharsets.UTF_8));
     }
 
     /** Only generated when the archive did not already ship an item model for the block. */

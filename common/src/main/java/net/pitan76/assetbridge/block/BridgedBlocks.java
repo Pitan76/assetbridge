@@ -4,8 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.Material;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
@@ -36,7 +34,7 @@ public final class BridgedBlocks {
                 AssetBridge.LOGGER.warn("Skipping block with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
             }
-            Block block = new Block(BlockBehaviour.Properties.of(Material.STONE).strength(1.5F, 6.0F));
+            Block block = BridgedBlock.create(asset.states());
             createdBlocks.put(id, block);
             createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.get())));
         }
