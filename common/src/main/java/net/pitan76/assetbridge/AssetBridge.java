@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge;
 
 import net.pitan76.assetbridge.archive.ArchiveScanner;
+import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItems;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class AssetBridge {
@@ -30,7 +32,13 @@ public class AssetBridge {
      *                       Asset Bridge never shadows a mod the player actually installed
      */
     public static void init(Path gameDir, Predicate<String> namespaceInUse) {
-        bundle = AssetPipeline.build(ArchiveScanner.scan(gameDir), namespaceInUse);
+        // Scan assetbridge/
+        List<AssetArchive> archives = ArchiveScanner.scan(gameDir);
+
+        // Build the asset bundle from the archives (assets)
+        bundle = AssetPipeline.build(archives, namespaceInUse);
+
+        // Create the bridged blocks and items
         BridgedBlocks.create(bundle);
         BridgedItems.create(bundle);
     }

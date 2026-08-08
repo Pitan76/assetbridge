@@ -31,7 +31,7 @@ public class AssetBridgeFabric implements ModInitializer {
                 namespace -> FabricLoader.getInstance().isModLoaded(namespace));
 
         // Mod initialisation runs before the registries freeze, so direct registration is fine.
-        int registered = 0;
+        int registeredBlocks = 0;
         for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
             // Mod init order is not controllable, so a mod loaded after us can still claim the
             // same id. That is the desired outcome anyway: the real mod should win.
@@ -41,7 +41,7 @@ public class AssetBridgeFabric implements ModInitializer {
             }
             Registry.register(Registry.BLOCK, entry.getKey(), entry.getValue());
             Registry.register(Registry.ITEM, entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
-            registered++;
+            registeredBlocks++;
         }
 
         int registeredItems = 0;
@@ -53,6 +53,6 @@ public class AssetBridgeFabric implements ModInitializer {
             Registry.register(Registry.ITEM, entry.getKey(), entry.getValue());
             registeredItems++;
         }
-        AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registered, registeredItems);
+        AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registeredBlocks, registeredItems);
     }
 }

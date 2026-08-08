@@ -35,6 +35,7 @@ public class PackRepositoryMixin {
             // The PackType constructor delegates to the other one, so guard against a double add.
             if (source == AssetBridgeRepositorySource.INSTANCE) return;
         }
+
         Set<RepositorySource> merged = new LinkedHashSet<>(sources);
         merged.add(AssetBridgeRepositorySource.INSTANCE);
         this.sources = ImmutableSet.copyOf(merged);
