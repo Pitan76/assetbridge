@@ -2,10 +2,7 @@
 取り込んだMODからブロックなどのアセットを読み込み、機能を持たず見た目だけを利用するMOD<br />
 バージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
 
-要件の詳細は [RD.md](RD.md) を参照。
-
-- 対象: Minecraft 1.18.2 / Fabric・Forge（Architectury、Arch API非依存）
-- 現状: MVP（ブロックのみ）
+- Fabric/Forge 1.18.2
 
 ## 使い方
 
@@ -47,18 +44,3 @@ mods/assetbridge/*.{jar,zip}
 
 ブロックの登録タイミングだけがローダーごとに異なる（Fabricはmod init、ForgeはRegistryEvent）ため、
 共通コードはインスタンス生成までを担当し、登録は各プラットフォームのエントリポイントが行う。
-
-## MVPの制限
-
-- ブロックはプロパティ無しの単一モデルとして登録する（blockstateのvariantは代表1件のみ使用）
-- ブロック挙動は石相当固定（当たり判定・硬さ・音）
-- 1.18.2の `CreativeModeTab.TABS` が固定長のため、専用タブは作らず建築ブロックタブに入れる
-- アイテム・エンティティ・Block Entity・GUI・レシピ・カスタムレンダリングは対象外
-
-## ビルド
-
-```sh
-./gradlew build
-```
-
-成果物は `fabric/build/libs/` および `forge/build/libs/` に出力される。
