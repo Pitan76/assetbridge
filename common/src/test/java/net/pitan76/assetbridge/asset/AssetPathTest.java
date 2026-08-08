@@ -96,6 +96,14 @@ class AssetPathTest {
     }
 
     @Test
+    void readsTheItemNameFromAnItemModelPath() {
+        assertEquals("wand", AssetPath.itemModel("examplemod", "wand").itemModelName());
+        // Nested files are model fragments shared by other models, not items.
+        assertNull(new AssetPath(PackKind.CLIENT, "examplemod", "models/item/parts/handle.json").itemModelName());
+        assertNull(new AssetPath(PackKind.CLIENT, "examplemod", "models/block/foo.json").itemModelName());
+    }
+
+    @Test
     void buildsGeneratedPaths() {
         assertEquals("assets/examplemod/blockstates/foo.json", AssetPath.blockState("examplemod", "foo").toFullPath());
         assertEquals("assets/examplemod/models/item/foo.json", AssetPath.itemModel("examplemod", "foo").toFullPath());

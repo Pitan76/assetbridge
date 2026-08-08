@@ -6,6 +6,7 @@ import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedItemAsset;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.test.TestArchives;
@@ -194,6 +195,55 @@ class AssetPipelineTest {
         )));
 
         assertEquals(List.of("examplemod:fine"), bundle.blocks().stream().map(BridgedBlockAsset::id).toList());
+    }
+
+    @Test
+    void registersItemModelsThatNoBlockClaims() {
+        AssetBundle bundle = build(TestArchives.archive("example-mod.jar", 8, Map.of(
+                "assets/examplemod/models/item/wand.json",
+                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/wand\"}}",
+                "assets/examplemod/textures/item/wand.png", "png bytes"
+        )));
+
+        assertEquals(List.of("examplemod:wand"), bundle.items().stream().map(BridgedItemAsset::id).toList());
+        assertEquals("example-mod.jar", bundle.items().get(0).sourceArchive());
+    }
+
+    @Test
+    void doesNotRegisterAStandaloneItemForABridgedBlock() {
+        AssetBundle bundle = build(TestArchives.archive("example-mod.jar", 8, Map.of(
+                "assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
+                "assets/examplemod/models/item/foo.json", "{\"parent\": \"examplemod:block/foo\"}",
+                "assets/examplemod/models/item/wand.json", "{\"parent\": \"item/generated\"}"
+        )));
+
+        // 'foo' is already covered by the block's own BlockItem.
+        assertEquals(List.of("examplemod:wand"), bundle.items().stream().map(BridgedItemAsset::id).toList());
+    }
+
+    @Test
+    void ignoresNestedItemModelFragments() {
+        AssetBundle bundle = build(TestArchives.archive("example-mod.jar", 8, Map.of(
+                "assets/examplemod/models/item/parts/handle.json", "{\"parent\": \"item/generated\"}"
+        )));
+
+        assertEquals(List.of(), bundle.items());
+    }
+
+    @Test
+    void keepsTheFirstArchiveOnDuplicateItemIds() {
+        AssetBundle bundle = build(
+                TestArchives.archive("first.jar", 8, Map.of("assets/examplemod/models/item/wand.json",
+                        "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/first\"}}")),
+                TestArchives.archive("second.jar", 8, Map.of("assets/examplemod/models/item/wand.json",
+                        "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/second\"}}")));
+
+        assertEquals(1, bundle.items().size());
+        assertEquals("first.jar", bundle.items().get(0).sourceArchive());
+        assertEquals("examplemod:item/first",
+                json(bundle, new AssetPath(AssetPath.PackKind.CLIENT, "examplemod", "models/item/wand.json"))
+                        .getAsJsonObject("textures").get("layer0").getAsString());
     }
 
     @Test

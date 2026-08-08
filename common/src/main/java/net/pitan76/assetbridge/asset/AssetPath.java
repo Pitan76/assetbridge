@@ -103,6 +103,18 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         return path.substring("blockstates/".length(), path.length() - ".json".length());
     }
 
+    /**
+     * The registry name an item model file describes, e.g. {@code foo} for
+     * {@code models/item/foo.json}. Only meaningful for {@link Category#ITEM_MODEL}.
+     */
+    @Nullable
+    public String itemModelName() {
+        if (category() != Category.ITEM_MODEL || !path.endsWith(".json")) return null;
+        String name = path.substring("models/item/".length(), path.length() - ".json".length());
+        // Nested paths like models/item/parts/foo.json are model fragments, not items.
+        return name.indexOf('/') < 0 ? name : null;
+    }
+
     public static AssetPath blockState(String namespace, String name) {
         return new AssetPath(PackKind.CLIENT, namespace, "blockstates/" + name + ".json");
     }

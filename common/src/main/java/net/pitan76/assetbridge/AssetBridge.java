@@ -3,6 +3,7 @@ package net.pitan76.assetbridge;
 import net.pitan76.assetbridge.archive.ArchiveScanner;
 import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.block.BridgedBlocks;
+import net.pitan76.assetbridge.block.BridgedItems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ public final class AssetBridge {
     public static void init(Path gameDir, Predicate<String> namespaceInUse) {
         bundle = AssetPipeline.build(ArchiveScanner.scan(gameDir), namespaceInUse);
         BridgedBlocks.create(bundle);
+        BridgedItems.create(bundle);
     }
 
     public static AssetBundle bundle() {

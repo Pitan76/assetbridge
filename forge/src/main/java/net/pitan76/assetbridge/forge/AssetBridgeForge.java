@@ -15,6 +15,7 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
+import net.pitan76.assetbridge.block.BridgedItems;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -60,5 +61,16 @@ public final class AssetBridgeForge {
             if (skipped.contains(entry.getKey()) || event.getRegistry().containsKey(entry.getKey())) continue;
             event.getRegistry().register(entry.getValue().setRegistryName(entry.getKey()));
         }
+
+        int registered = 0;
+        for (Map.Entry<ResourceLocation, Item> entry : BridgedItems.items().entrySet()) {
+            if (event.getRegistry().containsKey(entry.getKey())) {
+                AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
+                continue;
+            }
+            event.getRegistry().register(entry.getValue().setRegistryName(entry.getKey()));
+            registered++;
+        }
+        AssetBridge.LOGGER.info("Registered {} bridged items", registered);
     }
 }

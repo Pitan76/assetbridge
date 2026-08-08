@@ -40,6 +40,9 @@ public final class BridgedItemGroup {
         for (var item : BridgedBlocks.items().values()) {
             return new ItemStack(item);
         }
+        for (var item : BridgedItems.items().values()) {
+            return new ItemStack(item);
+        }
         return new ItemStack(Items.BRICKS);
     }
 }

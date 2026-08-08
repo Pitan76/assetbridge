@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Block;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
+import net.pitan76.assetbridge.block.BridgedItems;
 
 import java.util.Map;
 
@@ -38,6 +39,16 @@ public final class AssetBridgeFabric implements ModInitializer {
             Registry.register(Registry.ITEM, entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
             registered++;
         }
-        AssetBridge.LOGGER.info("Registered {} bridged blocks", registered);
+
+        int registeredItems = 0;
+        for (Map.Entry<ResourceLocation, Item> entry : BridgedItems.items().entrySet()) {
+            if (Registry.ITEM.containsKey(entry.getKey())) {
+                AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
+                continue;
+            }
+            Registry.register(Registry.ITEM, entry.getKey(), entry.getValue());
+            registeredItems++;
+        }
+        AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registered, registeredItems);
     }
 }

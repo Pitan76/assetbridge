@@ -6,6 +6,7 @@ import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedItemAsset;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
@@ -17,6 +18,7 @@ import net.pitan76.assetbridge.util.Json;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +47,9 @@ public final class AssetPipeline {
         AssetBundle bundle = new AssetBundle();
         Set<String> seenBlocks = new HashSet<>();
         Set<String> skippedNamespaces = new HashSet<>();
+        // Item candidates cannot be resolved until every blockstate has been read, because a
+        // block item takes precedence over a standalone item of the same id. First one wins.
+        Map<String, BridgedItemAsset> itemCandidates = new LinkedHashMap<>();
 
         for (AssetArchive archive : archives) {
             AssetVersion version = AssetVersion.fromPackFormat(archive.packFormat()).resolved();
@@ -62,7 +67,12 @@ public final class AssetPipeline {
 
                 switch (path.category()) {
                     case BLOCKSTATE -> readBlockState(bundle, archive, version, path, entry.getValue(), seenBlocks);
-                    case BLOCK_MODEL, ITEM_MODEL, MODEL ->
+                    case ITEM_MODEL -> {
+                        if (convertInto(bundle, MODELS, path, entry.getValue(), version, archive)) {
+                            readItem(itemCandidates, archive, version, path);
+                        }
+                    }
+                    case BLOCK_MODEL, MODEL ->
                             convertInto(bundle, MODELS, path, entry.getValue(), version, archive);
                     case TEXTURE, TEXTURE_META, LANG ->
                             convertInto(bundle, BINARY, path, entry.getValue(), version, archive);
@@ -75,10 +85,13 @@ public final class AssetPipeline {
 
         for (BridgedBlockAsset block : bundle.blocks()) {
             generateItemModel(bundle, block);
+            // The block's own item owns this id, so it is not a standalone item.
+            itemCandidates.remove(block.id());
         }
+        itemCandidates.values().forEach(bundle::addItem);
 
-        AssetBridge.LOGGER.info("Prepared {} bridged blocks and {} resources from {} archive(s)",
-                bundle.blocks().size(), bundle.resources().size(), archives.size());
+        AssetBridge.LOGGER.info("Prepared {} bridged blocks, {} items and {} resources from {} archive(s)",
+                bundle.blocks().size(), bundle.items().size(), bundle.resources().size(), archives.size());
         return bundle;
     }
 
@@ -122,14 +135,27 @@ public final class AssetPipeline {
                 states, archive.fileName(), version));
     }
 
-    private static void convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, byte[] data,
-                                    AssetVersion version, AssetArchive archive) {
+    /** An item model is only worth an item registration if the model itself survived. */
+    private static void readItem(Map<String, BridgedItemAsset> candidates, AssetArchive archive,
+                                 AssetVersion version, AssetPath path) {
+        String name = path.itemModelName();
+        if (name == null) return;
+
+        candidates.putIfAbsent(path.namespace() + ":" + name,
+                new BridgedItemAsset(path.namespace(), name, archive.fileName(), version));
+    }
+
+    private static boolean convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, byte[] data,
+                                       AssetVersion version, AssetArchive archive) {
         byte[] converted = converter.convert(path, data, version);
         if (converted == null) {
             AssetBridge.LOGGER.warn("Dropped unconvertible resource {} from {}", path, archive.fileName());
-            return;
+            return false;
         }
+        // An earlier archive claimed this path already; keep the first one.
+        if (bundle.hasResource(path)) return false;
         bundle.putResource(path, converted);
+        return true;
     }
 
     /** Only generated when the archive did not already ship an item model for the block. */
