@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "assetbridge",
+  "version": "${version}",
+  "name": "Asset Bridge ",
+  "description": "A Minecraft mod that loads assets such as blocks from other mods, allowing them to be used visually without their original functionality.",
+  "authors": [
+    "Pitan"
+  ],
+  "contact": {
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/assetbridge"
+  },
+  "license": "MIT",
+  "icon": "assets/assetbridge/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.pitan76.assetbridge.fabric.AssetBridgeFabric"
+    ],
+    "client": [
+      "net.pitan76.assetbridge.fabric.client.AssetBridgeFabricClient"
+    ]
+  },
+  "mixins": [
+    "assetbridge.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~1.18.2",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
