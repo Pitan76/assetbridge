@@ -17,7 +17,7 @@ import java.util.Map;
  * code; the actual registry call is left to each platform, because Fabric registers during
  * mod init while Forge registers from a registry event.
  */
-public final class BridgedBlocks {
+public class BridgedBlocks {
     private static Map<ResourceLocation, Block> blocks = Collections.emptyMap();
     private static Map<ResourceLocation, Item> items = Collections.emptyMap();
 

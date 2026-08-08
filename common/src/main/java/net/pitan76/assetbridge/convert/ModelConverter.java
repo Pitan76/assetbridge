@@ -20,7 +20,7 @@ import java.util.Map;
  *       rejects; they are stripped rather than failing the whole model.</li>
  * </ul>
  */
-public final class ModelConverter implements AssetConverter {
+public class ModelConverter implements AssetConverter {
     /** Keys introduced after 1.18.2 that the 1.18.2 model deserialiser does not understand. */
     private static final String[] UNKNOWN_FUTURE_KEYS = {"overrides_v2", "oversized_in_gui"};
 

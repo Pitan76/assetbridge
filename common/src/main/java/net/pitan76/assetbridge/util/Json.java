@@ -7,7 +7,7 @@ import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.Nullable;
 
 /** Minimal Gson helpers so the parsing layer stays free of Minecraft classes. */
-public final class Json {
+public class Json {
     private static final Gson GSON = new Gson();
 
     private Json() {

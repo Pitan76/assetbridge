@@ -14,7 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /** Builds archives and in-memory bundles for tests. */
-public final class TestArchives {
+public class TestArchives {
     private TestArchives() {
     }
 

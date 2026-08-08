@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /** Serves the converted assets to Minecraft as an in-memory resource pack. */
-public final class AssetBridgePackResources implements PackResources {
+public class AssetBridgePackResources implements PackResources {
     public static final String PACK_ID = AssetBridge.MOD_ID + "_external";
 
     private static final String PACK_MCMETA = "{\"pack\":{\"pack_format\":" + AssetVersion.CURRENT_PACK_FORMAT

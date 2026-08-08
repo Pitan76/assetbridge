@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * <p>Each archive is read at its own declared asset version and converted independently,
  * so a 1.12 pack and a 1.20 pack can be loaded side by side.
  */
-public final class AssetPipeline {
+public class AssetPipeline {
     private static final AssetConverter BLOCKSTATES = new BlockStateConverter();
     private static final AssetConverter MODELS = new ModelConverter();
     private static final AssetConverter BINARY = new PassthroughConverter();

@@ -14,7 +14,7 @@ import java.util.Map;
  * properties, so one representative model is picked: the empty variant when present,
  * otherwise the first declared one.
  */
-public final class BlockStateParser {
+public class BlockStateParser {
     private BlockStateParser() {
     }
 

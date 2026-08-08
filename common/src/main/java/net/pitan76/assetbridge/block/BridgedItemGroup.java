@@ -18,7 +18,7 @@ import java.util.Collection;
  * constructor, Fabric API offers a builder). Each platform creates them and hands them over
  * here before {@link net.pitan76.assetbridge.AssetBridge#init} runs.
  */
-public final class BridgedItemGroup {
+public class BridgedItemGroup {
     /** Tab ids, used for the translation keys and, on Fabric, the tabs' resource locations. */
     public static final String BLOCKS = "blocks";
     public static final String ITEMS = "items";

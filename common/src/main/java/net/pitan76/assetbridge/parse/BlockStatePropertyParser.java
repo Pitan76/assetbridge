@@ -22,7 +22,7 @@ import java.util.Set;
  * model belongs to which state is the vanilla model loader's job, so all this parser has
  * to do is work out which properties exist and which values they take.
  */
-public final class BlockStatePropertyParser {
+public class BlockStatePropertyParser {
     /** Multipart condition keys that combine other conditions rather than naming a property. */
     private static final Set<String> COMBINATORS = Set.of("OR", "AND");
 

@@ -21,7 +21,7 @@ import java.util.Map;
  *       {@code models/block/}, so a bare {@code cube_all} means {@code block/cube_all}.</li>
  * </ul>
  */
-public final class BlockStateConverter implements AssetConverter {
+public class BlockStateConverter implements AssetConverter {
     @Override
     @Nullable
     public byte[] convert(AssetPath path, byte[] data, AssetVersion from) {

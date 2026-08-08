@@ -14,7 +14,7 @@ import net.pitan76.assetbridge.block.BridgedItems;
 
 import java.util.Map;
 
-public final class AssetBridgeFabric implements ModInitializer {
+public class AssetBridgeFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         // The tabs have to exist before the items are built.

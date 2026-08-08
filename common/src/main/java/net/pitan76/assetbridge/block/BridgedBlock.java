@@ -17,7 +17,7 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
  * <p>No behaviour is attached to the properties: they exist purely so the right model is
  * picked. Deciding a state on placement is a later step.
  */
-public final class BridgedBlock extends Block {
+public class BridgedBlock extends Block {
     /**
      * {@code createBlockStateDefinition} runs inside {@code super(...)}, before any field of
      * this class can be assigned, so the definition is handed over out of band.

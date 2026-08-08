@@ -11,7 +11,7 @@ import java.util.function.Consumer;
  * Injects the bridged assets as an always-enabled built-in pack.
  * Registered from {@code PackRepositoryMixin} so no loader-specific resource API is needed.
  */
-public final class AssetBridgeRepositorySource implements RepositorySource {
+public class AssetBridgeRepositorySource implements RepositorySource {
     public static final AssetBridgeRepositorySource INSTANCE = new AssetBridgeRepositorySource();
 
     private AssetBridgeRepositorySource() {

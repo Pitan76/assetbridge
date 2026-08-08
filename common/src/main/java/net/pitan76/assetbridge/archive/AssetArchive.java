@@ -9,7 +9,7 @@ import java.util.Map;
  * An external JAR/ZIP that has been read into memory.
  * Only asset entries are retained; no class file is ever touched.
  */
-public final class AssetArchive {
+public class AssetArchive {
     private final String fileName;
     private final int packFormat;
     private final Map<AssetPath, byte[]> entries;

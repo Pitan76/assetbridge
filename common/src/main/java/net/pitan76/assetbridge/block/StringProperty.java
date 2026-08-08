@@ -14,7 +14,7 @@ import java.util.Set;
  * which cannot be produced for value sets that are only known at runtime. Since
  * {@code Property} is generic over any {@code Comparable}, {@code String} works directly.
  */
-public final class StringProperty extends Property<String> {
+public class StringProperty extends Property<String> {
     private final Set<String> values;
 
     private StringProperty(String name, Set<String> values) {

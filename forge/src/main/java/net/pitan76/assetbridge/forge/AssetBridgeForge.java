@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Mod(AssetBridge.MOD_ID)
-public final class AssetBridgeForge {
+public class AssetBridgeForge {
     /** Ids that lost the race against a real mod, so their items must be skipped too. */
     private final Set<ResourceLocation> skipped = new LinkedHashSet<>();
 

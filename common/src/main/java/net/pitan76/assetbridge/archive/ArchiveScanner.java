@@ -20,7 +20,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /** Finds and reads the archives placed in {@code mods/assetbridge/}. */
-public final class ArchiveScanner {
+public class ArchiveScanner {
     private ArchiveScanner() {
     }
 

@@ -16,7 +16,7 @@ import java.util.Map;
  * <p>Like the blocks, these carry no behaviour: they exist so the model and texture from the
  * external mod can be held, seen in the creative tab and used for screenshots.
  */
-public final class BridgedItems {
+public class BridgedItems {
     private static Map<ResourceLocation, Item> items = Collections.emptyMap();
 
     private BridgedItems() {
