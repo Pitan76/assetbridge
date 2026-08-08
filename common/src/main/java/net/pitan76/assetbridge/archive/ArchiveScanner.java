@@ -2,6 +2,7 @@ package net.pitan76.assetbridge.archive;
 
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.AssetBridge;
+import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.util.Json;
 
 import java.io.IOException;
@@ -20,9 +21,6 @@ import java.util.zip.ZipFile;
 
 /** Finds and reads the archives placed in {@code mods/assetbridge/}. */
 public final class ArchiveScanner {
-    /** Directories inside {@code assets/<namespace>/} that are worth extracting for the MVP. */
-    private static final String[] INTERESTING = {"blockstates/", "models/", "textures/", "lang/"};
-
     private ArchiveScanner() {
     }
 
@@ -59,7 +57,7 @@ public final class ArchiveScanner {
     }
 
     private static AssetArchive read(Path file) throws IOException {
-        Map<String, byte[]> entries = new HashMap<>();
+        Map<AssetPath, byte[]> entries = new HashMap<>();
         int packFormat = -1;
 
         try (ZipFile zip = new ZipFile(file.toFile())) {
@@ -67,13 +65,13 @@ public final class ArchiveScanner {
             while (it.hasMoreElements()) {
                 ZipEntry entry = it.nextElement();
                 if (entry.isDirectory()) continue;
-                String path = entry.getName().replace('\\', '/');
 
-                if (path.equals("pack.mcmeta")) {
+                if (entry.getName().equals("pack.mcmeta")) {
                     packFormat = readPackFormat(zip, entry);
                     continue;
                 }
-                if (!isInteresting(path)) continue;
+                AssetPath path = AssetPath.parse(entry.getName());
+                if (path == null || !path.isBridgeable()) continue;
 
                 try (InputStream in = zip.getInputStream(entry)) {
                     entries.put(path, in.readAllBytes());
@@ -95,16 +93,5 @@ public final class ArchiveScanner {
             // A malformed pack.mcmeta only costs us the version hint.
         }
         return -1;
-    }
-
-    private static boolean isInteresting(String path) {
-        if (!path.startsWith("assets/")) return false;
-        int nsEnd = path.indexOf('/', "assets/".length());
-        if (nsEnd < 0) return false;
-        String rest = path.substring(nsEnd + 1);
-        for (String prefix : INTERESTING) {
-            if (rest.startsWith(prefix)) return true;
-        }
-        return false;
     }
 }

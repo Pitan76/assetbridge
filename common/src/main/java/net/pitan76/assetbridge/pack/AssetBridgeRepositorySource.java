@@ -26,7 +26,9 @@ public final class AssetBridgeRepositorySource implements RepositorySource {
                 true,
                 () -> new AssetBridgePackResources(AssetBridge.bundle()),
                 constructor,
-                Pack.Position.TOP,
+                // Above vanilla so the bridged assets resolve, but below the packs the
+                // player enabled themselves so their resource pack still wins.
+                Pack.Position.BOTTOM,
                 PackSource.BUILT_IN
         );
         if (pack != null) {

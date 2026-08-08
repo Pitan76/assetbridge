@@ -10,11 +10,10 @@ import java.util.Map;
  * the format the running Minecraft version expects.
  */
 public final class AssetBundle {
-    private final Map<String, byte[]> resources = new HashMap<>();
+    private final Map<AssetPath, byte[]> resources = new HashMap<>();
     private final List<BridgedBlockAsset> blocks = new ArrayList<>();
 
-    /** @param path full pack path, e.g. {@code assets/examplemod/models/block/foo.json} */
-    public void putResource(String path, byte[] data) {
+    public void putResource(AssetPath path, byte[] data) {
         resources.put(path, data);
     }
 
@@ -22,11 +21,11 @@ public final class AssetBundle {
         blocks.add(block);
     }
 
-    public boolean hasResource(String path) {
+    public boolean hasResource(AssetPath path) {
         return resources.containsKey(path);
     }
 
-    public Map<String, byte[]> resources() {
+    public Map<AssetPath, byte[]> resources() {
         return resources;
     }
 

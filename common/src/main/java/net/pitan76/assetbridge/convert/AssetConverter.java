@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge.convert;
 
+import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,11 +9,10 @@ import org.jetbrains.annotations.Nullable;
  * Minecraft version expects.
  *
  * <p>This is the seam the requirement doc calls for: nothing outside this package should
- * know about cross-version asset spec differences. Implementations get the pack-relative
- * path (e.g. {@code assets/examplemod/models/block/foo.json}) and the raw bytes, and
- * return the converted bytes, or {@code null} to drop the resource entirely.
+ * know about cross-version asset spec differences. Implementations return the converted
+ * bytes, or {@code null} to drop the resource entirely.
  */
 public interface AssetConverter {
     @Nullable
-    byte[] convert(String path, byte[] data, AssetVersion from);
+    byte[] convert(AssetPath path, byte[] data, AssetVersion from);
 }

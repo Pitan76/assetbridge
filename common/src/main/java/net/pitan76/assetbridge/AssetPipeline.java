@@ -3,6 +3,7 @@ package net.pitan76.assetbridge;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
 import net.pitan76.assetbridge.convert.AssetConverter;
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * archive -> parse -> internal representation -> current-version assets.
@@ -30,25 +32,39 @@ public final class AssetPipeline {
     private AssetPipeline() {
     }
 
-    public static AssetBundle build(List<AssetArchive> archives) {
+    /**
+     * @param namespaceInUse namespaces that already belong to a loaded mod (including
+     *                       {@code minecraft}). Their assets are skipped entirely, so
+     *                       Asset Bridge never shadows a mod the player actually installed.
+     */
+    public static AssetBundle build(List<AssetArchive> archives, Predicate<String> namespaceInUse) {
         AssetBundle bundle = new AssetBundle();
         Set<String> seenBlocks = new HashSet<>();
+        Set<String> skippedNamespaces = new HashSet<>();
 
         for (AssetArchive archive : archives) {
             AssetVersion version = AssetVersion.fromPackFormat(archive.packFormat()).resolved();
 
-            for (Map.Entry<String, byte[]> entry : archive.entries().entrySet()) {
-                String path = entry.getKey();
-                String namespace = namespaceOf(path);
-                if (namespace == null) continue;
-                String rest = path.substring("assets/".length() + namespace.length() + 1);
+            for (Map.Entry<AssetPath, byte[]> entry : archive.entries().entrySet()) {
+                AssetPath path = entry.getKey();
 
-                if (rest.startsWith("blockstates/") && rest.endsWith(".json")) {
-                    readBlockState(bundle, archive, version, namespace, rest, entry.getValue(), seenBlocks);
-                } else if (rest.startsWith("models/") && rest.endsWith(".json")) {
-                    convertInto(bundle, MODELS, path, entry.getValue(), version, archive);
-                } else if (rest.startsWith("textures/") || rest.startsWith("lang/")) {
-                    convertInto(bundle, BINARY, path, entry.getValue(), version, archive);
+                if (namespaceInUse.test(path.namespace())) {
+                    if (skippedNamespaces.add(path.namespace())) {
+                        AssetBridge.LOGGER.info("Skipping namespace '{}' from {}: it is already provided by a loaded mod",
+                                path.namespace(), archive.fileName());
+                    }
+                    continue;
+                }
+
+                switch (path.category()) {
+                    case BLOCKSTATE -> readBlockState(bundle, archive, version, path, entry.getValue(), seenBlocks);
+                    case BLOCK_MODEL, ITEM_MODEL, MODEL ->
+                            convertInto(bundle, MODELS, path, entry.getValue(), version, archive);
+                    case TEXTURE, TEXTURE_META, LANG ->
+                            convertInto(bundle, BINARY, path, entry.getValue(), version, archive);
+                    case OTHER -> {
+                        // Filtered out at scan time; nothing to do.
+                    }
                 }
             }
         }
@@ -64,9 +80,10 @@ public final class AssetPipeline {
     }
 
     private static void readBlockState(AssetBundle bundle, AssetArchive archive, AssetVersion version,
-                                       String namespace, String rest, byte[] data, Set<String> seenBlocks) {
-        String name = rest.substring("blockstates/".length(), rest.length() - ".json".length());
-        String id = namespace + ":" + name;
+                                       AssetPath path, byte[] data, Set<String> seenBlocks) {
+        String name = path.blockStateName();
+        if (name == null) return;
+        String id = path.namespace() + ":" + name;
 
         JsonObject json = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (json == null) {
@@ -82,10 +99,11 @@ public final class AssetPipeline {
             AssetBridge.LOGGER.warn("Skipping duplicate block {} from {}", id, archive.fileName());
             return;
         }
-        bundle.addBlock(new BridgedBlockAsset(namespace, name, qualify(model, namespace), archive.fileName(), version));
+        bundle.addBlock(new BridgedBlockAsset(path.namespace(), name, qualify(model, path.namespace()),
+                archive.fileName(), version));
     }
 
-    private static void convertInto(AssetBundle bundle, AssetConverter converter, String path, byte[] data,
+    private static void convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, byte[] data,
                                     AssetVersion version, AssetArchive archive) {
         byte[] converted = converter.convert(path, data, version);
         if (converted == null) {
@@ -104,13 +122,13 @@ public final class AssetPipeline {
         JsonObject root = new JsonObject();
         root.add("variants", variants);
 
-        bundle.putResource("assets/" + block.namespace() + "/blockstates/" + block.path() + ".json",
+        bundle.putResource(AssetPath.blockState(block.namespace(), block.path()),
                 Json.toString(root).getBytes(StandardCharsets.UTF_8));
     }
 
     /** Only generated when the archive did not already ship an item model for the block. */
     private static void generateItemModel(AssetBundle bundle, BridgedBlockAsset block) {
-        String path = "assets/" + block.namespace() + "/models/item/" + block.path() + ".json";
+        AssetPath path = AssetPath.itemModel(block.namespace(), block.path());
         if (bundle.hasResource(path)) return;
 
         JsonObject root = new JsonObject();
@@ -120,11 +138,5 @@ public final class AssetPipeline {
 
     private static String qualify(String reference, String namespace) {
         return reference.indexOf(':') < 0 ? namespace + ":" + reference : reference;
-    }
-
-    private static String namespaceOf(String path) {
-        if (!path.startsWith("assets/")) return null;
-        int end = path.indexOf('/', "assets/".length());
-        return end < 0 ? null : path.substring("assets/".length(), end);
     }
 }

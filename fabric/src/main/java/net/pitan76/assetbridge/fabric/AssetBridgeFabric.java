@@ -22,15 +22,22 @@ public final class AssetBridgeFabric implements ModInitializer {
                 .icon(BridgedItemGroup::icon)
                 .build());
 
-        AssetBridge.init(FabricLoader.getInstance().getGameDir());
+        AssetBridge.init(FabricLoader.getInstance().getGameDir(),
+                namespace -> FabricLoader.getInstance().isModLoaded(namespace));
 
         // Mod initialisation runs before the registries freeze, so direct registration is fine.
+        int registered = 0;
         for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
+            // Mod init order is not controllable, so a mod loaded after us can still claim the
+            // same id. That is the desired outcome anyway: the real mod should win.
+            if (Registry.BLOCK.containsKey(entry.getKey())) {
+                AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", entry.getKey());
+                continue;
+            }
             Registry.register(Registry.BLOCK, entry.getKey(), entry.getValue());
+            Registry.register(Registry.ITEM, entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
+            registered++;
         }
-        for (Map.Entry<ResourceLocation, Item> entry : BridgedBlocks.items().entrySet()) {
-            Registry.register(Registry.ITEM, entry.getKey(), entry.getValue());
-        }
-        AssetBridge.LOGGER.info("Registered {} bridged blocks", BridgedBlocks.blocks().size());
+        AssetBridge.LOGGER.info("Registered {} bridged blocks", registered);
     }
 }

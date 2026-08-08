@@ -8,6 +8,7 @@ import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import net.minecraft.util.GsonHelper;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,28 +61,30 @@ public final class AssetBridgePackResources implements PackResources {
     @Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
                                                      int maxDepth, Predicate<String> filter) {
-        String prefix = type.getDirectory() + "/" + namespace + "/" + path + "/";
+        AssetPath.PackKind kind = kindOf(type);
+        String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();
 
-        for (String key : bundle.resources().keySet()) {
-            if (!key.startsWith(prefix)) continue;
-            String relative = key.substring(prefix.length());
+        for (AssetPath key : bundle.resources().keySet()) {
+            if (key.kind() != kind || !key.namespace().equals(namespace)) continue;
+            if (!key.path().startsWith(prefix)) continue;
+
+            String relative = key.path().substring(prefix.length());
             // maxDepth counts directory levels below `path`.
             if (countSlashes(relative) >= maxDepth) continue;
             if (!filter.test(fileNameOf(relative))) continue;
-            found.add(new ResourceLocation(namespace, key.substring(type.getDirectory().length() + namespace.length() + 2)));
+
+            found.add(new ResourceLocation(namespace, key.path()));
         }
         return found;
     }
 
     @Override
     public Set<String> getNamespaces(PackType type) {
+        AssetPath.PackKind kind = kindOf(type);
         Set<String> namespaces = new HashSet<>();
-        String prefix = type.getDirectory() + "/";
-        for (String key : bundle.resources().keySet()) {
-            if (!key.startsWith(prefix)) continue;
-            int end = key.indexOf('/', prefix.length());
-            if (end > 0) namespaces.add(key.substring(prefix.length(), end));
+        for (AssetPath key : bundle.resources().keySet()) {
+            if (key.kind() == kind) namespaces.add(key.namespace());
         }
         return namespaces;
     }
@@ -105,8 +108,12 @@ public final class AssetBridgePackResources implements PackResources {
         // Everything is held in memory; nothing to release.
     }
 
-    private static String pathOf(PackType type, ResourceLocation location) {
-        return type.getDirectory() + "/" + location.getNamespace() + "/" + location.getPath();
+    private static AssetPath pathOf(PackType type, ResourceLocation location) {
+        return new AssetPath(kindOf(type), location.getNamespace(), location.getPath());
+    }
+
+    private static AssetPath.PackKind kindOf(PackType type) {
+        return type == PackType.SERVER_DATA ? AssetPath.PackKind.SERVER : AssetPath.PackKind.CLIENT;
     }
 
     private static int countSlashes(String value) {

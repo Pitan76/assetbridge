@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.convert;
 
 import com.google.gson.JsonObject;
+import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ public final class ModelConverter implements AssetConverter {
 
     @Override
     @Nullable
-    public byte[] convert(String path, byte[] data, AssetVersion from) {
+    public byte[] convert(AssetPath path, byte[] data, AssetVersion from) {
         JsonObject model = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (model == null) return null;
 

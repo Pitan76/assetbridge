@@ -1,5 +1,7 @@
 package net.pitan76.assetbridge.archive;
 
+import net.pitan76.assetbridge.asset.AssetPath;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -10,9 +12,9 @@ import java.util.Map;
 public final class AssetArchive {
     private final String fileName;
     private final int packFormat;
-    private final Map<String, byte[]> entries;
+    private final Map<AssetPath, byte[]> entries;
 
-    public AssetArchive(String fileName, int packFormat, Map<String, byte[]> entries) {
+    public AssetArchive(String fileName, int packFormat, Map<AssetPath, byte[]> entries) {
         this.fileName = fileName;
         this.packFormat = packFormat;
         this.entries = Collections.unmodifiableMap(entries);
@@ -27,8 +29,7 @@ public final class AssetArchive {
         return packFormat;
     }
 
-    /** Asset entries keyed by their full archive path, e.g. {@code assets/examplemod/models/block/foo.json}. */
-    public Map<String, byte[]> entries() {
+    public Map<AssetPath, byte[]> entries() {
         return entries;
     }
 }
