@@ -15,6 +15,7 @@ import net.pitan76.assetbridge.convert.PassthroughConverter;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
 import net.pitan76.assetbridge.util.Json;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -47,12 +48,15 @@ public class AssetPipeline {
         AssetBundle bundle = new AssetBundle();
         Set<String> seenBlocks = new HashSet<>();
         Set<String> skippedNamespaces = new HashSet<>();
-        // Item candidates cannot be resolved until every blockstate has been read, because a
-        // block item takes precedence over a standalone item of the same id. First one wins.
-        Map<String, BridgedItemAsset> itemCandidates = new LinkedHashMap<>();
+        // Item candidates cannot be resolved until everything has been read: a block item takes
+        // precedence over a standalone item of the same id, and 1.21.4+ item definitions take
+        // precedence over guessing from item models. First archive wins within each source.
+        Map<String, BridgedItemAsset> fromDefinitions = new LinkedHashMap<>();
+        Map<String, BridgedItemAsset> fromModels = new LinkedHashMap<>();
+        Set<String> namespacesWithDefinitions = new HashSet<>();
 
         for (AssetArchive archive : archives) {
-            AssetVersion version = AssetVersion.fromPackFormat(archive.packFormat()).resolved();
+            AssetVersion version = archive.version();
 
             for (Map.Entry<AssetPath, byte[]> entry : archive.entries().entrySet()) {
                 AssetPath path = entry.getKey();
@@ -67,9 +71,16 @@ public class AssetPipeline {
 
                 switch (path.category()) {
                     case BLOCKSTATE -> readBlockState(bundle, archive, version, path, entry.getValue(), seenBlocks);
+                    case ITEM_DEFINITION -> {
+                        // The file itself means nothing to this Minecraft version, so it is not
+                        // served; only its name is used, as the mod's own list of items.
+                        namespacesWithDefinitions.add(path.namespace());
+                        addCandidate(fromDefinitions, archive, version, path.namespace(),
+                                path.itemDefinitionName());
+                    }
                     case ITEM_MODEL -> {
                         if (convertInto(bundle, MODELS, path, entry.getValue(), version, archive)) {
-                            readItem(itemCandidates, archive, version, path);
+                            addCandidate(fromModels, archive, version, path.namespace(), path.itemModelName());
                         }
                     }
                     case BLOCK_MODEL, MODEL ->
@@ -81,6 +92,14 @@ public class AssetPipeline {
                     }
                 }
             }
+        }
+
+        Map<String, BridgedItemAsset> itemCandidates = new LinkedHashMap<>(fromDefinitions);
+        for (Map.Entry<String, BridgedItemAsset> candidate : fromModels.entrySet()) {
+            // A namespace that ships item definitions has already listed everything it has;
+            // its remaining item models are block items and shared fragments.
+            if (namespacesWithDefinitions.contains(candidate.getValue().namespace())) continue;
+            itemCandidates.putIfAbsent(candidate.getKey(), candidate.getValue());
         }
 
         for (BridgedBlockAsset block : bundle.blocks()) {
@@ -135,14 +154,12 @@ public class AssetPipeline {
                 states, archive.fileName(), version));
     }
 
-    /** An item model is only worth an item registration if the model itself survived. */
-    private static void readItem(Map<String, BridgedItemAsset> candidates, AssetArchive archive,
-                                 AssetVersion version, AssetPath path) {
-        String name = path.itemModelName();
+    private static void addCandidate(Map<String, BridgedItemAsset> candidates, AssetArchive archive,
+                                     AssetVersion version, String namespace, @Nullable String name) {
         if (name == null) return;
 
-        candidates.putIfAbsent(path.namespace() + ":" + name,
-                new BridgedItemAsset(path.namespace(), name, archive.fileName(), version));
+        candidates.putIfAbsent(namespace + ":" + name,
+                new BridgedItemAsset(namespace, name, archive.fileName(), version));
     }
 
     private static boolean convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, byte[] data,

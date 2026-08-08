@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.archive;
 
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetVersion;
 
 import java.util.Collections;
 import java.util.Map;
@@ -11,12 +12,14 @@ import java.util.Map;
  */
 public class AssetArchive {
     private final String fileName;
-    private final int packFormat;
+    private final AssetVersion version;
+    private final String versionSource;
     private final Map<AssetPath, byte[]> entries;
 
-    public AssetArchive(String fileName, int packFormat, Map<AssetPath, byte[]> entries) {
+    public AssetArchive(String fileName, AssetVersion version, String versionSource, Map<AssetPath, byte[]> entries) {
         this.fileName = fileName;
-        this.packFormat = packFormat;
+        this.version = version;
+        this.versionSource = versionSource;
         this.entries = Collections.unmodifiableMap(entries);
     }
 
@@ -24,9 +27,14 @@ public class AssetArchive {
         return fileName;
     }
 
-    /** pack_format declared by the archive's pack.mcmeta, or -1 when unknown. */
-    public int packFormat() {
-        return packFormat;
+    /** The asset generation this archive was authored for. */
+    public AssetVersion version() {
+        return version;
+    }
+
+    /** Which metadata file the version came from, for logging. */
+    public String versionSource() {
+        return versionSource;
     }
 
     public Map<AssetPath, byte[]> entries() {

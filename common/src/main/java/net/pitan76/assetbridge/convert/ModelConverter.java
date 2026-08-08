@@ -30,14 +30,11 @@ public class ModelConverter implements AssetConverter {
         JsonObject model = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (model == null) return null;
 
-        boolean changed = false;
-        if (from == AssetVersion.LEGACY) {
-            changed = renameLegacyDirectories(model);
-        }
-        if (from == AssetVersion.FUTURE) {
-            for (String key : UNKNOWN_FUTURE_KEYS) {
-                changed |= model.remove(key) != null;
-            }
+        // Both rules are driven by the content: 'blocks/' does not exist in 1.13+, and a key
+        // 1.18.2 does not know is worth dropping whatever version the archive claims to be.
+        boolean changed = renameLegacyDirectories(model);
+        for (String key : UNKNOWN_FUTURE_KEYS) {
+            changed |= model.remove(key) != null;
         }
         return changed ? Json.toString(model).getBytes(StandardCharsets.UTF_8) : data;
     }

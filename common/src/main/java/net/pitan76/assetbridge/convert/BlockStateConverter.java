@@ -13,20 +13,19 @@ import java.util.Map;
 /**
  * Normalises blockstate JSON towards the 1.18.2 spec so it can be served unchanged.
  *
- * <p>Handled differences:
+ * <p>Both fixes here are driven by the shape of the content rather than by the declared
+ * version, because both inputs are simply invalid in 1.13+ — if they are present, the file
+ * is pre-flattening no matter what its metadata claims:
  * <ul>
- *   <li>{@link AssetVersion#LEGACY}: pre-1.13 packs use the variant key {@code normal} for
- *       "no properties", where 1.13+ uses the empty key.</li>
- *   <li>{@link AssetVersion#LEGACY}: pre-1.13 model references in blockstates are relative to
- *       {@code models/block/}, so a bare {@code cube_all} means {@code block/cube_all}.</li>
+ *   <li>the variant key {@code normal} meant "no properties"; 1.13+ uses the empty key</li>
+ *   <li>model references were relative to {@code models/block/}, so a bare {@code cube_all}
+ *       means {@code block/cube_all}</li>
  * </ul>
  */
 public class BlockStateConverter implements AssetConverter {
     @Override
     @Nullable
     public byte[] convert(AssetPath path, byte[] data, AssetVersion from) {
-        if (from != AssetVersion.LEGACY) return data;
-
         JsonObject blockState = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (blockState == null) return null;
 

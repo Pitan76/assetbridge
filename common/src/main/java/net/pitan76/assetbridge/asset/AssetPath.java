@@ -42,6 +42,11 @@ public record AssetPath(PackKind kind, String namespace, String path) {
     /** What the resource is, as far as Asset Bridge cares. */
     public enum Category {
         BLOCKSTATE,
+        /**
+         * A 1.21.4+ standalone item definition. Its contents mean nothing to older versions,
+         * but the file name is an authoritative list of the mod's items.
+         */
+        ITEM_DEFINITION,
         BLOCK_MODEL,
         ITEM_MODEL,
         MODEL,
@@ -75,6 +80,7 @@ public record AssetPath(PackKind kind, String namespace, String path) {
 
     public Category category() {
         if (path.startsWith("blockstates/")) return Category.BLOCKSTATE;
+        if (path.startsWith("items/")) return Category.ITEM_DEFINITION;
         if (path.startsWith("models/block/")) return Category.BLOCK_MODEL;
         if (path.startsWith("models/item/")) return Category.ITEM_MODEL;
         if (path.startsWith("models/")) return Category.MODEL;
@@ -109,9 +115,23 @@ public record AssetPath(PackKind kind, String namespace, String path) {
      */
     @Nullable
     public String itemModelName() {
-        if (category() != Category.ITEM_MODEL || !path.endsWith(".json")) return null;
-        String name = path.substring("models/item/".length(), path.length() - ".json".length());
-        // Nested paths like models/item/parts/foo.json are model fragments, not items.
+        return nameUnder(Category.ITEM_MODEL, "models/item/");
+    }
+
+    /**
+     * The registry name an item definition describes, e.g. {@code foo} for
+     * {@code items/foo.json}. Only meaningful for {@link Category#ITEM_DEFINITION}.
+     */
+    @Nullable
+    public String itemDefinitionName() {
+        return nameUnder(Category.ITEM_DEFINITION, "items/");
+    }
+
+    @Nullable
+    private String nameUnder(Category expected, String prefix) {
+        if (category() != expected || !path.endsWith(".json")) return null;
+        String name = path.substring(prefix.length(), path.length() - ".json".length());
+        // Nested paths are fragments shared by other files, not registry entries.
         return name.indexOf('/') < 0 ? name : null;
     }
 

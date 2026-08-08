@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.archive;
 
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.test.TestArchives;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -50,26 +51,36 @@ class ArchiveScannerTest {
     }
 
     @Test
-    void readsThePackFormat() throws IOException {
+    void detectsTheVersionFromThePackMetadata() throws IOException {
         writeArchive("example-mod.jar", Map.of(
                 "pack.mcmeta", "{\"pack\": {\"pack_format\": 4, \"description\": \"x\"}}",
                 "assets/examplemod/blockstates/foo.json", "{}"
         ));
 
-        assertEquals(4, single().packFormat());
+        AssetArchive archive = single();
+        assertEquals(AssetVersion.FLATTENED, archive.version());
+        assertEquals("pack.mcmeta", archive.versionSource());
     }
 
     @Test
-    void reportsAnUnknownPackFormatWhenTheMetadataIsMissingOrBroken() throws IOException {
-        writeArchive("no-meta.jar", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
-        writeArchive("broken-meta.zip", Map.of(
-                "pack.mcmeta", "{ this is not json",
-                "assets/othermod/blockstates/foo.json", "{}"
+    void fallsBackToTheLoaderMetadataWhenThereIsNoPackMcmeta() throws IOException {
+        // The common case: mod JARs are not resource packs and ship no pack.mcmeta.
+        writeArchive("example-mod.jar", Map.of(
+                "META-INF/neoforge.mods.toml",
+                "[[dependencies.\"examplemod\"]]\nmodId=\"minecraft\"\nversionRange=\"[1.21.1]\"\n",
+                "assets/examplemod/blockstates/foo.json", "{}"
         ));
 
-        for (AssetArchive archive : ArchiveScanner.scan(gameDir)) {
-            assertEquals(-1, archive.packFormat(), archive.fileName());
-        }
+        AssetArchive archive = single();
+        assertEquals(AssetVersion.FUTURE, archive.version());
+        assertEquals("META-INF/neoforge.mods.toml", archive.versionSource());
+    }
+
+    @Test
+    void assumesTheCurrentVersionWhenNothingSaysOtherwise() throws IOException {
+        writeArchive("assets.zip", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
+
+        assertEquals(AssetVersion.MODERN, single().version());
     }
 
     @Test

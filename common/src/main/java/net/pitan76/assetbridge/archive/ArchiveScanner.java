@@ -1,9 +1,7 @@
 package net.pitan76.assetbridge.archive;
 
-import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
-import net.pitan76.assetbridge.util.Json;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +56,9 @@ public class ArchiveScanner {
 
     private static AssetArchive read(Path file) throws IOException {
         Map<AssetPath, byte[]> entries = new HashMap<>();
-        int packFormat = -1;
+        Map<String, String> metadata = new HashMap<>();
+        VersionDetector.Structure structure = new VersionDetector.Structure();
+        String fileName = file.getFileName().toString();
 
         try (ZipFile zip = new ZipFile(file.toFile())) {
             var it = zip.entries();
@@ -66,10 +66,12 @@ public class ArchiveScanner {
                 ZipEntry entry = it.nextElement();
                 if (entry.isDirectory()) continue;
 
-                if (entry.getName().equals("pack.mcmeta")) {
-                    packFormat = readPackFormat(zip, entry);
+                if (VersionDetector.METADATA_FILES.contains(entry.getName())) {
+                    metadata.put(entry.getName(), readText(zip, entry));
                     continue;
                 }
+                structure.observe(entry.getName());
+
                 AssetPath path = AssetPath.parse(entry.getName());
                 if (path == null || !path.isBridgeable()) continue;
 
@@ -78,20 +80,16 @@ public class ArchiveScanner {
                 }
             }
         }
-        AssetBridge.LOGGER.info("Read {} asset entries from {} (pack_format={})",
-                entries.size(), file.getFileName(), packFormat);
-        return new AssetArchive(file.getFileName().toString(), packFormat, entries);
+
+        VersionDetector.Detection detection = VersionDetector.detect(fileName, metadata, structure);
+        AssetBridge.LOGGER.info("Read {} asset entries from {} (assets look like {}, from {})",
+                entries.size(), fileName, detection.version(), detection.source());
+        return new AssetArchive(fileName, detection.version(), detection.source(), entries);
     }
 
-    private static int readPackFormat(ZipFile zip, ZipEntry entry) {
+    private static String readText(ZipFile zip, ZipEntry entry) throws IOException {
         try (InputStream in = zip.getInputStream(entry)) {
-            JsonObject root = Json.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
-            if (root != null && root.has("pack") && root.getAsJsonObject("pack").has("pack_format")) {
-                return root.getAsJsonObject("pack").get("pack_format").getAsInt();
-            }
-        } catch (Exception ignored) {
-            // A malformed pack.mcmeta only costs us the version hint.
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
-        return -1;
     }
 }
