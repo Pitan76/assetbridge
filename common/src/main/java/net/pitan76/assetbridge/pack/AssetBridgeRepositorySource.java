@@ -54,7 +54,7 @@ public class AssetBridgeRepositorySource implements RepositorySource {
     // below the packs the player enabled themselves so their own pack still wins.
 
     //? if >=1.20 {
-    @Override
+    /*@Override
     public void loadPacks(Consumer<Pack> consumer) {
         if (!shouldLoad()) return;
         // 1.20 folded the pack constructor into the factory and made the title a Component.
@@ -70,8 +70,8 @@ public class AssetBridgeRepositorySource implements RepositorySource {
                 PackSource.BUILT_IN
         ));
     }
-    //?} else {
-    /*@Override
+    *///?} else {
+    @Override
     public void loadPacks(Consumer<Pack> consumer, Pack.PackConstructor constructor) {
         if (!shouldLoad()) return;
         emit(consumer, Pack.create(
@@ -83,5 +83,5 @@ public class AssetBridgeRepositorySource implements RepositorySource {
                 PackSource.BUILT_IN
         ));
     }
-    *///?}
+    //?}
 }

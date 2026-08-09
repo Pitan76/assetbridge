@@ -107,7 +107,7 @@ public class BridgedItemGroup {
     }
 
     //? if <1.19.3 {
-    /*/^* Falls back to a vanilla tab if a platform could not provide one. ^/
+    /** Falls back to a vanilla tab if a platform could not provide one. */
     public static CreativeModeTab blocks() {
         return blocksTab != null ? blocksTab : CreativeModeTab.TAB_BUILDING_BLOCKS;
     }
@@ -116,13 +116,13 @@ public class BridgedItemGroup {
         return itemsTab != null ? itemsTab : CreativeModeTab.TAB_MISC;
     }
 
-    /^* The tab an item declares at construction time. Gone from 1.19.3 onwards. ^/
+    /** The tab an item declares at construction time. Gone from 1.19.3 onwards. */
     public static CreativeModeTab getTab(String namespace, boolean isBlock) {
         CreativeModeTab tab = namespaceTab(namespace);
         if (tab != null) return tab;
         return isBlock ? blocks() : items();
     }
-    *///?}
+    //?}
 
     public static void initTabs(Set<String> namespaces) {
         com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();

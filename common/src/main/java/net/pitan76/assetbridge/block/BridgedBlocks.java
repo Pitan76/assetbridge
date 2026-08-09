@@ -37,11 +37,11 @@ public class BridgedBlocks {
             Block block = BridgedBlock.create(asset.states());
             createdBlocks.put(id, block);
             //? if >=1.19.3 {
-            // 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
+            /*// 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
             createdItems.put(id, new BlockItem(block, new Item.Properties()));
-            //?} else {
-            /*createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), true))));
-            *///?}
+            *///?} else {
+            createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), true))));
+            //?}
         }
 
         blocks = Collections.unmodifiableMap(createdBlocks);

@@ -36,12 +36,12 @@ public class BridgedBlock extends Block {
 
     private BridgedBlock(BridgedStateDefinition states) {
         //? if >=1.20 {
-        // 1.20 removed Material; a block's sounds and map colour now come from the
+        /*// 1.20 removed Material; a block's sounds and map colour now come from the
         // properties themselves, and the defaults match what Material.STONE gave us.
         super(Properties.of().strength(1.5F, 6.0F));
-        //?} else {
-        /*super(Properties.of(net.minecraft.world.level.material.Material.STONE).strength(1.5F, 6.0F));
-        *///?}
+        *///?} else {
+        super(Properties.of(net.minecraft.world.level.material.Material.STONE).strength(1.5F, 6.0F));
+        //?}
 
         this.facing = directionProperty();
         this.axis = axisProperty();

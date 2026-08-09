@@ -44,7 +44,7 @@ public class AssetBridgeForge {
     }
 
     //? if >=1.20.1 {
-    private static final Map<ResourceLocation, CreativeModeTab> TABS_TO_REGISTER = new LinkedHashMap<>();
+    /*private static final Map<ResourceLocation, CreativeModeTab> TABS_TO_REGISTER = new LinkedHashMap<>();
     private static final Map<net.minecraft.resources.ResourceKey<CreativeModeTab>, Supplier<java.util.List<Item>>> TAB_CONTENTS = new java.util.HashMap<>();
 
     private static CreativeModeTab createTab(
@@ -66,7 +66,7 @@ public class AssetBridgeForge {
         return tab;
     }
     
-    //?}
+    *///?}
 
     public AssetBridgeForge() {
         // Load config first to check enabled features during tab setup
@@ -75,7 +75,7 @@ public class AssetBridgeForge {
         // Forge patches a String constructor into CreativeModeTab; the label becomes the
         // translation key suffix, so it is kept identical to Fabric's tab ids.
         //? if >=1.20.1 {
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
+        /*if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(createTab(
                     BridgedItemGroup.BLOCKS,
                     BridgedItemGroup::blocksIcon,
@@ -90,8 +90,8 @@ public class AssetBridgeForge {
                 namespace,
                 iconSupplier,
                 () -> BridgedItemGroup.namespaceTabContents(namespace)));
-        //?} else {
-        /*if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
+        *///?} else {
+        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.BLOCKS) {
                 @Override
                 public ItemStack makeIcon() {
@@ -112,7 +112,7 @@ public class AssetBridgeForge {
                 return iconSupplier.get();
             }
         });
-        *///?}
+        //?}
 
         BridgedItemGroup.setModNameProvider(namespace -> ModList.get().getModContainerById(namespace)
                 .map(container -> container.getModInfo().getDisplayName())
@@ -123,14 +123,14 @@ public class AssetBridgeForge {
         // LOWEST so every other mod has registered by the time we check for id collisions.
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         //? if >=1.20.1 {
-        bus.addListener(EventPriority.LOWEST, this::onRegister);
+        /*bus.addListener(EventPriority.LOWEST, this::onRegister);
         bus.addListener(this::onBuildCreativeModeTabContents);
-        //?} else if >=1.19 {
+        *///?} else if >=1.19 {
         /*bus.addListener(EventPriority.LOWEST, this::onRegister);
         *///?} else {
-        /*bus.addGenericListener(Block.class, EventPriority.LOWEST, this::registerBlocks);
+        bus.addGenericListener(Block.class, EventPriority.LOWEST, this::registerBlocks);
         bus.addGenericListener(Item.class, EventPriority.LOWEST, this::registerItems);
-        *///?}
+        //?}
         bus.addListener(this::clientSetup);
     }
 
@@ -192,7 +192,7 @@ public class AssetBridgeForge {
     // ---------------------------------------------------------------------------
 
     //? if >=1.20.1 {
-    private void onRegister(net.minecraftforge.registries.RegisterEvent event) {
+    /*private void onRegister(net.minecraftforge.registries.RegisterEvent event) {
         if (event.getRegistryKey().equals(net.minecraft.core.registries.Registries.BLOCK)) {
             registerBlocksInto(
                     id -> net.minecraftforge.registries.ForgeRegistries.BLOCKS.containsKey(id),
@@ -202,7 +202,6 @@ public class AssetBridgeForge {
                     id -> net.minecraftforge.registries.ForgeRegistries.ITEMS.containsKey(id),
                     (id, item) -> event.register(net.minecraft.core.registries.Registries.ITEM, id, () -> item));
         } else if (event.getRegistryKey().equals(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB)) {
-            System.out.println("AssetBridge Debug: Registering creative mode tabs: " + TABS_TO_REGISTER.keySet());
             TABS_TO_REGISTER.forEach((id, tab) -> {
                 event.register(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, id, () -> tab);
             });
@@ -210,17 +209,12 @@ public class AssetBridgeForge {
     }
 
     private void onBuildCreativeModeTabContents(net.minecraftforge.event.BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey().location().getNamespace().equals(AssetBridge.MOD_ID)) {
-            System.out.println("AssetBridge Debug: Tab contents build event for: " + event.getTabKey());
-        }
         Supplier<java.util.List<Item>> contents = TAB_CONTENTS.get(event.getTabKey());
         if (contents != null) {
-            java.util.List<Item> items = contents.get();
-            System.out.println("AssetBridge Debug: Adding " + items.size() + " items to tab " + event.getTabKey());
-            items.forEach(event::accept);
+            contents.get().forEach(event::accept);
         }
     }
-    //?} else if >=1.19 {
+    *///?} else if >=1.19 {
     /*private void onRegister(net.minecraftforge.registries.RegisterEvent event) {
         if (event.getRegistryKey().equals(net.minecraft.core.Registry.BLOCK_REGISTRY)) {
             registerBlocksInto(
@@ -234,7 +228,7 @@ public class AssetBridgeForge {
     }
     */
     //?} else {
-    /*private void registerBlocks(net.minecraftforge.event.RegistryEvent.Register<Block> event) {
+    private void registerBlocks(net.minecraftforge.event.RegistryEvent.Register<Block> event) {
         registerBlocksInto(
                 id -> event.getRegistry().containsKey(id),
                 (id, block) -> event.getRegistry().register(block.setRegistryName(id)));
@@ -245,5 +239,5 @@ public class AssetBridgeForge {
                 id -> event.getRegistry().containsKey(id),
                 (id, item) -> event.getRegistry().register(item.setRegistryName(id)));
     }
-    *///?}
+    //?}
 }
