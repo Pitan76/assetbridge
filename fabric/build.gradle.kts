@@ -28,7 +28,7 @@ architectury {
     fabric()
 }
 
-val gametest = sourceSets.create("gametest") {
+sourceSets.create("gametest") {
     val main = sourceSets.main.get()
     compileClasspath += main.compileClasspath + main.output
     runtimeClasspath += main.runtimeClasspath + main.output
@@ -39,25 +39,25 @@ loom {
         create("gametest") {
             server()
             name("Game Test")
-            source(gametest)
+            source(sourceSets.getByName("gametest"))
             vmArg("-Dfabric-api.gametest")
             vmArg("-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.get().asFile}/gametest-report.xml")
         }
     }
 }
 
-val common = configurations.create("common") {
+configurations.create("common") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
 
 configurations {
-    compileClasspath.get().extendsFrom(common)
-    runtimeClasspath.get().extendsFrom(common)
-    getByName("developmentFabric").extendsFrom(common)
+    compileClasspath.get().extendsFrom(configurations["common"])
+    runtimeClasspath.get().extendsFrom(configurations["common"])
+    getByName("developmentFabric").extendsFrom(configurations["common"])
 }
 
-val shadowBundle = configurations.create("shadowBundle") {
+configurations.create("shadowBundle") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -66,8 +66,8 @@ dependencies {
     "modImplementation"("net.fabricmc:fabric-loader:$fabric_loader_version")
     "modImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric_api_version")
 
-    common(project(path = ":common", configuration = "namedElements")) { isTransitive = false }
-    shadowBundle(project(path = ":common", configuration = "transformProductionFabric"))
+    "common"(project(path = ":common", configuration = "namedElements")) { isTransitive = false }
+    "shadowBundle"(project(path = ":common", configuration = "transformProductionFabric"))
 }
 
 tasks.processResources {
@@ -79,7 +79,7 @@ tasks.processResources {
 }
 
 tasks.shadowJar {
-    configurations.set(listOf(shadowBundle))
+    configurations.set(listOf(configurations["shadowBundle"]))
     archiveClassifier.set("dev-shadow")
 }
 

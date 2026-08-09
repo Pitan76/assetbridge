@@ -15,18 +15,18 @@ architectury {
     forge()
 }
 
-val common = configurations.create("common") {
+configurations.create("common") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
 
 configurations {
-    compileClasspath.get().extendsFrom(common)
-    runtimeClasspath.get().extendsFrom(common)
-    getByName("developmentForge").extendsFrom(common)
+    compileClasspath.get().extendsFrom(configurations["common"])
+    runtimeClasspath.get().extendsFrom(configurations["common"])
+    getByName("developmentForge").extendsFrom(configurations["common"])
 }
 
-val shadowBundle = configurations.create("shadowBundle") {
+configurations.create("shadowBundle") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -34,8 +34,8 @@ val shadowBundle = configurations.create("shadowBundle") {
 dependencies {
     "forge"("net.minecraftforge:forge:$forge_version")
 
-    common(project(path = ":common", configuration = "namedElements")) { isTransitive = false }
-    shadowBundle(project(path = ":common", configuration = "transformProductionForge"))
+    "common"(project(path = ":common", configuration = "namedElements")) { isTransitive = false }
+    "shadowBundle"(project(path = ":common", configuration = "transformProductionForge"))
 }
 
 tasks.processResources {
@@ -47,7 +47,7 @@ tasks.processResources {
 }
 
 tasks.shadowJar {
-    configurations.set(listOf(shadowBundle))
+    configurations.set(listOf(configurations["shadowBundle"]))
     archiveClassifier.set("dev-shadow")
 }
 
