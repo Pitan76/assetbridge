@@ -2,7 +2,7 @@ package net.pitan76.assetbridge;
 
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.archive.ArchiveScanner;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
@@ -89,7 +89,7 @@ public class MemoryBenchmark {
         // 2. スキャンとビルドを実行
         long startTime = System.currentTimeMillis();
         List<AssetArchive> archives = ArchiveScanner.scan(tempDir);
-        AssetBundle bundle = AssetPipeline.build(archives, ns -> false);
+        BridgedAssetManager assets = AssetPipeline.build(archives, ns -> false);
         long endTime = System.currentTimeMillis();
 
         runGC();
@@ -99,14 +99,14 @@ public class MemoryBenchmark {
         System.out.printf("Scan & Build took: %d ms%n", (endTime - startTime));
         System.out.printf("Memory after scan & build: %.2f MB (Diff: +%.2f MB)%n", 
                 memAfterBuild / (1024.0 * 1024.0), buildDiff / (1024.0 * 1024.0));
-        System.out.printf("Bundle holds %d blocks and %d resources%n", bundle.blocks().size(), bundle.resources().size());
+        System.out.printf("Bundle holds %d blocks and %d resources%n", assets.blocks().size(), assets.resources().size());
 
         // 3. テクスチャをメモリ上に全ロードするシミュレーション（遅延ロードしなかった場合のシミュレーション）
         System.out.println("Simulating full texture load (reading all resources)...");
         long readStartTime = System.currentTimeMillis();
         long totalBytesRead = 0;
         List<byte[]> loadedData = new ArrayList<>();
-        for (Map.Entry<AssetPath, AssetSource> entry : bundle.resources().entrySet()) {
+        for (Map.Entry<AssetPath, AssetSource> entry : assets.resources().entrySet()) {
             byte[] bytes = entry.getValue().readAll();
             loadedData.add(bytes);
             totalBytesRead += bytes.length;

@@ -2,7 +2,7 @@ package net.pitan76.assetbridge.feature;
 
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.archive.AssetArchive;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.feature.builtin.BlockFeature;
 import net.pitan76.assetbridge.feature.builtin.DataPackFeature;
 import net.pitan76.assetbridge.feature.builtin.ItemFeature;
@@ -65,12 +65,12 @@ public class Features {
     }
 
     /** Runs every switched-on feature against the freshly built bundle. */
-    public static void apply(Path gameDir, AssetBundle bundle, List<AssetArchive> archives,
+    public static void apply(Path gameDir, BridgedAssetManager assets, List<AssetArchive> archives,
                              Predicate<String> namespaceInUse) {
         enabled = FeatureConfig.read(gameDir, registered());
         applied = true;
 
-        FeatureContext context = new FeatureContext(gameDir, bundle, enabled, archives, namespaceInUse);
+        FeatureContext context = new FeatureContext(gameDir, assets, enabled, archives, namespaceInUse);
         for (Feature feature : REGISTERED) {
             if (!enabled.contains(feature.id())) {
                 AssetBridge.LOGGER.info("Feature '{}' is switched off", feature.id());

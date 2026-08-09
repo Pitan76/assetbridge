@@ -1,7 +1,7 @@
 package net.pitan76.assetbridge.feature.builtin;
 
 import net.pitan76.assetbridge.archive.AssetArchive;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.feature.FeatureContext;
@@ -32,48 +32,48 @@ class RecipeFeatureTest {
 
     @Test
     void bridgesAVanillaRecipe() throws IOException {
-        AssetBundle bundle = apply(ALL_ON, NOTHING_LOADED, Map.of(
+        BridgedAssetManager assets = apply(ALL_ON, NOTHING_LOADED, Map.of(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 
-        assertEquals(SHAPELESS, new String(bundle.readResource(FOO), StandardCharsets.UTF_8));
+        assertEquals(SHAPELESS, new String(assets.readResource(FOO), StandardCharsets.UTF_8));
     }
 
     @Test
     void leavesAModdedRecipeTypeBehind() {
-        AssetBundle bundle = apply(ALL_ON, NOTHING_LOADED, Map.of(
+        BridgedAssetManager assets = apply(ALL_ON, NOTHING_LOADED, Map.of(
                 "data/examplemod/recipes/foo.json", "{\"type\":\"create:mixing\"}"
         ));
 
-        assertFalse(bundle.hasResource(FOO));
+        assertFalse(assets.hasResource(FOO));
     }
 
     @Test
     void skipsANamespaceARealModOwns() {
-        AssetBundle bundle = apply(ALL_ON, namespace -> namespace.equals("examplemod"), Map.of(
+        BridgedAssetManager assets = apply(ALL_ON, namespace -> namespace.equals("examplemod"), Map.of(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 
-        assertFalse(bundle.hasResource(FOO));
+        assertFalse(assets.hasResource(FOO));
     }
 
     @Test
     void bridgesNothingWithoutTheDataPack() {
-        AssetBundle bundle = apply(Set.of(RecipeFeature.ID), NOTHING_LOADED, Map.of(
+        BridgedAssetManager assets = apply(Set.of(RecipeFeature.ID), NOTHING_LOADED, Map.of(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 
-        assertFalse(bundle.hasResource(FOO));
+        assertFalse(assets.hasResource(FOO));
     }
 
-    private static AssetBundle apply(Set<String> enabled, Predicate<String> namespaceInUse,
+    private static BridgedAssetManager apply(Set<String> enabled, Predicate<String> namespaceInUse,
                                      Map<String, String> entries) {
-        AssetBundle bundle = new AssetBundle();
+        BridgedAssetManager assets = new BridgedAssetManager();
         List<AssetArchive> archives =
                 List.of(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, entries));
 
         new RecipeFeature().apply(
-                new FeatureContext(Path.of("."), bundle, enabled, archives, namespaceInUse));
-        return bundle;
+                new FeatureContext(Path.of("."), assets, enabled, archives, namespaceInUse));
+        return assets;
     }
 }

@@ -3,7 +3,7 @@ package net.pitan76.assetbridge.convert;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.AssetBridge;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
@@ -34,21 +34,21 @@ public class ModelReferenceResolver {
     }
 
     /** @return how many models had to be replaced */
-    public static int resolve(AssetBundle bundle) {
+    public static int resolve(BridgedAssetManager assets) {
         int repaired = 0;
         // Copied: the loop replaces resources as it goes.
-        for (AssetPath path : List.copyOf(bundle.resources().keySet())) {
+        for (AssetPath path : List.copyOf(assets.resources().keySet())) {
             if (!isModel(path)) continue;
 
-            JsonObject model = read(bundle, path);
+            JsonObject model = read(assets, path);
             if (model == null) continue;
 
             String parent = parentOf(model);
-            if (parent == null || resolves(bundle, parent)) continue;
+            if (parent == null || resolves(assets, parent)) continue;
 
             AssetBridge.LOGGER.warn("Model {} inherits from {}, which is not available; "
                     + "substituting a stand-in", path, parent);
-            bundle.putResource(path, Json.toString(substituteFor(model, path))
+            assets.putResource(path, Json.toString(substituteFor(model, path))
                     .getBytes(StandardCharsets.UTF_8));
             repaired++;
         }
@@ -64,13 +64,13 @@ public class ModelReferenceResolver {
      * Anything in the {@code minecraft} namespace is taken on trust: the vanilla models
      * cannot be enumerated from here, and a pack that inherits from one is the normal case.
      */
-    private static boolean resolves(AssetBundle bundle, String parent) {
+    private static boolean resolves(BridgedAssetManager assets, String parent) {
         int colon = parent.indexOf(':');
         String namespace = colon < 0 ? "minecraft" : parent.substring(0, colon);
         String name = colon < 0 ? parent : parent.substring(colon + 1);
         if (namespace.equals("minecraft")) return true;
 
-        return bundle.hasResource(new AssetPath(AssetPath.PackKind.CLIENT, namespace,
+        return assets.hasResource(new AssetPath(AssetPath.PackKind.CLIENT, namespace,
                 "models/" + name + ".json"));
     }
 
@@ -130,9 +130,9 @@ public class ModelReferenceResolver {
     }
 
     @Nullable
-    private static JsonObject read(AssetBundle bundle, AssetPath path) {
+    private static JsonObject read(BridgedAssetManager assets, AssetPath path) {
         try {
-            byte[] data = bundle.readResource(path);
+            byte[] data = assets.readResource(path);
             return data == null ? null : Json.parse(new String(data, StandardCharsets.UTF_8));
         } catch (IOException e) {
             AssetBridge.LOGGER.error("Could not read {}", path, e);

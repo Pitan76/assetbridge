@@ -2,7 +2,7 @@ package net.pitan76.assetbridge;
 
 import net.pitan76.assetbridge.archive.ArchiveScanner;
 import net.pitan76.assetbridge.archive.AssetArchive;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.feature.Features;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ public class AssetBridge {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 
-    private static AssetBundle bundle = new AssetBundle();
+    private static BridgedAssetManager assets = new BridgedAssetManager();
     // Held for the lifetime of the game: the bundle serves textures straight out of these
     // archives, so closing one would break every resource it still backs.
     private static List<AssetArchive> archives = List.of();
@@ -41,18 +41,18 @@ public class AssetBridge {
         archives = ArchiveScanner.scan(gameDir);
 
         // Build the asset bundle from the archives (assets)
-        bundle = AssetPipeline.build(archives, namespaceInUse);
+        assets = AssetPipeline.build(archives, namespaceInUse);
 
         // Initialize namespace creative tabs if configured
-        net.pitan76.assetbridge.block.BridgedItemGroup.initTabs(bundle.namespaces());
+        net.pitan76.assetbridge.block.BridgedItemGroup.initTabs(assets.namespaces());
 
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
-        Features.apply(gameDir, bundle, archives, namespaceInUse);
+        Features.apply(gameDir, assets, archives, namespaceInUse);
     }
 
-    public static AssetBundle bundle() {
-        return bundle;
+    public static BridgedAssetManager assets() {
+        return assets;
     }
 
     /** Only relevant if {@link #init} ever runs twice; the archives outlive it otherwise. */

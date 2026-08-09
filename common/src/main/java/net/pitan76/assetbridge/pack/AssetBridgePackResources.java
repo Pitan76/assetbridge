@@ -7,7 +7,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import net.minecraft.util.GsonHelper;
 import net.pitan76.assetbridge.AssetBridge;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
@@ -37,12 +37,12 @@ public class AssetBridgePackResources implements PackResources {
     public static final String PACK_ID = AssetBridge.MOD_ID + "_external";
     public static final String DATA_PACK_ID = AssetBridge.MOD_ID + "_external_data";
 
-    private final AssetBundle bundle;
+    private final BridgedAssetManager assets;
     private final AssetPath.PackKind kind;
     private final String mcmeta;
 
-    public AssetBridgePackResources(AssetBundle bundle, AssetPath.PackKind kind) {
-        this.bundle = bundle;
+    public AssetBridgePackResources(BridgedAssetManager assets, AssetPath.PackKind kind) {
+        this.assets = assets;
         this.kind = kind;
         int format = kind == AssetPath.PackKind.SERVER
                 ? AssetVersion.CURRENT_DATA_PACK_FORMAT
@@ -61,14 +61,14 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
-        AssetSource source = serves(type) ? bundle.resources().get(pathOf(type, location)) : null;
+        AssetSource source = serves(type) ? assets.resources().get(pathOf(type, location)) : null;
         if (source == null) throw new FileNotFoundException(location.toString());
         return source.open();
     }
 
     @Override
     public boolean hasResource(PackType type, ResourceLocation location) {
-        return serves(type) && bundle.resources().containsKey(pathOf(type, location));
+        return serves(type) && assets.resources().containsKey(pathOf(type, location));
     }
 
     @Override
@@ -79,7 +79,7 @@ public class AssetBridgePackResources implements PackResources {
         String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();
 
-        for (AssetPath key : bundle.resources().keySet()) {
+        for (AssetPath key : assets.resources().keySet()) {
             if (key.kind() != kind || !key.namespace().equals(namespace)) continue;
             if (!key.path().startsWith(prefix)) continue;
 
@@ -98,7 +98,7 @@ public class AssetBridgePackResources implements PackResources {
         if (!serves(type)) return Set.of();
 
         Set<String> namespaces = new LinkedHashSet<>();
-        for (AssetPath key : bundle.resources().keySet()) {
+        for (AssetPath key : assets.resources().keySet()) {
             if (key.kind() == kind) namespaces.add(key.namespace());
         }
         return namespaces;

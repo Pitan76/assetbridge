@@ -8,7 +8,7 @@ package net.pitan76.assetbridge.asset;
  * @param states     the properties the block must be registered with so that its original
  *                   blockstate file resolves; empty when the block is property-free
  */
-public record BridgedBlockAsset(String namespace, String path, String modelId,
+public record BridgedBlockDefinition(String namespace, String path, String modelId,
                                 BridgedStateDefinition states, String sourceArchive, AssetVersion version) {
     public String id() {
         return namespace + ":" + path;

@@ -1,10 +1,10 @@
 package net.pitan76.assetbridge.feature.builtin;
 
 import com.google.gson.JsonObject;
-import net.pitan76.assetbridge.asset.AssetBundle;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
-import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.feature.FeatureContext;
 import net.pitan76.assetbridge.util.Json;
@@ -26,11 +26,11 @@ class LootTableFeatureTest {
 
     @Test
     void generatesADropSelfTablePerBlock() throws IOException {
-        AssetBundle bundle = bundleWithBlock("examplemod", "foo");
+        BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
 
-        apply(bundle, ALL_ON);
+        apply(assets, ALL_ON);
 
-        JsonObject table = read(bundle, AssetPath.blockLootTable("examplemod", "foo"));
+        JsonObject table = read(assets, AssetPath.blockLootTable("examplemod", "foo"));
         assertEquals("minecraft:block", table.get("type").getAsString());
         JsonObject pool = table.getAsJsonArray("pools").get(0).getAsJsonObject();
         assertEquals("examplemod:foo", pool.getAsJsonArray("entries").get(0)
@@ -39,48 +39,48 @@ class LootTableFeatureTest {
 
     @Test
     void keepsATableTheArchiveShipped() throws IOException {
-        AssetBundle bundle = bundleWithBlock("examplemod", "foo");
+        BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
         AssetPath path = AssetPath.blockLootTable("examplemod", "foo");
-        bundle.putResource(path, "{\"shipped\":true}".getBytes(StandardCharsets.UTF_8));
+        assets.putResource(path, "{\"shipped\":true}".getBytes(StandardCharsets.UTF_8));
 
-        apply(bundle, ALL_ON);
+        apply(assets, ALL_ON);
 
-        assertEquals(true, read(bundle, path).get("shipped").getAsBoolean());
+        assertEquals(true, read(assets, path).get("shipped").getAsBoolean());
     }
 
     @Test
     void generatesNothingWithoutTheDataPack() {
-        AssetBundle bundle = bundleWithBlock("examplemod", "foo");
+        BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
 
-        apply(bundle, Set.of(BlockFeature.ID, LootTableFeature.ID));
+        apply(assets, Set.of(BlockFeature.ID, LootTableFeature.ID));
 
-        assertFalse(bundle.hasResource(AssetPath.blockLootTable("examplemod", "foo")));
+        assertFalse(assets.hasResource(AssetPath.blockLootTable("examplemod", "foo")));
     }
 
     @Test
     void generatesNothingWithoutTheBlocks() {
         // Nothing would exist to drop.
-        AssetBundle bundle = bundleWithBlock("examplemod", "foo");
+        BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
 
-        apply(bundle, Set.of(DataPackFeature.ID, LootTableFeature.ID));
+        apply(assets, Set.of(DataPackFeature.ID, LootTableFeature.ID));
 
-        assertFalse(bundle.hasResource(AssetPath.blockLootTable("examplemod", "foo")));
+        assertFalse(assets.hasResource(AssetPath.blockLootTable("examplemod", "foo")));
     }
 
-    private static void apply(AssetBundle bundle, Set<String> enabled) {
+    private static void apply(BridgedAssetManager assets, Set<String> enabled) {
         new LootTableFeature().apply(new FeatureContext(
-                Path.of("."), bundle, enabled, List.of(), namespace -> false));
+                Path.of("."), assets, enabled, List.of(), namespace -> false));
     }
 
-    private static AssetBundle bundleWithBlock(String namespace, String name) {
-        AssetBundle bundle = new AssetBundle();
-        bundle.addBlock(new BridgedBlockAsset(namespace, name, namespace + ":block/" + name,
+    private static BridgedAssetManager bundleWithBlock(String namespace, String name) {
+        BridgedAssetManager assets = new BridgedAssetManager();
+        assets.addBlock(new BridgedBlockDefinition(namespace, name, namespace + ":block/" + name,
                 BridgedStateDefinition.empty(), "example-mod.jar", AssetVersion.MODERN));
-        return bundle;
+        return assets;
     }
 
-    private static JsonObject read(AssetBundle bundle, AssetPath path) throws IOException {
-        byte[] data = bundle.readResource(path);
+    private static JsonObject read(BridgedAssetManager assets, AssetPath path) throws IOException {
+        byte[] data = assets.readResource(path);
         assertNotNull(data, "missing resource: " + path);
         JsonObject parsed = Json.parse(new String(data, StandardCharsets.UTF_8));
         assertNotNull(parsed);

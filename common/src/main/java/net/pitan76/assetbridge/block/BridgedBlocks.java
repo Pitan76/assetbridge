@@ -5,8 +5,8 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.pitan76.assetbridge.AssetBridge;
-import net.pitan76.assetbridge.asset.AssetBundle;
-import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
+import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -24,11 +24,11 @@ public class BridgedBlocks {
     private BridgedBlocks() {
     }
 
-    public static void create(AssetBundle bundle) {
+    public static void create(BridgedAssetManager assets) {
         Map<ResourceLocation, Block> createdBlocks = new LinkedHashMap<>();
         Map<ResourceLocation, Item> createdItems = new LinkedHashMap<>();
 
-        for (BridgedBlockAsset asset : bundle.blocks()) {
+        for (BridgedBlockDefinition asset : assets.blocks()) {
             ResourceLocation id = ResourceLocation.tryParse(asset.id());
             if (id == null) {
                 AssetBridge.LOGGER.warn("Skipping block with invalid id '{}' from {}", asset.id(), asset.sourceArchive());

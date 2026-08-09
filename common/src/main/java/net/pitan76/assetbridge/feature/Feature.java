@@ -4,7 +4,7 @@ package net.pitan76.assetbridge.feature;
  * One switchable piece of Asset Bridge.
  *
  * <p>The core is only responsible for turning archives into an {@link
- * net.pitan76.assetbridge.asset.AssetBundle}. Everything done with that bundle afterwards —
+ * net.pitan76.assetbridge.asset.BridgedAssetManager}. Everything done with that bundle afterwards —
  * creating blocks, creating items, serving a resource pack, and later data packs, loot
  * tables and recipes — is a feature, so a new one can be added without the core learning
  * about it and a broken one can be switched off.

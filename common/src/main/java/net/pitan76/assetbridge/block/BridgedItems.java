@@ -3,8 +3,8 @@ package net.pitan76.assetbridge.block;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.pitan76.assetbridge.AssetBridge;
-import net.pitan76.assetbridge.asset.AssetBundle;
-import net.pitan76.assetbridge.asset.BridgedItemAsset;
+import net.pitan76.assetbridge.asset.BridgedAssetManager;
+import net.pitan76.assetbridge.asset.BridgedItemDefinition;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,10 +22,10 @@ public class BridgedItems {
     private BridgedItems() {
     }
 
-    public static void create(AssetBundle bundle) {
+    public static void create(BridgedAssetManager assets) {
         Map<ResourceLocation, Item> created = new LinkedHashMap<>();
 
-        for (BridgedItemAsset asset : bundle.items()) {
+        for (BridgedItemDefinition asset : assets.items()) {
             ResourceLocation id = ResourceLocation.tryParse(asset.id());
             if (id == null) {
                 AssetBridge.LOGGER.warn("Skipping item with invalid id '{}' from {}", asset.id(), asset.sourceArchive());

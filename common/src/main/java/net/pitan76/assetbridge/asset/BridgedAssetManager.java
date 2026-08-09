@@ -1,5 +1,4 @@
 package net.pitan76.assetbridge.asset;
-
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -12,11 +11,11 @@ import java.util.Map;
  * Everything Asset Bridge extracted from the external archives, already converted to
  * the format the running Minecraft version expects.
  */
-public class AssetBundle {
+public class BridgedAssetManager {
     // Insertion ordered: what a pack lists, and in which order, must not depend on a hash.
     private final Map<AssetPath, AssetSource> resources = new LinkedHashMap<>();
-    private final List<BridgedBlockAsset> blocks = new ArrayList<>();
-    private final List<BridgedItemAsset> items = new ArrayList<>();
+    private final List<BridgedBlockDefinition> blocks = new ArrayList<>();
+    private final List<BridgedItemDefinition> items = new ArrayList<>();
 
     /** For resources Asset Bridge produced itself; they exist nowhere on disk. */
     public void putResource(AssetPath path, byte[] data) {
@@ -28,11 +27,11 @@ public class AssetBundle {
         resources.put(path, source);
     }
 
-    public void addBlock(BridgedBlockAsset block) {
+    public void addBlock(BridgedBlockDefinition block) {
         blocks.add(block);
     }
 
-    public void addItem(BridgedItemAsset item) {
+    public void addItem(BridgedItemDefinition item) {
         items.add(item);
     }
 
@@ -56,21 +55,21 @@ public class AssetBundle {
         return source == null ? null : source.readAll();
     }
 
-    public List<BridgedBlockAsset> blocks() {
+    public List<BridgedBlockDefinition> blocks() {
         return blocks;
     }
 
-    public List<BridgedItemAsset> items() {
+    public List<BridgedItemDefinition> items() {
         return items;
     }
 
     public java.util.Set<String> namespaces() {
         java.util.Set<String> ns = new java.util.LinkedHashSet<>();
-        for (BridgedBlockAsset block : blocks) {
+        for (BridgedBlockDefinition block : blocks) {
             net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(block.id());
             if (id != null) ns.add(id.getNamespace());
         }
-        for (BridgedItemAsset item : items) {
+        for (BridgedItemDefinition item : items) {
             net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(item.id());
             if (id != null) ns.add(id.getNamespace());
         }
