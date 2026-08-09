@@ -27,6 +27,11 @@ public class AssetBridgeFabric implements ModInitializer {
                 .icon(BridgedItemGroup::itemsIcon)
                 .build());
 
+        BridgedItemGroup.setTabFactory((namespace, icon) -> FabricItemGroupBuilder
+                .create(new ResourceLocation(AssetBridge.MOD_ID, namespace))
+                .icon(() -> icon)
+                .build());
+
         AssetBridge.init(FabricLoader.getInstance().getGameDir(),
                 namespace -> FabricLoader.getInstance().isModLoaded(namespace));
 

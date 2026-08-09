@@ -43,6 +43,9 @@ public class AssetBridge {
         // Build the asset bundle from the archives (assets)
         bundle = AssetPipeline.build(archives, namespaceInUse);
 
+        // Initialize namespace creative tabs if configured
+        net.pitan76.assetbridge.block.BridgedItemGroup.initTabs(bundle.namespaces());
+
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
         Features.apply(gameDir, bundle);

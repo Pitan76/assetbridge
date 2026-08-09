@@ -42,6 +42,13 @@ public class AssetBridgeForge {
             }
         });
 
+        BridgedItemGroup.setTabFactory((namespace, icon) -> new CreativeModeTab(AssetBridge.MOD_ID + "." + namespace) {
+            @Override
+            public ItemStack makeIcon() {
+                return icon;
+            }
+        });
+
         AssetBridge.init(FMLPaths.GAMEDIR.get(), namespace -> ModList.get().isLoaded(namespace));
 
         // LOWEST so every other mod has registered by the time we check for id collisions.

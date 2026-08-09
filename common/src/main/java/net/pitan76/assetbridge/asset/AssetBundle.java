@@ -39,6 +39,11 @@ public class AssetBundle {
         return resources.containsKey(path);
     }
 
+    /** Whether anything at all would be served in that pack root. */
+    public boolean hasResources(AssetPath.PackKind kind) {
+        return resources.keySet().stream().anyMatch(path -> path.kind() == kind);
+    }
+
     public Map<AssetPath, AssetSource> resources() {
         return resources;
     }
@@ -56,6 +61,19 @@ public class AssetBundle {
 
     public List<BridgedItemAsset> items() {
         return items;
+    }
+
+    public java.util.Set<String> namespaces() {
+        java.util.Set<String> ns = new java.util.LinkedHashSet<>();
+        for (BridgedBlockAsset block : blocks) {
+            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(block.id());
+            if (id != null) ns.add(id.getNamespace());
+        }
+        for (BridgedItemAsset item : items) {
+            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(item.id());
+            if (id != null) ns.add(id.getNamespace());
+        }
+        return ns;
     }
 
     public boolean isEmpty() {
