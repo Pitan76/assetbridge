@@ -1,8 +1,10 @@
 package net.pitan76.assetbridge.archive;
 
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.test.TestArchives;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -10,20 +12,31 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArchiveScannerTest {
     @TempDir
     Path gameDir;
 
+    private final List<AssetArchive> opened = new ArrayList<>();
+
+    /** A scanned archive keeps its ZIP open, and Windows will not delete a locked file. */
+    @AfterEach
+    void closeArchives() throws IOException {
+        for (AssetArchive archive : opened) archive.close();
+        opened.clear();
+    }
+
     @Test
     void createsTheDirectoryWhenItIsMissing() {
-        assertEquals(List.of(), ArchiveScanner.scan(gameDir));
+        assertEquals(List.of(), scan());
 
         assertTrue(Files.isDirectory(ArchiveScanner.directory(gameDir)));
     }
@@ -89,7 +102,7 @@ class ArchiveScannerTest {
         writeArchive("b.ZIP", Map.of("assets/b/blockstates/foo.json", "{}"));
         writeArchive("c.txt", Map.of("assets/c/blockstates/foo.json", "{}"));
 
-        assertEquals(List.of("a.jar", "b.ZIP"), ArchiveScanner.scan(gameDir).stream()
+        assertEquals(List.of("a.jar", "b.ZIP"), scan().stream()
                 .map(AssetArchive::fileName).toList());
     }
 
@@ -99,12 +112,47 @@ class ArchiveScannerTest {
                 StandardCharsets.UTF_8);
         writeArchive("good.jar", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
 
-        assertEquals(List.of("good.jar"), ArchiveScanner.scan(gameDir).stream()
+        assertEquals(List.of("good.jar"), scan().stream()
                 .map(AssetArchive::fileName).toList());
     }
 
-    private AssetArchive single() {
+    @Test
+    void readsAnEntryOnDemandRatherThanAtScanTime() throws IOException {
+        writeArchive("example-mod.jar", Map.of(
+                "assets/examplemod/textures/block/foo.png", "not really a png"
+        ));
+
+        AssetArchive archive = single();
+        AssetSource source = archive.entries()
+                .get(AssetPath.parse("assets/examplemod/textures/block/foo.png"));
+
+        assertEquals("not really a png", new String(source.readAll(), StandardCharsets.UTF_8));
+        // Reading twice must work: nothing is consumed or cached.
+        assertEquals("not really a png", new String(source.readAll(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void closingTheArchiveInvalidatesItsEntries() throws IOException {
+        writeArchive("example-mod.jar", Map.of(
+                "assets/examplemod/textures/block/foo.png", "not really a png"
+        ));
+
+        AssetArchive archive = single();
+        AssetSource source = archive.entries()
+                .get(AssetPath.parse("assets/examplemod/textures/block/foo.png"));
+        archive.close();
+
+        assertThrows(IllegalStateException.class, source::readAll);
+    }
+
+    private List<AssetArchive> scan() {
         List<AssetArchive> archives = ArchiveScanner.scan(gameDir);
+        opened.addAll(archives);
+        return archives;
+    }
+
+    private AssetArchive single() {
+        List<AssetArchive> archives = scan();
         assertEquals(1, archives.size());
         return archives.get(0);
     }
