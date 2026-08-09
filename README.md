@@ -55,7 +55,7 @@ feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ## 技術的な話
-本プロジェクトは、1つのコードベースから複数のMinecraftバージョン（1.18.2、1.19.2、1.20.1）およびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
+本プロジェクトは、1つのコードベースから複数のMinecraftバージョンおよびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
 
 ### 1. マルチバージョン管理とビルド (Stonecutter)
 * **Stonecutter (0.9.7)** を導入しており、各ローダーモジュールをブランチとし、`versions/` ディレクトリ配下にバージョンごとのサブプロジェクトを展開しています。
