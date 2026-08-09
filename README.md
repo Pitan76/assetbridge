@@ -55,20 +55,16 @@ feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ## 技術的な話
-本プロジェクトは、1つのコードベースから複数のMCバージョンおよびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
+本プロジェクトは、複数のMCバージョンおよびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
 
-### 1. マルチバージョン管理 (Stonecutter)
-* Stonecutterを導入し、`versions/` 配下にバージョンごとのサブプロジェクトを展開しています。
-* APIの差異はプリプロセッサコメント（`//? if >=1.20.1` など）で吸収され、ビルド時に自動生成されます。
-* IDEの認識切り替えは `./gradlew "Set active project to <version>"`、コミット前は `./gradlew "Reset active project"` を実行します。
-* 一括ビルドには `./gradlew chiseledBuild` を使用します。
+### クロスプラットフォーム (Architectury Loom)
+- Architectury Loomを採用し、共通のMojangマッピングを適用して開発しています（※実行時ライブラリへの依存はありません）。
 
-### 2. ビルド環境
-* Architectury Loomを採用し、共通のMojangマッピングを適用して開発しています（※実行時ライブラリへの依存はありません）。
-
-### 3. 初期化設計
-* Featureによるカプセル化: アセット解析やブロック・アイテム生成などの各処理は、`Feature` クラスに分割されています。
-* 遅延初期化: Forgeのレジストリ凍結（`Registry is already frozen`）を避けるため、インスタンス生成処理はModコンストラクタではなく、登録イベント（`RegisterEvent` 等）の発生時まで実行が遅延されます。
+### クロスバージョン管理 (Stonecutter)
+- Stonecutterを導入し、`versions/` 配下にバージョンごとのサブプロジェクトを展開しています。
+- APIの差異はプリプロセッサコメント（`//? if >=1.20.1` など）で吸収され、ビルド時に自動生成されます。
+- IDEの認識切り替えは `./gradlew "Set active project to <version>"`、コミット前は `./gradlew "Reset active project"` を実行します。
+- 全てのビルドには `./gradlew chiseledBuild` を使用します。
 
 ## ビルド
 ```sh
