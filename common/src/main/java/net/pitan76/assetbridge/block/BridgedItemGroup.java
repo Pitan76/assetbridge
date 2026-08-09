@@ -5,7 +5,8 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.pitan76.assetbridge.feature.FeatureConfig;
+import net.pitan76.assetbridge.feature.Features;
+import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -61,7 +62,7 @@ public class BridgedItemGroup {
     }
 
     public static CreativeModeTab getTab(String namespace, boolean isBlock) {
-        if (!FeatureConfig.isSplitTabByNamespace()) {
+        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
             return isBlock ? blocks() : items();
         }
         CreativeModeTab tab = namespaceTabs.get(namespace);
@@ -72,7 +73,7 @@ public class BridgedItemGroup {
         LanguageHelper.injectTranslation("itemGroup.assetbridge.blocks", "Asset Bridge Blocks");
         LanguageHelper.injectTranslation("itemGroup.assetbridge.items", "Asset Bridge Items");
 
-        if (!FeatureConfig.isSplitTabByNamespace() || tabFactory == null) {
+        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID) || tabFactory == null) {
             return;
         }
         for (String namespace : namespaces) {

@@ -24,19 +24,12 @@ import java.util.Set;
 public class FeatureConfig {
     private static final String FILE_NAME = AssetBridge.MOD_ID + ".properties";
     private static final String KEY_PREFIX = "feature.";
-    private static final String KEY_SPLIT_TAB = "creative_tab.split_by_namespace";
-
-    private static boolean splitTabByNamespace = true;
 
     private FeatureConfig() {
     }
 
     public static Path file(Path gameDir) {
         return gameDir.resolve("config").resolve(FILE_NAME);
-    }
-
-    public static boolean isSplitTabByNamespace() {
-        return splitTabByNamespace;
     }
 
     /** The ids of the features the player left switched on. Never fails: defaults win. */
@@ -52,15 +45,8 @@ public class FeatureConfig {
             }
         }
 
-        String splitVal = properties.getProperty(KEY_SPLIT_TAB);
-        if (splitVal == null) {
-            splitTabByNamespace = true;
-        } else {
-            splitTabByNamespace = Boolean.parseBoolean(splitVal.trim());
-        }
-
         Set<String> enabled = new LinkedHashSet<>();
-        boolean complete = splitVal != null;
+        boolean complete = true;
         for (Feature feature : features) {
             String value = properties.getProperty(KEY_PREFIX + feature.id());
             if (value == null) {
@@ -78,12 +64,6 @@ public class FeatureConfig {
     private static void write(Path path, List<Feature> features, Set<String> enabled) {
         StringBuilder text = new StringBuilder("# ").append(AssetBridge.MOD_NAME)
                 .append(" features. Set a line to false to switch that part off.\n");
-        text.append('\n')
-                .append("# Split creative tabs by namespace (mod) instead of blocks and items.\n")
-                .append("# If true, tabs are created per namespace (e.g. \"Asset Bridge: namespace\").\n")
-                .append("# If false, two tabs \"Asset Bridge Blocks\" and \"Asset Bridge Items\" are created.\n")
-                .append(KEY_SPLIT_TAB).append('=').append(splitTabByNamespace).append('\n');
-
         for (Feature feature : features) {
             text.append('\n')
                     .append("# ").append(feature.description()).append('\n')

@@ -27,7 +27,6 @@ class FeatureConfigTest {
         String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=true"), written);
         assertTrue(written.contains("feature.off=false"), written);
-        assertTrue(written.contains("creative_tab.split_by_namespace=true"), written);
         // The description is what tells a player what they are switching off.
         assertTrue(written.contains("# on feature"), written);
     }
