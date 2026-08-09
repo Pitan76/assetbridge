@@ -55,6 +55,20 @@ feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ## 技術的な話
+本プロジェクトは、1つのコードベースから複数のMinecraftバージョン（1.18.2、1.19.2、1.20.1）およびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
+
+### 1. マルチバージョン管理とビルド (Stonecutter)
+* **Stonecutter (0.9.7)** を導入しており、各ローダーモジュールをブランチとし、`versions/` ディレクトリ配下にバージョンごとのサブプロジェクトを展開しています。
+* バージョン間のJava APIの差異は、ソースコード内のプリプロセッサコメント（`//? if >=1.20.1` など）により吸収されます。ビルド時に各バージョン用のソースコードが自動生成されます。
+* 開発中のIDEでの認識切り替えは `./gradlew "Set active project to <version>"` で行い、コミット前には `./gradlew "Reset active project"` を実行してベースバージョンに差し戻す運用となっています。
+* 全ターゲットの同時ビルドには `./gradlew chiseledBuild` を使用します。
+
+### 2. プラットフォーム共有とビルド環境
+* **Architectury Loom** をビルドシステムとして採用しており、FabricとForgeで共通のMojangマッピングを適用して開発を行っています（※Architectury APIなどの実行時ライブラリへの依存はありません）。
+
+### 3. バージョン差分の吸収と初期化設計
+* **Featureによる拡張性**: アセットの解析、アイテムやブロックの生成、リソースパック適用などはそれぞれ独立した `Feature` クラスとしてカプセル化されています。
+* **遅延初期化設計**: Forgeにおけるレジストリ早期凍結エラー（`Registry is already frozen`）を防止するため、ブロックやアイテムのインスタンス生成およびFeatureの適用処理は、Modコンストラクタではなく `RegisterEvent`（または `RegistryEvent.Register`）イベントの発生時まで実行を遅延させるアーキテクチャとなっています。
 
 ## ビルド
 ```sh
