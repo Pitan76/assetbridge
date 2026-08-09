@@ -1,8 +1,9 @@
-# Asset Bridge (Fabric/Forge)
-取り込んだMODからブロックなどのアセットを読み込み、機能を持たず見た目だけを利用するMOD<br />
-バージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
+# Asset Bridge
+取り込んだMODからブロックなどのアセットを読み込み、機能を持たず見た目だけのブロック、アイテムを利用するMOD<br />
+ゲームバージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
 
 なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。
+Fabric/Forge 1.18.2-1.20.1対応です。
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
@@ -99,3 +100,102 @@ git push origin v1.0.0
 - AIエージェント: Claude Opus 5.0
 - IDE: IntelliJ IDEA
 - ビルドツール: Gradle
+
+# Asset Bridge (English)
+Load assets from imported mods and use them as blocks, items, etc.
+Perfect for when you want to add visual elements from other mods, even across different game versions or platforms.
+
+Note that the code from imported mods is not executed; only assets are used, so specific features will not function.
+Supports both Fabric and Forge (versions 1.18.2-1.20.1).
+
+- CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
+- Modrinth: https://modrinth.com/mod/assetbridge
+- ModParks: https://modparks.pitan76.net/projects/assetbridge
+
+## Usage
+Create an `assetbridge/` folder inside your game directory's `mods/` folder and place the mods you want to import inside it.
+(Asset Bridge will automatically create the `assetbridge/` folder on first launch.)
+
+```text
+mods/
+└─ assetbridge/
+   ├─ aaa.jar
+   ├─ bbb.jar
+   └─ ccc.zip
+```
+
+Blocks found in `assets/<namespace>/blockstates/*.json` and items found in `assets/<namespace>/models/item/*.json` will be registered under their original namespace and can be accessed from the creative tabs "Asset Bridge: Blocks" and "Asset Bridge: Items".
+
+## Configuration (Config)
+You can configure Asset Bridge in `config/assetbridge.properties`. The configuration file will be created inside the config folder on the first launch.
+
+### assetbridge.properties
+
+```properties
+# Split creative tabs by mod (false = "Blocks" and "Items" tabs only)
+feature.split_tab_by_namespace=true
+
+# Enable block registration
+feature.blocks=true
+
+# Enable item registration (non-block items)
+feature.items=true
+
+# Generate loot tables (for dropping blocks, etc.)
+feature.loot_tables=true
+
+# Load recipes
+feature.recipes=true
+
+# Apply resource packs (models, textures, etc.)
+feature.resource_pack=true
+
+# Apply data packs (loot tables, recipes, etc.)
+feature.data_pack=true
+
+# Enable cutout
+#feature.cutout_blocks=true
+feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
+```
+
+## Technical Details
+This project is structured to build mods for multiple Minecraft versions and platforms (Fabric, Forge).
+
+### Cross-Platform (Architectury Loom)
+- Uses Architectury Loom with common Mojang mappings for development.
+
+### Cross-Version Management (Stonecutter)
+-Stonecutter is used to manage version-specific subprojects under `versions/`.
+- API differences are handled with preprocessor comments (e.g., `//? if >=1.20.1`) and automatically generated during build.
+- To switch IDE recognition, run `./gradlew "Set active project to <version>"`. Before committing, run `./gradlew "Reset active project"`.
+- Use `./gradlew chiseledBuild` for all builds.
+
+## Build
+```sh
+./gradlew build
+```
+
+## Testing
+Input, parsing, and transformation layers are verified with JUnit/GameTest.
+
+```sh
+./gradlew :common:test
+
+./gradlew :fabric:runGametest
+```
+
+## Release
+Automatic releases are created via GitHub Actions.
+
+```sh
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+## License
+- MIT License
+
+## Tools
+- AI Agent: Claude Opus 5.0
+- IDE: IntelliJ IDEA
+- Build Tool: Gradle
