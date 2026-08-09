@@ -71,8 +71,10 @@ public class ModelConverter implements AssetConverter {
         int colon = reference.indexOf(':');
         String namespace = colon < 0 ? "" : reference.substring(0, colon + 1);
         String path = reference.substring(colon + 1);
-        if (path.startsWith("blocks/")) return namespace + "block/" + path.substring("blocks/".length());
-        if (path.startsWith("items/")) return namespace + "item/" + path.substring("items/".length());
+        if (namespace.isEmpty() || namespace.equals("minecraft:")) {
+            if (path.startsWith("blocks/")) return namespace + "block/" + path.substring("blocks/".length());
+            if (path.startsWith("items/")) return namespace + "item/" + path.substring("items/".length());
+        }
         return reference;
     }
 }

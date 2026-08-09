@@ -27,7 +27,7 @@ class ModelConverterTest {
                 AssetVersion.LEGACY);
 
         assertEquals("block/cube_all", result.get("parent").getAsString());
-        assertEquals("examplemod:block/foo", result.getAsJsonObject("textures").get("all").getAsString());
+        assertEquals("examplemod:blocks/foo", result.getAsJsonObject("textures").get("all").getAsString());
     }
 
     @Test

@@ -106,8 +106,7 @@ public class AssetPipeline {
             case TEXTURE, TEXTURE_META, LANG -> {
                 // Nothing to convert, so the bytes never have to enter the heap: the archive
                 // serves them when the game asks. An earlier archive claiming the path still wins.
-                AssetPath targetPath = path.renameLegacyDirectories();
-                if (!assets.hasResource(targetPath)) assets.putResource(targetPath, source);
+                if (!assets.hasResource(path)) assets.putResource(path, source);
             }
             case RECIPE -> {
                 // Server-side data is a feature's business, not the core's;

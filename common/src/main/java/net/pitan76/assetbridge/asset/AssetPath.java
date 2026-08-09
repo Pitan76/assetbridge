@@ -162,17 +162,6 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         return new AssetPath(PackKind.CLIENT, namespace, "models/item/" + name + ".json");
     }
 
-    public AssetPath renameLegacyDirectories() {
-        if (kind != PackKind.CLIENT) return this;
-        if (path.startsWith("textures/blocks/")) {
-            return new AssetPath(kind, namespace, "textures/block/" + path.substring("textures/blocks/".length()));
-        }
-        if (path.startsWith("textures/items/")) {
-            return new AssetPath(kind, namespace, "textures/item/" + path.substring("textures/items/".length()));
-        }
-        return this;
-    }
-
     @Override
     public @NotNull String toString() {
         return toFullPath();

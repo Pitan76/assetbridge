@@ -61,14 +61,41 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
-        AssetSource source = serves(type) ? assets.resources().get(pathOf(type, location)) : null;
+        if (!serves(type)) throw new FileNotFoundException(location.toString());
+        AssetPath path = pathOf(type, location);
+        AssetSource source = assets.resources().get(path);
+        if (source == null) {
+            AssetPath alt = getAlternativePath(path);
+            if (alt != null) {
+                source = assets.resources().get(alt);
+            }
+        }
         if (source == null) throw new FileNotFoundException(location.toString());
         return source.open();
     }
 
     @Override
     public boolean hasResource(PackType type, ResourceLocation location) {
-        return serves(type) && assets.resources().containsKey(pathOf(type, location));
+        if (!serves(type)) return false;
+        AssetPath path = pathOf(type, location);
+        if (assets.resources().containsKey(path)) return true;
+        AssetPath alt = getAlternativePath(path);
+        return alt != null && assets.resources().containsKey(alt);
+    }
+
+    @Nullable
+    private AssetPath getAlternativePath(AssetPath original) {
+        if (original.kind() != AssetPath.PackKind.CLIENT) return null;
+        String path = original.path();
+        if (path.startsWith("textures/block/")) {
+            return new AssetPath(original.kind(), original.namespace(),
+                    "textures/blocks/" + path.substring("textures/block/".length()));
+        }
+        if (path.startsWith("textures/item/")) {
+            return new AssetPath(original.kind(), original.namespace(),
+                    "textures/items/" + path.substring("textures/item/".length()));
+        }
+        return null;
     }
 
     @Override
