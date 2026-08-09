@@ -88,19 +88,21 @@ publishMods {
     type.set(me.modmuss50.mpp.ReleaseType.STABLE)
     modLoaders.add("forge")
 
-    val curseforgeId = project.findProperty("curseforge_project_id") as? String
-    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN").orNull ?: project.findProperty("curseforge_token") as? String
-    if (curseforgeId != null && curseforgeToken != null) {
+    val curseforgeId = project.findProperty("curseforge_project_id")?.toString()
+    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN").orNull ?: project.findProperty("curseforge_token")?.toString()
+    if (!curseforgeId.isNullOrEmpty() && !curseforgeToken.isNullOrEmpty()) {
         curseforge {
             projectId.set(curseforgeId)
             accessToken.set(curseforgeToken)
             minecraftVersions.add(mcVersion)
+            client.set(true)
+            server.set(true)
         }
     }
 
-    val modrinthId = project.findProperty("modrinth_project_id") as? String
-    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orNull ?: project.findProperty("modrinth_token") as? String
-    if (modrinthId != null && modrinthToken != null) {
+    val modrinthId = project.findProperty("modrinth_project_id")?.toString()
+    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orNull ?: project.findProperty("modrinth_token")?.toString()
+    if (!modrinthId.isNullOrEmpty() && !modrinthToken.isNullOrEmpty()) {
         modrinth {
             projectId.set(modrinthId)
             accessToken.set(modrinthToken)
