@@ -3,10 +3,17 @@ plugins {
 }
 
 // Workaround for Architectury Transformer FileNotFoundException: debug.log
-def transformerDebugLog = file("run/.architectury-transformer/debug.log")
-if (!transformerDebugLog.exists()) {
-    transformerDebugLog.parentFile.mkdirs()
-    transformerDebugLog.createNewFile()
+// Execute just before run tasks launch to prevent cleanup tasks from deleting the file.
+tasks.configureEach { task ->
+    if (task.name == "runClient" || task.name == "runServer" || task.name.contains("run")) {
+        task.doFirst {
+            def transformerDebugLog = file("run/.architectury-transformer/debug.log")
+            if (!transformerDebugLog.exists()) {
+                transformerDebugLog.parentFile.mkdirs()
+                transformerDebugLog.createNewFile()
+            }
+        }
+    }
 }
 
 architectury {
