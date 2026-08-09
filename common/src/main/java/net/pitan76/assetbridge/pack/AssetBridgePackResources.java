@@ -10,7 +10,7 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
-import net.pitan76.assetbridge.asset.AssetVersion;
+import net.pitan76.assetbridge.asset.RuntimePack;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -45,8 +45,8 @@ public class AssetBridgePackResources implements PackResources {
         this.assets = assets;
         this.kind = kind;
         int format = kind == AssetPath.PackKind.SERVER
-                ? AssetVersion.CURRENT_DATA_PACK_FORMAT
-                : AssetVersion.CURRENT_PACK_FORMAT;
+                ? RuntimePack.dataPackFormat()
+                : RuntimePack.resourcePackFormat();
         this.mcmeta = "{\"pack\":{\"pack_format\":" + format
                 + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
     }
