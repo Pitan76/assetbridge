@@ -76,7 +76,7 @@ public class AssetBridgeFabric implements ModInitializer {
     // ---------------------------------------------------------------------------
 
     //? if >=1.19.3 {
-    /*private static net.minecraft.core.Registry<Block> blockRegistry() {
+    private static net.minecraft.core.Registry<Block> blockRegistry() {
         return net.minecraft.core.registries.BuiltInRegistries.BLOCK;
     }
 
@@ -105,8 +105,8 @@ public class AssetBridgeFabric implements ModInitializer {
                 .register(entries -> contents.get().forEach(entries::accept));
         return tab;
     }
-    *///?} else {
-    private static net.minecraft.core.Registry<Block> blockRegistry() {
+    //?} else {
+    /*private static net.minecraft.core.Registry<Block> blockRegistry() {
         return Registry.BLOCK;
     }
 
@@ -114,7 +114,7 @@ public class AssetBridgeFabric implements ModInitializer {
         return Registry.ITEM;
     }
 
-    /** Up to 1.19.2 a tab only needs to exist; the items name it themselves. */
+    /^* Up to 1.19.2 a tab only needs to exist; the items name it themselves. ^/
     private static net.minecraft.world.item.CreativeModeTab createTab(
             String path,
             java.util.function.Supplier<net.minecraft.world.item.ItemStack> icon,
@@ -124,5 +124,5 @@ public class AssetBridgeFabric implements ModInitializer {
                 .icon(icon)
                 .build();
     }
-    //?}
+    *///?}
 }

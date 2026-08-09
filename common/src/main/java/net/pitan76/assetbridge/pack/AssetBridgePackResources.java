@@ -81,7 +81,7 @@ public class AssetBridgePackResources implements PackResources {
     // ---------------------------------------------------------------------------
 
     //? if >=1.20 {
-    /*@Override
+    @Override
     @Nullable
     public net.minecraft.server.packs.resources.IoSupplier<InputStream> getRootResource(String... elements) {
         return elements.length == 1 && "pack.mcmeta".equals(elements[0]) ? this::openMcmeta : null;
@@ -106,8 +106,8 @@ public class AssetBridgePackResources implements PackResources {
     public String packId() {
         return displayName();
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     public InputStream getRootResource(String fileName) throws IOException {
         if ("pack.mcmeta".equals(fileName)) return openMcmeta();
         throw new FileNotFoundException(fileName);
@@ -129,7 +129,7 @@ public class AssetBridgePackResources implements PackResources {
     public String getName() {
         return displayName();
     }
-    //?}
+    *///?}
 
     @Nullable
     private AssetPath getAlternativePath(AssetPath original) {
@@ -175,8 +175,8 @@ public class AssetBridgePackResources implements PackResources {
     }
 
     //? if >=1.20 {
-    /*// Replaced by listResources above.
-    *///?} elif >=1.19 {
+    // Replaced by listResources above.
+    //?} elif >=1.19 {
     /*@Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
                                                      Predicate<ResourceLocation> filter) {
@@ -188,7 +188,7 @@ public class AssetBridgePackResources implements PackResources {
         return found;
     }
     *///?} else {
-    @Override
+    /*@Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
                                                      int maxDepth, Predicate<String> filter) {
         List<ResourceLocation> found = new ArrayList<>();
@@ -197,7 +197,7 @@ public class AssetBridgePackResources implements PackResources {
         }
         return found;
     }
-    //?}
+    *///?}
 
     @Override
     public Set<String> getNamespaces(PackType type) {

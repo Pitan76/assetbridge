@@ -10,7 +10,7 @@ plugins {
     id("architectury-plugin") version "3.4-SNAPSHOT" apply false
     id("com.gradleup.shadow") version "9.6.1" apply false
 }
-stonecutter active "1.18.2" /* [SC] DO NOT EDIT */
+stonecutter active "1.20.1" /* [SC] DO NOT EDIT */
 
 val maven_group = project.findProperty("maven_group") as String
 val mod_version = project.findProperty("mod_version") as String

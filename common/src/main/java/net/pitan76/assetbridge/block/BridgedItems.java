@@ -32,11 +32,11 @@ public class BridgedItems {
                 continue;
             }
             //? if >=1.19.3 {
-            /*// 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
+            // 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
             created.put(id, new Item(new Item.Properties()));
-            *///?} else {
-            created.put(id, new Item(new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), false))));
-            //?}
+            //?} else {
+            /*created.put(id, new Item(new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), false))));
+            *///?}
         }
 
         items = Collections.unmodifiableMap(created);
