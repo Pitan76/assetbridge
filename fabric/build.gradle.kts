@@ -110,6 +110,7 @@ tasks.remapJar {
 publishMods {
     val mcVersion = project.name
     file.set(tasks.remapJar.flatMap { it.archiveFile })
+    displayName.set(tasks.remapJar.flatMap { it.archiveFile.map { it.asFile.name } })
     changelog.set("Release of version ${project.version} for Minecraft $mcVersion (Fabric)")
     type.set(me.modmuss50.mpp.ReleaseType.STABLE)
     modLoaders.add("fabric")
