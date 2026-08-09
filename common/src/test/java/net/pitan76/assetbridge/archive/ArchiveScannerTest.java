@@ -86,7 +86,7 @@ class ArchiveScannerTest {
         ));
 
         AssetArchive archive = single();
-        assertEquals(AssetVersion.FUTURE, archive.version());
+        assertEquals(AssetVersion.COMPONENTS, archive.version());
         assertEquals("META-INF/neoforge.mods.toml", archive.versionSource());
     }
 

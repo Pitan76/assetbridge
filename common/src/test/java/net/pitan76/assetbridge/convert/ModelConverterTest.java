@@ -54,7 +54,7 @@ class ModelConverterTest {
     @Test
     void stripsKeysThatArePostDatingThisVersion() {
         JsonObject result = convert("""
-                {"parent": "block/cube_all", "oversized_in_gui": true}""", AssetVersion.FUTURE);
+                {"parent": "block/cube_all", "oversized_in_gui": true}""", AssetVersion.ATLASES);
 
         assertFalse(result.has("oversized_in_gui"));
         assertEquals("block/cube_all", result.get("parent").getAsString());

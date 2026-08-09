@@ -168,11 +168,11 @@ class AssetPipelineTest {
                 TestArchives.archive("old.jar", AssetVersion.LEGACY, Map.of(
                         "assets/oldmod/blockstates/foo.json",
                         "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}")),
-                TestArchives.archive("new.jar", AssetVersion.FUTURE, Map.of(
+                TestArchives.archive("new.jar", AssetVersion.ATLASES, Map.of(
                         "assets/newmod/blockstates/bar.json",
                         "{\"variants\": {\"\": {\"model\": \"newmod:block/bar\"}}}")));
 
-        assertEquals(List.of(AssetVersion.LEGACY, AssetVersion.FUTURE),
+        assertEquals(List.of(AssetVersion.LEGACY, AssetVersion.ATLASES),
                 assets.blocks().stream().map(BridgedBlockDefinition::version).toList());
     }
 
@@ -243,7 +243,7 @@ class AssetPipelineTest {
 
     @Test
     void prefersItemDefinitionsOverGuessingFromItemModels() {
-        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.FUTURE, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Map.of(
                 // 1.21.4+ ships an authoritative list of items; the item models next to it
                 // include shared fragments and block items that are not separate items.
                 "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}",
@@ -256,7 +256,7 @@ class AssetPipelineTest {
 
     @Test
     void doesNotServeItemDefinitionsThisVersionCannotRead() {
-        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.FUTURE, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Map.of(
                 "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}"
         )));
 
@@ -265,7 +265,7 @@ class AssetPipelineTest {
 
     @Test
     void stillUsesItemModelsForNamespacesWithoutDefinitions() {
-        BridgedAssetManager assets = build(TestArchives.archive("mixed.jar", AssetVersion.FUTURE, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("mixed.jar", AssetVersion.ATLASES, Map.of(
                 "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}",
                 "assets/oldmod/models/item/gem.json", "{\"parent\": \"item/generated\"}"
         )));

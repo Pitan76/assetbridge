@@ -74,7 +74,7 @@ class BlockStateConverterTest {
         byte[] data = "{\"variants\": {\"\": {\"model\": \"newmod:block/foo\"}}}".getBytes(StandardCharsets.UTF_8);
 
         assertSame(data, converter.convert(PATH, data, AssetVersion.MODERN));
-        assertSame(data, converter.convert(PATH, data, AssetVersion.FUTURE));
+        assertSame(data, converter.convert(PATH, data, AssetVersion.ATLASES));
     }
 
     @Test

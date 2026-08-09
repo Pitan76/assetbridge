@@ -21,9 +21,11 @@ class VersionDetectorTest {
             "1.18.2,  MODERN",
             "1.19,    MODERN",
             "1.19.2,  MODERN",
-            "1.19.3,  FUTURE",
-            "1.20.1,  FUTURE",
-            "1.21.1,  FUTURE"
+            "1.19.3,  ATLASES",
+            "1.20.4,  ATLASES",
+            "1.20.5,  COMPONENTS",
+            "1.21.1,  COMPONENTS",
+            "1.21.4,  ITEM_DEFINITIONS"
     })
     void mapsMinecraftVersionsOntoAssetGenerations(String version, AssetVersion expected) {
         assertEquals(expected, AssetVersion.fromMinecraftVersion(version));
@@ -37,13 +39,13 @@ class VersionDetectorTest {
                 "META-INF/mods.toml", "modId=\"minecraft\"\nversionRange=\"[1.18.2]\""
         ));
 
-        assertEquals(AssetVersion.FUTURE, detection.version());
+        assertEquals(AssetVersion.ITEM_DEFINITIONS, detection.version());
         assertEquals("assets/*/items/ (1.21.4+)", detection.source());
     }
 
     @Test
     void spriteAtlasesMarkAnArchiveAsNewerThanThisVersion() {
-        assertEquals(AssetVersion.FUTURE, detect("mymod.jar", structure("assets/mymod/atlases/blocks.json")).version());
+        assertEquals(AssetVersion.ATLASES, detect("mymod.jar", structure("assets/mymod/atlases/blocks.json")).version());
     }
 
     @Test
@@ -62,7 +64,7 @@ class VersionDetectorTest {
                 "META-INF/mods.toml", "modId=\"minecraft\"\nversionRange=\"[1.21.1]\""
         ));
 
-        assertEquals(AssetVersion.FUTURE, detection.version());
+        assertEquals(AssetVersion.COMPONENTS, detection.version());
         assertEquals("META-INF/mods.toml", detection.source());
     }
 
@@ -80,7 +82,7 @@ class VersionDetectorTest {
                         """));
 
         // The neoforge dependency's 21.1.235 must not be mistaken for a Minecraft version.
-        assertEquals(AssetVersion.FUTURE, detection.version());
+        assertEquals(AssetVersion.COMPONENTS, detection.version());
         assertEquals("META-INF/neoforge.mods.toml", detection.source());
     }
 
@@ -102,7 +104,7 @@ class VersionDetectorTest {
         Detection detection = detect("mymod.jar", new Structure(), Map.of(
                 "fabric.mod.json", "{\"depends\": {\"minecraft\": \">=1.20.1 <1.21\", \"java\": \">=17\"}}"));
 
-        assertEquals(AssetVersion.FUTURE, detection.version());
+        assertEquals(AssetVersion.ATLASES, detection.version());
         assertEquals("fabric.mod.json", detection.source());
     }
 
@@ -128,14 +130,14 @@ class VersionDetectorTest {
     void fallsBackToTheFileName() {
         Detection detection = detect("astralenchant-1.21.1-neoforge-v1.1.0.jar", new Structure());
 
-        assertEquals(AssetVersion.FUTURE, detection.version());
+        assertEquals(AssetVersion.COMPONENTS, detection.version());
         assertEquals("file name", detection.source());
     }
 
     @Test
     void ignoresModVersionNumbersInTheFileName() {
         // 1.2.0 is the mod's own version; only 1.20.1 is a plausible Minecraft release.
-        assertEquals(AssetVersion.FUTURE, detect("mymod-1.2.0-1.20.1.jar", new Structure()).version());
+        assertEquals(AssetVersion.ATLASES, detect("mymod-1.2.0-1.20.1.jar", new Structure()).version());
         assertEquals(AssetVersion.MODERN, detect("mymod-1.18.2-3.0.1.jar", new Structure()).version());
     }
 

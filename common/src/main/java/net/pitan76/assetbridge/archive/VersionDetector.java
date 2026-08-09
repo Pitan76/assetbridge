@@ -73,8 +73,8 @@ public class VersionDetector {
 
         @Nullable
         Detection detect() {
-            if (itemDefinitions) return new Detection(AssetVersion.FUTURE, "assets/*/items/ (1.21.4+)");
-            if (atlases) return new Detection(AssetVersion.FUTURE, "assets/*/atlases/ (1.19.3+)");
+            if (itemDefinitions) return new Detection(AssetVersion.ITEM_DEFINITIONS, "assets/*/items/ (1.21.4+)");
+            if (atlases) return new Detection(AssetVersion.ATLASES, "assets/*/atlases/ (1.19.3+)");
             if (legacyTextureDirs) {
                 return new Detection(AssetVersion.LEGACY, "assets/*/textures/blocks/ (pre-1.13)");
             }

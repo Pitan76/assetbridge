@@ -15,7 +15,7 @@ import java.util.Map;
  * <ul>
  *   <li>{@link AssetVersion#LEGACY}: pre-1.13 models refer to textures as {@code blocks/stone}
  *       and parents as {@code block/cube_all} under the old directory names.</li>
- *   <li>{@link AssetVersion#FUTURE}: 1.19.3+ may carry keys 1.18.2's model deserialiser
+ *   <li>{@link AssetVersion#ATLASES} and later: 1.19.3+ may carry keys an older model deserialiser
  *       rejects; they are stripped rather than failing the whole model.</li>
  * </ul>
  */

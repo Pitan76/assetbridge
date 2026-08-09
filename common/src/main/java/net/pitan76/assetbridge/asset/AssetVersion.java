@@ -12,12 +12,29 @@ public enum AssetVersion {
     LEGACY,
     /** 1.13 - 1.14: flattening done, pre-multipart-heavy era. */
     FLATTENED,
-    /** 1.15 - 1.19.2: the generation the MVP targets natively (1.18.2 is pack_format 8). */
+    /** 1.15 - 1.19.2: singular {@code block/} directories, no atlas definitions. */
     MODERN,
-    /** 1.19.3+: split item/block model handling, overlays, newer texture metadata. */
-    FUTURE,
+    /** 1.19.3 - 1.20.4: {@code assets/*&#47;atlases/}, reworked item model metadata. */
+    ATLASES,
+    /** 1.20.5 - 1.21.3: item stack components replace NBT in item definitions. */
+    COMPONENTS,
+    /** 1.21.4+: {@code assets/*&#47;items/} item definitions split out of models. */
+    ITEM_DEFINITIONS,
     /** No pack.mcmeta, or an unreadable one. Treated as {@link #MODERN}. */
     UNKNOWN;
+
+    /**
+     * Whether this generation is at or past {@code other}.
+     *
+     * <p>Converters should prefer this over equality: a rule that applies from 1.19.3
+     * onwards must also apply to every later generation, and writing it as
+     * {@code == ATLASES} silently stops applying when the next generation is added.
+     *
+     * <p>{@link #UNKNOWN} is compared as {@link #MODERN}, matching {@link #resolved()}.
+     */
+    public boolean isAtLeast(AssetVersion other) {
+        return resolved().ordinal() >= other.resolved().ordinal();
+    }
 
     /**
      * Maps a Minecraft version such as {@code 1.21.1} onto its asset generation.
@@ -43,17 +60,31 @@ public enum AssetVersion {
 
         if (minor <= 12) return LEGACY;
         if (minor <= 14) return FLATTENED;
-        // 1.19.3 is where the item model and metadata changes land.
+        // 1.19.3 is where the atlas definitions and item model metadata changes land.
         if (minor < 19 || (minor == 19 && patch <= 2)) return MODERN;
-        return FUTURE;
+        // 1.20.5 introduced item stack components.
+        if (minor < 20 || (minor == 20 && patch <= 4)) return ATLASES;
+        // 1.21.4 split item definitions out of models.
+        if (minor < 21 || (minor == 21 && patch <= 3)) return COMPONENTS;
+        return ITEM_DEFINITIONS;
     }
 
+    /**
+     * Maps a resource pack's {@code pack_format} onto its generation.
+     *
+     * <p>The boundaries are the first format of each generation: 1.19.3 is 12,
+     * 1.20.5 is 32 and 1.21.4 is 46. Prefer {@link #fromMinecraftVersion(String)} when a
+     * version string is available — it is exact, whereas these numbers move with every
+     * snapshot and a pack may also declare a data pack format here.
+     */
     public static AssetVersion fromPackFormat(int packFormat) {
         if (packFormat < 0) return UNKNOWN;
         if (packFormat <= 3) return LEGACY;
         if (packFormat <= 4) return FLATTENED;
-        if (packFormat <= 9) return MODERN;
-        return FUTURE;
+        if (packFormat < 12) return MODERN;
+        if (packFormat < 32) return ATLASES;
+        if (packFormat < 46) return COMPONENTS;
+        return ITEM_DEFINITIONS;
     }
 
     public AssetVersion resolved() {
