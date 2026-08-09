@@ -1,7 +1,6 @@
 package net.pitan76.assetbridge.fabric;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
@@ -22,20 +21,20 @@ public class AssetBridgeFabric implements ModInitializer {
 
         // The tabs have to exist before the items are built.
         if (!net.pitan76.assetbridge.feature.Features.isEnabled(net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature.ID)) {
-            BridgedItemGroup.setBlocksTab(FabricItemGroupBuilder
-                    .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.BLOCKS))
-                    .icon(BridgedItemGroup::blocksIcon)
-                    .build());
-            BridgedItemGroup.setItemsTab(FabricItemGroupBuilder
-                    .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.ITEMS))
-                    .icon(BridgedItemGroup::itemsIcon)
-                    .build());
+            BridgedItemGroup.setBlocksTab(createTab(
+                    BridgedItemGroup.BLOCKS,
+                    BridgedItemGroup::blocksIcon,
+                    () -> BridgedItemGroup.sharedTabContents(true)));
+            BridgedItemGroup.setItemsTab(createTab(
+                    BridgedItemGroup.ITEMS,
+                    BridgedItemGroup::itemsIcon,
+                    () -> BridgedItemGroup.sharedTabContents(false)));
         }
 
-        BridgedItemGroup.setTabFactory((namespace, iconSupplier) -> FabricItemGroupBuilder
-                .create(new ResourceLocation(AssetBridge.MOD_ID, namespace))
-                .icon(iconSupplier)
-                .build());
+        BridgedItemGroup.setTabFactory((namespace, iconSupplier) -> createTab(
+                namespace,
+                iconSupplier,
+                () -> BridgedItemGroup.namespaceTabContents(namespace)));
 
         BridgedItemGroup.setModNameProvider(namespace -> FabricLoader.getInstance().getModContainer(namespace)
                 .map(container -> container.getMetadata().getName())
@@ -49,24 +48,81 @@ public class AssetBridgeFabric implements ModInitializer {
         for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
             // Mod init order is not controllable, so a mod loaded after us can still claim the
             // same id. That is the desired outcome anyway: the real mod should win.
-            if (Registry.BLOCK.containsKey(entry.getKey())) {
+            if (blockRegistry().containsKey(entry.getKey())) {
                 AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", entry.getKey());
                 continue;
             }
-            Registry.register(Registry.BLOCK, entry.getKey(), entry.getValue());
-            Registry.register(Registry.ITEM, entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
+            Registry.register(blockRegistry(), entry.getKey(), entry.getValue());
+            Registry.register(itemRegistry(), entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
             registeredBlocks++;
         }
 
         int registeredItems = 0;
         for (Map.Entry<ResourceLocation, Item> entry : BridgedItems.items().entrySet()) {
-            if (Registry.ITEM.containsKey(entry.getKey())) {
+            if (itemRegistry().containsKey(entry.getKey())) {
                 AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
                 continue;
             }
-            Registry.register(Registry.ITEM, entry.getKey(), entry.getValue());
+            Registry.register(itemRegistry(), entry.getKey(), entry.getValue());
             registeredItems++;
         }
         AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registeredBlocks, registeredItems);
     }
+
+    // ---------------------------------------------------------------------------
+    // Version-specific glue. 1.19.3 moved the vanilla registries onto
+    // BuiltInRegistries and turned creative tabs into registry entries that pull
+    // their contents from an event instead of being named by each item.
+    // ---------------------------------------------------------------------------
+
+    //? if >=1.19.3 {
+    /*private static net.minecraft.core.Registry<Block> blockRegistry() {
+        return net.minecraft.core.registries.BuiltInRegistries.BLOCK;
+    }
+
+    private static net.minecraft.core.Registry<Item> itemRegistry() {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM;
+    }
+
+    // Builds a tab, registers it, and points it at the contents it should collect.
+    private static net.minecraft.world.item.CreativeModeTab createTab(
+            String path,
+            java.util.function.Supplier<net.minecraft.world.item.ItemStack> icon,
+            java.util.function.Supplier<java.util.List<Item>> contents) {
+        ResourceLocation id = new ResourceLocation(AssetBridge.MOD_ID, path);
+        net.minecraft.resources.ResourceKey<net.minecraft.world.item.CreativeModeTab> key =
+                net.minecraft.resources.ResourceKey.create(
+                        net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, id);
+
+        net.minecraft.world.item.CreativeModeTab tab = net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
+                .title(net.minecraft.network.chat.Component.translatable("itemGroup." + AssetBridge.MOD_ID + "." + path))
+                .icon(icon)
+                .build();
+        Registry.register(net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB, key, tab);
+
+        // Evaluated when the tab is filled, which is after the bridged items exist.
+        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(key)
+                .register(entries -> contents.get().forEach(entries::accept));
+        return tab;
+    }
+    *///?} else {
+    private static net.minecraft.core.Registry<Block> blockRegistry() {
+        return Registry.BLOCK;
+    }
+
+    private static net.minecraft.core.Registry<Item> itemRegistry() {
+        return Registry.ITEM;
+    }
+
+    /** Up to 1.19.2 a tab only needs to exist; the items name it themselves. */
+    private static net.minecraft.world.item.CreativeModeTab createTab(
+            String path,
+            java.util.function.Supplier<net.minecraft.world.item.ItemStack> icon,
+            java.util.function.Supplier<java.util.List<Item>> contents) {
+        return net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder
+                .create(new ResourceLocation(AssetBridge.MOD_ID, path))
+                .icon(icon)
+                .build();
+    }
+    //?}
 }
