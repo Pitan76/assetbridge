@@ -29,15 +29,17 @@ public class PackRepositoryMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void assetbridge$addSource(CallbackInfo ci) {
+        // A repository that already reads the vanilla data packs is the data pack one;
+        // anything else is a resource pack repository.
+        boolean serverSide = false;
         for (RepositorySource source : sources) {
-            // Data pack repository: bridged assets are client resources only.
-            if (source instanceof ServerPacksSource) return;
+            if (source instanceof ServerPacksSource) serverSide = true;
             // The PackType constructor delegates to the other one, so guard against a double add.
-            if (source == AssetBridgeRepositorySource.INSTANCE) return;
+            if (source instanceof AssetBridgeRepositorySource) return;
         }
 
         Set<RepositorySource> merged = new LinkedHashSet<>(sources);
-        merged.add(AssetBridgeRepositorySource.INSTANCE);
+        merged.add(serverSide ? AssetBridgeRepositorySource.DATA : AssetBridgeRepositorySource.RESOURCES);
         this.sources = ImmutableSet.copyOf(merged);
     }
 }

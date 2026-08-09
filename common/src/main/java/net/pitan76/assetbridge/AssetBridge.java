@@ -48,7 +48,7 @@ public class AssetBridge {
 
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
-        Features.apply(gameDir, bundle);
+        Features.apply(gameDir, bundle, archives, namespaceInUse);
     }
 
     public static AssetBundle bundle() {

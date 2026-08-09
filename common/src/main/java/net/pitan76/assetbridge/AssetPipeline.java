@@ -94,6 +94,10 @@ public class AssetPipeline {
                         // claiming the path still wins.
                         if (!bundle.hasResource(path)) bundle.putResource(path, source);
                     }
+                    case RECIPE -> {
+                        // Server-side data is a feature's business, not the core's;
+                        // RecipeFeature reads these straight from the archive.
+                    }
                     case OTHER -> {
                         // Filtered out at scan time; nothing to do.
                     }

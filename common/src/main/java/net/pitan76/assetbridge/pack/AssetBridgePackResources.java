@@ -26,43 +26,56 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/** Serves the converted assets to Minecraft as an in-memory resource pack. */
+/**
+ * Serves the bridged assets to Minecraft as an in-memory pack.
+ *
+ * <p>One instance covers one pack root: a resource pack for {@link AssetPath.PackKind#CLIENT}
+ * and a data pack for {@link AssetPath.PackKind#SERVER}. They are separate packs because
+ * Minecraft keeps a separate repository, and a separate {@code pack_format}, for each.
+ */
 public class AssetBridgePackResources implements PackResources {
     public static final String PACK_ID = AssetBridge.MOD_ID + "_external";
-
-    private static final String PACK_MCMETA = "{\"pack\":{\"pack_format\":" + AssetVersion.CURRENT_PACK_FORMAT
-            + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
+    public static final String DATA_PACK_ID = AssetBridge.MOD_ID + "_external_data";
 
     private final AssetBundle bundle;
+    private final AssetPath.PackKind kind;
+    private final String mcmeta;
 
-    public AssetBridgePackResources(AssetBundle bundle) {
+    public AssetBridgePackResources(AssetBundle bundle, AssetPath.PackKind kind) {
         this.bundle = bundle;
+        this.kind = kind;
+        int format = kind == AssetPath.PackKind.SERVER
+                ? AssetVersion.CURRENT_DATA_PACK_FORMAT
+                : AssetVersion.CURRENT_PACK_FORMAT;
+        this.mcmeta = "{\"pack\":{\"pack_format\":" + format
+                + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
     }
 
     @Override
     public InputStream getRootResource(String fileName) throws IOException {
         if ("pack.mcmeta".equals(fileName)) {
-            return new ByteArrayInputStream(PACK_MCMETA.getBytes(StandardCharsets.UTF_8));
+            return new ByteArrayInputStream(mcmeta.getBytes(StandardCharsets.UTF_8));
         }
         throw new FileNotFoundException(fileName);
     }
 
     @Override
     public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
-        AssetSource source = bundle.resources().get(pathOf(type, location));
+        AssetSource source = serves(type) ? bundle.resources().get(pathOf(type, location)) : null;
         if (source == null) throw new FileNotFoundException(location.toString());
         return source.open();
     }
 
     @Override
     public boolean hasResource(PackType type, ResourceLocation location) {
-        return bundle.resources().containsKey(pathOf(type, location));
+        return serves(type) && bundle.resources().containsKey(pathOf(type, location));
     }
 
     @Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
                                                      int maxDepth, Predicate<String> filter) {
-        AssetPath.PackKind kind = kindOf(type);
+        if (!serves(type)) return List.of();
+
         String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();
 
@@ -82,7 +95,8 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public Set<String> getNamespaces(PackType type) {
-        AssetPath.PackKind kind = kindOf(type);
+        if (!serves(type)) return Set.of();
+
         Set<String> namespaces = new HashSet<>();
         for (AssetPath key : bundle.resources().keySet()) {
             if (key.kind() == kind) namespaces.add(key.namespace());
@@ -93,7 +107,7 @@ public class AssetBridgePackResources implements PackResources {
     @Override
     @Nullable
     public <T> T getMetadataSection(MetadataSectionSerializer<T> serializer) {
-        JsonObject root = GsonHelper.parse(new StringReader(PACK_MCMETA));
+        JsonObject root = GsonHelper.parse(new StringReader(mcmeta));
         String section = serializer.getMetadataSectionName();
         if (!root.has(section)) return null;
         return serializer.fromJson(GsonHelper.getAsJsonObject(root, section));
@@ -101,7 +115,12 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public String getName() {
-        return "Asset Bridge";
+        return kind == AssetPath.PackKind.SERVER ? "Asset Bridge Data" : "Asset Bridge";
+    }
+
+    /** This pack only answers for the root it was built for; the other one is a separate pack. */
+    private boolean serves(PackType type) {
+        return kindOf(type) == kind;
     }
 
     @Override

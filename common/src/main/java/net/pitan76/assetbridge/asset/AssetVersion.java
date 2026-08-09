@@ -19,8 +19,11 @@ public enum AssetVersion {
     /** No pack.mcmeta, or an unreadable one. Treated as {@link #MODERN}. */
     UNKNOWN;
 
-    /** The pack_format of the Minecraft version this build targets. */
+    /** The resource pack_format of the Minecraft version this build targets. */
     public static final int CURRENT_PACK_FORMAT = 8;
+
+    /** Data packs are versioned separately; 1.18.2 is 9 while its resource packs are 8. */
+    public static final int CURRENT_DATA_PACK_FORMAT = 9;
 
     /**
      * Maps a Minecraft version such as {@code 1.21.1} onto its asset generation.

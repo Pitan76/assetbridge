@@ -1,9 +1,13 @@
 package net.pitan76.assetbridge.feature;
 
 import net.pitan76.assetbridge.AssetBridge;
+import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.feature.builtin.BlockFeature;
+import net.pitan76.assetbridge.feature.builtin.DataPackFeature;
 import net.pitan76.assetbridge.feature.builtin.ItemFeature;
+import net.pitan76.assetbridge.feature.builtin.LootTableFeature;
+import net.pitan76.assetbridge.feature.builtin.RecipeFeature;
 import net.pitan76.assetbridge.feature.builtin.ResourcePackFeature;
 
 import java.nio.file.Path;
@@ -11,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * The list of features, in the order they run.
@@ -22,7 +27,11 @@ public class Features {
     private static final List<Feature> REGISTERED = new ArrayList<>(List.of(
             new BlockFeature(),
             new ItemFeature(),
-            new ResourcePackFeature()
+            // Runs after the blocks it generates tables for, before the packs that serve them.
+            new LootTableFeature(),
+            new RecipeFeature(),
+            new ResourcePackFeature(),
+            new DataPackFeature()
     ));
 
     private static Set<String> enabled = Set.of();
@@ -54,11 +63,12 @@ public class Features {
     }
 
     /** Runs every switched-on feature against the freshly built bundle. */
-    public static void apply(Path gameDir, AssetBundle bundle) {
+    public static void apply(Path gameDir, AssetBundle bundle, List<AssetArchive> archives,
+                             Predicate<String> namespaceInUse) {
         enabled = FeatureConfig.read(gameDir, registered());
         applied = true;
 
-        FeatureContext context = new FeatureContext(gameDir, bundle, enabled);
+        FeatureContext context = new FeatureContext(gameDir, bundle, enabled, archives, namespaceInUse);
         for (Feature feature : REGISTERED) {
             if (!enabled.contains(feature.id())) {
                 AssetBridge.LOGGER.info("Feature '{}' is switched off", feature.id());

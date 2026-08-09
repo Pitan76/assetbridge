@@ -47,6 +47,8 @@ public record AssetPath(PackKind kind, String namespace, String path) {
          * but the file name is an authoritative list of the mod's items.
          */
         ITEM_DEFINITION,
+        /** A data pack recipe. Only ever found under {@link PackKind#SERVER}. */
+        RECIPE,
         BLOCK_MODEL,
         ITEM_MODEL,
         MODEL,
@@ -79,6 +81,10 @@ public record AssetPath(PackKind kind, String namespace, String path) {
     }
 
     public Category category() {
+        // The two roots share no directory layout, so a data path is never a client one.
+        if (kind == PackKind.SERVER) {
+            return path.startsWith("recipes/") && path.endsWith(".json") ? Category.RECIPE : Category.OTHER;
+        }
         if (path.startsWith("blockstates/")) return Category.BLOCKSTATE;
         if (path.startsWith("items/")) return Category.ITEM_DEFINITION;
         if (path.startsWith("models/block/")) return Category.BLOCK_MODEL;
@@ -137,6 +143,11 @@ public record AssetPath(PackKind kind, String namespace, String path) {
 
     public static AssetPath blockState(String namespace, String name) {
         return new AssetPath(PackKind.CLIENT, namespace, "blockstates/" + name + ".json");
+    }
+
+    /** Where a block's drops are read from, e.g. {@code data/ns/loot_tables/blocks/foo.json}. */
+    public static AssetPath blockLootTable(String namespace, String name) {
+        return new AssetPath(PackKind.SERVER, namespace, "loot_tables/blocks/" + name + ".json");
     }
 
     public static AssetPath itemModel(String namespace, String name) {
