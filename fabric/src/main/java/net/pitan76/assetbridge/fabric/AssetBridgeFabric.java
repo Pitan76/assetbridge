@@ -37,6 +37,10 @@ public class AssetBridgeFabric implements ModInitializer {
                 .icon(iconSupplier)
                 .build());
 
+        BridgedItemGroup.setModNameProvider(namespace -> FabricLoader.getInstance().getModContainer(namespace)
+                .map(container -> container.getMetadata().getName())
+                .orElse(BridgedItemGroup.capitalize(namespace)));
+
         AssetBridge.init(FabricLoader.getInstance().getGameDir(),
                 namespace -> FabricLoader.getInstance().isModLoaded(namespace));
 

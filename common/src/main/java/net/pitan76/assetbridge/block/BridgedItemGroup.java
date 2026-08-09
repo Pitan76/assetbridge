@@ -31,6 +31,8 @@ public class BridgedItemGroup {
 
     private static final Map<String, CreativeModeTab> namespaceTabs = new LinkedHashMap<>();
 
+    private static java.util.function.Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
+
     public interface TabFactory {
         CreativeModeTab create(String namespace, java.util.function.Supplier<ItemStack> iconSupplier);
     }
@@ -51,6 +53,10 @@ public class BridgedItemGroup {
 
     public static void setTabFactory(TabFactory factory) {
         tabFactory = factory;
+    }
+
+    public static void setModNameProvider(java.util.function.Function<String, String> provider) {
+        modNameProvider = provider;
     }
 
     /** Falls back to a vanilla tab if a platform could not provide one. */
@@ -84,7 +90,7 @@ public class BridgedItemGroup {
             CreativeModeTab tab = tabFactory.create(namespace, () -> namespaceIcon(namespace));
             if (tab != null) {
                 namespaceTabs.put(namespace, tab);
-                langJson.addProperty("itemGroup.assetbridge." + namespace, "Asset Bridge: " + capitalize(namespace));
+                langJson.addProperty("itemGroup.assetbridge." + namespace, "Asset Bridge: " + modNameProvider.apply(namespace));
             }
         }
         registerLang(langJson);
@@ -98,7 +104,7 @@ public class BridgedItemGroup {
                 new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/ja_jp.json"), data);
     }
 
-    private static String capitalize(String str) {
+    public static String capitalize(String str) {
         if (str == null || str.isEmpty()) return str;
         String[] parts = str.split("[_-]");
         StringBuilder sb = new StringBuilder();

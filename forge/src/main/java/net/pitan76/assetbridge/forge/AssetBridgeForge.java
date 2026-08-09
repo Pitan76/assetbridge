@@ -57,6 +57,10 @@ public class AssetBridgeForge {
             }
         });
 
+        BridgedItemGroup.setModNameProvider(namespace -> ModList.get().getModContainerById(namespace)
+                .map(container -> container.getModInfo().getDisplayName())
+                .orElse(BridgedItemGroup.capitalize(namespace)));
+
         AssetBridge.init(FMLPaths.GAMEDIR.get(), namespace -> ModList.get().isLoaded(namespace));
 
         // LOWEST so every other mod has registered by the time we check for id collisions.
