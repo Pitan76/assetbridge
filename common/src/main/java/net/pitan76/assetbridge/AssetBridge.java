@@ -8,6 +8,7 @@ import net.pitan76.assetbridge.block.BridgedItems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
@@ -19,6 +20,9 @@ public class AssetBridge {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 
     private static AssetBundle bundle = new AssetBundle();
+    // Held for the lifetime of the game: the bundle serves textures straight out of these
+    // archives, so closing one would break every resource it still backs.
+    private static List<AssetArchive> archives = List.of();
 
     private AssetBridge() {
     }
@@ -32,8 +36,10 @@ public class AssetBridge {
      *                       Asset Bridge never shadows a mod the player actually installed
      */
     public static void init(Path gameDir, Predicate<String> namespaceInUse) {
+        closeArchives();
+
         // Scan assetbridge/
-        List<AssetArchive> archives = ArchiveScanner.scan(gameDir);
+        archives = ArchiveScanner.scan(gameDir);
 
         // Build the asset bundle from the archives (assets)
         bundle = AssetPipeline.build(archives, namespaceInUse);
@@ -45,5 +51,17 @@ public class AssetBridge {
 
     public static AssetBundle bundle() {
         return bundle;
+    }
+
+    /** Only relevant if {@link #init} ever runs twice; the archives outlive it otherwise. */
+    private static void closeArchives() {
+        for (AssetArchive archive : archives) {
+            try {
+                archive.close();
+            } catch (IOException e) {
+                LOGGER.warn("Could not close {}", archive.fileName(), e);
+            }
+        }
+        archives = List.of();
     }
 }

@@ -2,6 +2,7 @@ package net.pitan76.assetbridge.archive;
 
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetSource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,13 +55,19 @@ public class ArchiveScanner {
         return archives;
     }
 
+    /**
+     * Indexes the archive without reading any resource body. The {@link ZipFile} stays open
+     * and is owned by the returned archive, so closing it is {@link AssetArchive#close()}'s
+     * job — not this method's.
+     */
     private static AssetArchive read(Path file) throws IOException {
-        Map<AssetPath, byte[]> entries = new HashMap<>();
+        Map<AssetPath, AssetSource> entries = new HashMap<>();
         Map<String, String> metadata = new HashMap<>();
         VersionDetector.Structure structure = new VersionDetector.Structure();
         String fileName = file.getFileName().toString();
 
-        try (ZipFile zip = new ZipFile(file.toFile())) {
+        ZipFile zip = new ZipFile(file.toFile());
+        try {
             var it = zip.entries();
             while (it.hasMoreElements()) {
                 ZipEntry entry = it.nextElement();
@@ -75,16 +82,17 @@ public class ArchiveScanner {
                 AssetPath path = AssetPath.parse(entry.getName());
                 if (path == null || !path.isBridgeable()) continue;
 
-                try (InputStream in = zip.getInputStream(entry)) {
-                    entries.put(path, in.readAllBytes());
-                }
+                entries.put(path, new ZipAssetSource(zip, entry.getName()));
             }
+        } catch (IOException | RuntimeException e) {
+            zip.close();
+            throw e;
         }
 
         VersionDetector.Detection detection = VersionDetector.detect(fileName, metadata, structure);
-        AssetBridge.LOGGER.info("Read {} asset entries from {} (assets look like {}, from {})",
+        AssetBridge.LOGGER.info("Indexed {} asset entries from {} (assets look like {}, from {})",
                 entries.size(), fileName, detection.version(), detection.source());
-        return new AssetArchive(fileName, detection.version(), detection.source(), entries);
+        return new AssetArchive(fileName, detection.version(), detection.source(), entries, zip);
     }
 
     private static String readText(ZipFile zip, ZipEntry entry) throws IOException {

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockAsset;
 import net.pitan76.assetbridge.asset.BridgedItemAsset;
@@ -12,13 +13,13 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
-import net.pitan76.assetbridge.convert.PassthroughConverter;
 import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -36,7 +37,6 @@ import java.util.function.Predicate;
 public class AssetPipeline {
     private static final AssetConverter BLOCKSTATES = new BlockStateConverter();
     private static final AssetConverter MODELS = new ModelConverter();
-    private static final AssetConverter BINARY = new PassthroughConverter();
 
     private AssetPipeline() {
     }
@@ -60,8 +60,9 @@ public class AssetPipeline {
         for (AssetArchive archive : archives) {
             AssetVersion version = archive.version();
 
-            for (Map.Entry<AssetPath, byte[]> entry : archive.entries().entrySet()) {
+            for (Map.Entry<AssetPath, AssetSource> entry : archive.entries().entrySet()) {
                 AssetPath path = entry.getKey();
+                AssetSource source = entry.getValue();
 
                 if (namespaceInUse.test(path.namespace())) {
                     if (skippedNamespaces.add(path.namespace())) {
@@ -72,7 +73,7 @@ public class AssetPipeline {
                 }
 
                 switch (path.category()) {
-                    case BLOCKSTATE -> readBlockState(bundle, archive, version, path, entry.getValue(), seenBlocks);
+                    case BLOCKSTATE -> readBlockState(bundle, archive, version, path, source, seenBlocks);
                     case ITEM_DEFINITION -> {
                         // The file itself means nothing to this Minecraft version, so it is not
                         // served; only its name is used, as the mod's own list of items.
@@ -81,14 +82,18 @@ public class AssetPipeline {
                                 path.itemDefinitionName());
                     }
                     case ITEM_MODEL -> {
-                        if (convertInto(bundle, MODELS, path, entry.getValue(), version, archive)) {
+                        if (convertInto(bundle, MODELS, path, source, version, archive)) {
                             addCandidate(fromModels, archive, version, path.namespace(), path.itemModelName());
                         }
                     }
                     case BLOCK_MODEL, MODEL ->
-                            convertInto(bundle, MODELS, path, entry.getValue(), version, archive);
-                    case TEXTURE, TEXTURE_META, LANG ->
-                            convertInto(bundle, BINARY, path, entry.getValue(), version, archive);
+                            convertInto(bundle, MODELS, path, source, version, archive);
+                    case TEXTURE, TEXTURE_META, LANG -> {
+                        // Nothing to convert, so the bytes never have to enter the heap:
+                        // the archive serves them when the game asks. An earlier archive
+                        // claiming the path still wins.
+                        if (!bundle.hasResource(path)) bundle.putResource(path, source);
+                    }
                     case OTHER -> {
                         // Filtered out at scan time; nothing to do.
                     }
@@ -117,10 +122,13 @@ public class AssetPipeline {
     }
 
     private static void readBlockState(AssetBundle bundle, AssetArchive archive, AssetVersion version,
-                                       AssetPath path, byte[] data, Set<String> seenBlocks) {
+                                       AssetPath path, AssetSource source, Set<String> seenBlocks) {
         String name = path.blockStateName();
         if (name == null) return;
         String id = path.namespace() + ":" + name;
+
+        byte[] data = read(source, path, archive);
+        if (data == null) return;
 
         byte[] converted = BLOCKSTATES.convert(path, data, version);
         JsonObject json = converted == null ? null : Json.parse(new String(converted, StandardCharsets.UTF_8));
@@ -174,8 +182,11 @@ public class AssetPipeline {
                 new BridgedItemAsset(namespace, name, archive.fileName(), version));
     }
 
-    private static boolean convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, byte[] data,
+    private static boolean convertInto(AssetBundle bundle, AssetConverter converter, AssetPath path, AssetSource source,
                                        AssetVersion version, AssetArchive archive) {
+        byte[] data = read(source, path, archive);
+        if (data == null) return false;
+
         byte[] converted = converter.convert(path, data, version);
         if (converted == null) {
             AssetBridge.LOGGER.warn("Dropped unconvertible resource {} from {}", path, archive.fileName());
@@ -195,6 +206,17 @@ public class AssetPipeline {
         JsonObject root = new JsonObject();
         root.addProperty("parent", block.modelId());
         bundle.putResource(path, Json.toString(root).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Resources that have to be converted are read once, here, and never again. */
+    @Nullable
+    private static byte[] read(AssetSource source, AssetPath path, AssetArchive archive) {
+        try {
+            return source.readAll();
+        } catch (IOException e) {
+            AssetBridge.LOGGER.error("Could not read {} from {}", path, archive.fileName(), e);
+            return null;
+        }
     }
 
     private static String qualify(String reference, String namespace) {

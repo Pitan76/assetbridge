@@ -1,5 +1,8 @@
 package net.pitan76.assetbridge.asset;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,12 +13,18 @@ import java.util.Map;
  * the format the running Minecraft version expects.
  */
 public class AssetBundle {
-    private final Map<AssetPath, byte[]> resources = new HashMap<>();
+    private final Map<AssetPath, AssetSource> resources = new HashMap<>();
     private final List<BridgedBlockAsset> blocks = new ArrayList<>();
     private final List<BridgedItemAsset> items = new ArrayList<>();
 
+    /** For resources Asset Bridge produced itself; they exist nowhere on disk. */
     public void putResource(AssetPath path, byte[] data) {
-        resources.put(path, data);
+        putResource(path, AssetSource.ofBytes(data));
+    }
+
+    /** For resources still backed by their archive, read only when the game asks. */
+    public void putResource(AssetPath path, AssetSource source) {
+        resources.put(path, source);
     }
 
     public void addBlock(BridgedBlockAsset block) {
@@ -30,8 +39,15 @@ public class AssetBundle {
         return resources.containsKey(path);
     }
 
-    public Map<AssetPath, byte[]> resources() {
+    public Map<AssetPath, AssetSource> resources() {
         return resources;
+    }
+
+    /** Reads a resource in full. Convenience for callers that cannot stream, e.g. tests. */
+    @Nullable
+    public byte[] readResource(AssetPath path) throws IOException {
+        AssetSource source = resources.get(path);
+        return source == null ? null : source.readAll();
     }
 
     public List<BridgedBlockAsset> blocks() {

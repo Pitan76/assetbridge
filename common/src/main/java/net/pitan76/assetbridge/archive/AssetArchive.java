@@ -1,26 +1,44 @@
 package net.pitan76.assetbridge.archive;
 
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.zip.ZipFile;
 
 /**
- * An external JAR/ZIP that has been read into memory.
- * Only asset entries are retained; no class file is ever touched.
+ * An external JAR/ZIP that has been indexed. Only asset entries are retained; no class file
+ * is ever touched.
+ *
+ * <p>The archive is left open for as long as the game runs, so entries that were not
+ * converted at startup can be streamed on demand instead of being held in the heap.
+ * {@link #close()} invalidates every {@link AssetSource} this archive handed out.
  */
-public class AssetArchive {
+public class AssetArchive implements Closeable {
     private final String fileName;
     private final AssetVersion version;
     private final String versionSource;
-    private final Map<AssetPath, byte[]> entries;
+    private final Map<AssetPath, AssetSource> entries;
+    @Nullable
+    private final ZipFile zip;
 
-    public AssetArchive(String fileName, AssetVersion version, String versionSource, Map<AssetPath, byte[]> entries) {
+    public AssetArchive(String fileName, AssetVersion version, String versionSource,
+                        Map<AssetPath, AssetSource> entries) {
+        this(fileName, version, versionSource, entries, null);
+    }
+
+    public AssetArchive(String fileName, AssetVersion version, String versionSource,
+                        Map<AssetPath, AssetSource> entries, @Nullable ZipFile zip) {
         this.fileName = fileName;
         this.version = version;
         this.versionSource = versionSource;
         this.entries = Collections.unmodifiableMap(entries);
+        this.zip = zip;
     }
 
     public String fileName() {
@@ -37,7 +55,12 @@ public class AssetArchive {
         return versionSource;
     }
 
-    public Map<AssetPath, byte[]> entries() {
+    public Map<AssetPath, AssetSource> entries() {
         return entries;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (zip != null) zip.close();
     }
 }

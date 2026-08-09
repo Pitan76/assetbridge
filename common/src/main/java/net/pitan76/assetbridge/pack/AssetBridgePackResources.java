@@ -9,6 +9,7 @@ import net.minecraft.util.GsonHelper;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetBundle;
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +49,9 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
-        byte[] data = bundle.resources().get(pathOf(type, location));
-        if (data == null) throw new FileNotFoundException(location.toString());
-        return new ByteArrayInputStream(data);
+        AssetSource source = bundle.resources().get(pathOf(type, location));
+        if (source == null) throw new FileNotFoundException(location.toString());
+        return source.open();
     }
 
     @Override
@@ -105,7 +106,8 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public void close() {
-        // Everything is held in memory; nothing to release.
+        // A new instance is created on every resource reload, while the archives behind the
+        // bundle live as long as the game does, so there is nothing to release here.
     }
 
     private static AssetPath pathOf(PackType type, ResourceLocation location) {

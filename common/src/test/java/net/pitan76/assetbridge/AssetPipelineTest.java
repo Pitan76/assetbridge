@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -314,7 +315,7 @@ class AssetPipelineTest {
     }
 
     private static JsonObject json(AssetBundle bundle, AssetPath path) {
-        byte[] data = bundle.resources().get(path);
+        byte[] data = assertDoesNotThrow(() -> bundle.readResource(path));
         assertNotNull(data, "missing resource: " + path);
         JsonObject parsed = Json.parse(new String(data, StandardCharsets.UTF_8));
         assertNotNull(parsed);
