@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.level.material.Material;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,13 @@ public class BridgedBlock extends Block {
     private final EnumProperty<Direction.Axis> axis;
 
     private BridgedBlock(BridgedStateDefinition states) {
-        super(Properties.of(Material.STONE).strength(1.5F, 6.0F));
+        //? if >=1.20 {
+        /*// 1.20 removed Material; a block's sounds and map colour now come from the
+        // properties themselves, and the defaults match what Material.STONE gave us.
+        super(Properties.of().strength(1.5F, 6.0F));
+        *///?} else {
+        super(Properties.of(net.minecraft.world.level.material.Material.STONE).strength(1.5F, 6.0F));
+        //?}
 
         this.facing = directionProperty();
         this.axis = axisProperty();

@@ -8,6 +8,7 @@ import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.DataPackFeature;
 import net.pitan76.assetbridge.feature.builtin.ResourcePackFeature;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -34,26 +35,53 @@ public class AssetBridgeRepositorySource implements RepositorySource {
         this.featureId = featureId;
     }
 
-    @Override
-    public void loadPacks(Consumer<Pack> consumer, Pack.PackConstructor constructor) {
-        if (!Features.isEnabled(featureId)) return;
+    /** Whether this source should contribute a pack at all. */
+    private boolean shouldLoad() {
+        if (!Features.isEnabled(featureId)) return false;
         // An empty pack is not an error, but Minecraft has no reason to load one.
-        if (!AssetBridge.assets().hasResources(kind)) return;
+        return AssetBridge.assets().hasResources(kind);
+    }
 
-        Pack pack = Pack.create(
-                packId,
-                true,
-                () -> new AssetBridgePackResources(AssetBridge.assets(), kind),
-                constructor,
-                // Above vanilla so the bridged assets resolve, but below the packs the
-                // player enabled themselves so their own pack still wins.
-                Pack.Position.BOTTOM,
-                PackSource.BUILT_IN
-        );
+    private void emit(Consumer<Pack> consumer, @Nullable Pack pack) {
         if (pack != null) {
             consumer.accept(pack);
         } else {
             AssetBridge.LOGGER.error("Could not create the Asset Bridge pack '{}'", packId);
         }
     }
+
+    // Position.BOTTOM in both branches: above vanilla so the bridged assets resolve, but
+    // below the packs the player enabled themselves so their own pack still wins.
+
+    //? if >=1.20 {
+    /*@Override
+    public void loadPacks(Consumer<Pack> consumer) {
+        if (!shouldLoad()) return;
+        // 1.20 folded the pack constructor into the factory and made the title a Component.
+        emit(consumer, Pack.readMetaAndCreate(
+                packId,
+                net.minecraft.network.chat.Component.literal(packId),
+                true,
+                id -> new AssetBridgePackResources(AssetBridge.assets(), kind),
+                kind == AssetPath.PackKind.SERVER
+                        ? net.minecraft.server.packs.PackType.SERVER_DATA
+                        : net.minecraft.server.packs.PackType.CLIENT_RESOURCES,
+                Pack.Position.BOTTOM,
+                PackSource.BUILT_IN
+        ));
+    }
+    *///?} else {
+    @Override
+    public void loadPacks(Consumer<Pack> consumer, Pack.PackConstructor constructor) {
+        if (!shouldLoad()) return;
+        emit(consumer, Pack.create(
+                packId,
+                true,
+                () -> new AssetBridgePackResources(AssetBridge.assets(), kind),
+                constructor,
+                Pack.Position.BOTTOM,
+                PackSource.BUILT_IN
+        ));
+    }
+    //?}
 }

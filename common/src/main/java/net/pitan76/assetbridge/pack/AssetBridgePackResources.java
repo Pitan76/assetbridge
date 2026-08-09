@@ -51,37 +51,85 @@ public class AssetBridgePackResources implements PackResources {
                 + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
     }
 
+    /**
+     * Looks up a resource, falling back to the pre-flattening directory name.
+     * Version-independent: every override below is expressed in terms of this.
+     */
+    @Nullable
+    private AssetSource sourceOf(PackType type, ResourceLocation location) {
+        if (!serves(type)) return null;
+        AssetPath path = pathOf(type, location);
+        AssetSource source = assets.resources().get(path);
+        if (source != null) return source;
+        AssetPath alt = getAlternativePath(path);
+        return alt == null ? null : assets.resources().get(alt);
+    }
+
+    private InputStream openMcmeta() {
+        return new ByteArrayInputStream(mcmeta.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** The name shown in the pack list. */
+    private String displayName() {
+        return kind == AssetPath.PackKind.SERVER ? "Asset Bridge Data" : "Asset Bridge";
+    }
+
+    // ---------------------------------------------------------------------------
+    // The PackResources surface. 1.20 rewrote it: lookups return an IoSupplier and
+    // report absence with null instead of throwing, listing became a callback, and
+    // getName() became packId(). Only these wrappers differ; the logic above does not.
+    // ---------------------------------------------------------------------------
+
+    //? if >=1.20 {
+    /*@Override
+    @Nullable
+    public net.minecraft.server.packs.resources.IoSupplier<InputStream> getRootResource(String... elements) {
+        return elements.length == 1 && "pack.mcmeta".equals(elements[0]) ? this::openMcmeta : null;
+    }
+
+    @Override
+    @Nullable
+    public net.minecraft.server.packs.resources.IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
+        AssetSource source = sourceOf(type, location);
+        return source == null ? null : source::open;
+    }
+
+    @Override
+    public void listResources(PackType type, String namespace, String path, PackResources.ResourceOutput output) {
+        for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
+            AssetSource source = sourceOf(type, id);
+            if (source != null) output.accept(id, source::open);
+        }
+    }
+
+    @Override
+    public String packId() {
+        return displayName();
+    }
+    *///?} else {
     @Override
     public InputStream getRootResource(String fileName) throws IOException {
-        if ("pack.mcmeta".equals(fileName)) {
-            return new ByteArrayInputStream(mcmeta.getBytes(StandardCharsets.UTF_8));
-        }
+        if ("pack.mcmeta".equals(fileName)) return openMcmeta();
         throw new FileNotFoundException(fileName);
     }
 
     @Override
     public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
-        if (!serves(type)) throw new FileNotFoundException(location.toString());
-        AssetPath path = pathOf(type, location);
-        AssetSource source = assets.resources().get(path);
-        if (source == null) {
-            AssetPath alt = getAlternativePath(path);
-            if (alt != null) {
-                source = assets.resources().get(alt);
-            }
-        }
+        AssetSource source = sourceOf(type, location);
         if (source == null) throw new FileNotFoundException(location.toString());
         return source.open();
     }
 
     @Override
     public boolean hasResource(PackType type, ResourceLocation location) {
-        if (!serves(type)) return false;
-        AssetPath path = pathOf(type, location);
-        if (assets.resources().containsKey(path)) return true;
-        AssetPath alt = getAlternativePath(path);
-        return alt != null && assets.resources().containsKey(alt);
+        return sourceOf(type, location) != null;
     }
+
+    @Override
+    public String getName() {
+        return displayName();
+    }
+    //?}
 
     @Nullable
     private AssetPath getAlternativePath(AssetPath original) {
@@ -126,7 +174,9 @@ public class AssetBridgePackResources implements PackResources {
         return found;
     }
 
-    //? if >=1.19 {
+    //? if >=1.20 {
+    /*// Replaced by listResources above.
+    *///?} elif >=1.19 {
     /*@Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
                                                      Predicate<ResourceLocation> filter) {
@@ -167,11 +217,6 @@ public class AssetBridgePackResources implements PackResources {
         String section = serializer.getMetadataSectionName();
         if (!root.has(section)) return null;
         return serializer.fromJson(GsonHelper.getAsJsonObject(root, section));
-    }
-
-    @Override
-    public String getName() {
-        return kind == AssetPath.PackKind.SERVER ? "Asset Bridge Data" : "Asset Bridge";
     }
 
     /** This pack only answers for the root it was built for; the other one is a separate pack. */

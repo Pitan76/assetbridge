@@ -10,7 +10,9 @@ import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.asset.AssetPath;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -59,6 +61,52 @@ public class BridgedItemGroup {
         modNameProvider = provider;
     }
 
+    /** The namespace's own tab, when that feature is on and it got one. */
+    @Nullable
+    public static CreativeModeTab namespaceTab(String namespace) {
+        return Features.isEnabled(SplitTabByNamespaceFeature.ID) ? namespaceTabs.get(namespace) : null;
+    }
+
+    /** The namespaces that were given their own tab, in registration order. */
+    public static Set<String> tabbedNamespaces() {
+        return java.util.Collections.unmodifiableSet(namespaceTabs.keySet());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Which items belong in which tab.
+    //
+    // Up to 1.19.2 an item declared its own tab through Item.Properties#tab, so this
+    // was answered at construction time. 1.19.3 inverted it: a tab collects its
+    // contents from an event, so the answer has to be available afterwards instead.
+    // Both models are served from the queries below, which stay version-independent;
+    // the loaders decide when to ask.
+    // ---------------------------------------------------------------------------
+
+    /** Everything that belongs in the shared blocks or items tab. */
+    public static List<Item> sharedTabContents(boolean isBlock) {
+        List<Item> contents = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, ? extends Item> entry : sourceFor(isBlock).entrySet()) {
+            if (namespaceTab(entry.getKey().getNamespace()) == null) contents.add(entry.getValue());
+        }
+        return contents;
+    }
+
+    /** Everything that belongs in one namespace's own tab: its blocks first, then its items. */
+    public static List<Item> namespaceTabContents(String namespace) {
+        List<Item> contents = new ArrayList<>();
+        for (boolean isBlock : new boolean[]{true, false}) {
+            for (Map.Entry<ResourceLocation, ? extends Item> entry : sourceFor(isBlock).entrySet()) {
+                if (entry.getKey().getNamespace().equals(namespace)) contents.add(entry.getValue());
+            }
+        }
+        return contents;
+    }
+
+    private static Map<ResourceLocation, ? extends Item> sourceFor(boolean isBlock) {
+        return isBlock ? BridgedBlocks.items() : BridgedItems.items();
+    }
+
+    //? if <1.19.3 {
     /** Falls back to a vanilla tab if a platform could not provide one. */
     public static CreativeModeTab blocks() {
         return blocksTab != null ? blocksTab : CreativeModeTab.TAB_BUILDING_BLOCKS;
@@ -68,14 +116,13 @@ public class BridgedItemGroup {
         return itemsTab != null ? itemsTab : CreativeModeTab.TAB_MISC;
     }
 
-    /** The namespace's own tab when that feature is on and it got one; the shared tab otherwise. */
+    /** The tab an item declares at construction time. Gone from 1.19.3 onwards. */
     public static CreativeModeTab getTab(String namespace, boolean isBlock) {
-        CreativeModeTab tab = Features.isEnabled(SplitTabByNamespaceFeature.ID)
-                ? namespaceTabs.get(namespace)
-                : null;
+        CreativeModeTab tab = namespaceTab(namespace);
         if (tab != null) return tab;
         return isBlock ? blocks() : items();
     }
+    //?}
 
     public static void initTabs(Set<String> namespaces) {
         com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();
