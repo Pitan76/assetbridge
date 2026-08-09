@@ -3,6 +3,7 @@ package net.pitan76.assetbridge;
 import net.pitan76.assetbridge.archive.ArchiveScanner;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
+import net.pitan76.assetbridge.block.BridgedItemGroup;
 import net.pitan76.assetbridge.feature.Features;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,24 +32,19 @@ public class AssetBridge {
      * construction, before the block registry freezes and before resource packs are listed.
      * Registering the blocks themselves is the platform's job.
      *
-     * @param namespaceInUse tells whether a namespace already belongs to a loaded mod, so
+     * @param isNamespaceUsed tells whether a namespace already belongs to a loaded mod, so
      *                       Asset Bridge never shadows a mod the player actually installed
      */
-    public static void init(Path gameDir, Predicate<String> namespaceInUse) {
+    public static void init(Path gameDir, Predicate<String> isNamespaceUsed) {
         closeArchives();
 
-        // Scan assetbridge/
         archives = ArchiveScanner.scan(gameDir);
-
-        // Build the asset bundle from the archives (assets)
-        assets = AssetPipeline.build(archives, namespaceInUse);
-
-        // Initialize namespace creative tabs if configured
-        net.pitan76.assetbridge.block.BridgedItemGroup.initTabs(assets.namespaces());
+        assets = AssetPipeline.build(archives, isNamespaceUsed);
+        BridgedItemGroup.initTabs(assets.namespaces());
 
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
-        Features.apply(gameDir, assets, archives, namespaceInUse);
+        Features.apply(gameDir, assets, archives, isNamespaceUsed);
     }
 
     public static BridgedAssetManager assets() {

@@ -3,6 +3,7 @@ package net.pitan76.assetbridge.parse;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -33,13 +34,13 @@ public class BlockStateParser {
      */
     @Nullable
     public static JsonElement findVariant(JsonObject blockState) {
-        if (blockState.has("variants")) {
-            JsonObject variants = blockState.getAsJsonObject("variants");
+        JsonObject variants = Json.object(blockState, "variants");
+        if (variants != null) {
             JsonElement chosen = variants.has("") ? variants.get("") : firstValue(variants);
             return modelOf(chosen) == null ? null : chosen;
         }
-        if (blockState.has("multipart")) {
-            JsonArray parts = blockState.getAsJsonArray("multipart");
+        JsonArray parts = Json.array(blockState, "multipart");
+        if (parts != null) {
             for (JsonElement part : parts) {
                 if (!part.isJsonObject()) continue;
                 // Prefer an unconditional part: it is the one always visible.
@@ -71,7 +72,6 @@ public class BlockStateParser {
             return array.isEmpty() ? null : modelOf(array.get(0));
         }
         if (!element.isJsonObject()) return null;
-        JsonObject object = element.getAsJsonObject();
-        return object.has("model") ? object.get("model").getAsString() : null;
+        return Json.string(element.getAsJsonObject(), "model");
     }
 }

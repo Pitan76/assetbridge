@@ -66,14 +66,14 @@ class RecipeFeatureTest {
         assertFalse(assets.hasResource(FOO));
     }
 
-    private static BridgedAssetManager apply(Set<String> enabled, Predicate<String> namespaceInUse,
+    private static BridgedAssetManager apply(Set<String> enabled, Predicate<String> isNamespaceUsed,
                                      Map<String, String> entries) {
         BridgedAssetManager assets = new BridgedAssetManager();
         List<AssetArchive> archives =
                 List.of(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, entries));
 
         new RecipeFeature().apply(
-                new FeatureContext(Path.of("."), assets, enabled, archives, namespaceInUse));
+                new FeatureContext(Path.of("."), assets, enabled, archives, isNamespaceUsed));
         return assets;
     }
 }

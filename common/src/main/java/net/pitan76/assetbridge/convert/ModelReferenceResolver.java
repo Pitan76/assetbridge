@@ -1,6 +1,5 @@
 package net.pitan76.assetbridge.convert;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
@@ -43,7 +42,7 @@ public class ModelReferenceResolver {
             JsonObject model = read(assets, path);
             if (model == null) continue;
 
-            String parent = parentOf(model);
+            String parent = Json.string(model, "parent");
             if (parent == null || resolves(assets, parent)) continue;
 
             AssetBridge.LOGGER.warn("Model {} inherits from {}, which is not available; "
@@ -102,31 +101,19 @@ public class ModelReferenceResolver {
     /** The most representative texture the model names, ignoring {@code #placeholder} refs. */
     @Nullable
     private static String someTextureOf(JsonObject model) {
-        JsonElement textures = model.get("textures");
-        if (textures == null || !textures.isJsonObject()) return null;
-        JsonObject byKey = textures.getAsJsonObject();
+        JsonObject byKey = Json.object(model, "textures");
+        if (byKey == null) return null;
 
+        // A '#' value points at another key of the parent we just lost.
         for (String key : TEXTURE_KEYS) {
-            String value = stringOrNull(byKey, key);
-            // A '#' value points at another key of the parent we just lost.
+            String value = Json.string(byKey, key);
             if (value != null && !value.startsWith("#")) return value;
         }
         for (String key : byKey.keySet()) {
-            String value = stringOrNull(byKey, key);
+            String value = Json.string(byKey, key);
             if (value != null && !value.startsWith("#")) return value;
         }
         return null;
-    }
-
-    @Nullable
-    private static String parentOf(JsonObject model) {
-        return stringOrNull(model, "parent");
-    }
-
-    @Nullable
-    private static String stringOrNull(JsonObject object, String key) {
-        JsonElement value = object.get(key);
-        return value != null && value.isJsonPrimitive() ? value.getAsString() : null;
     }
 
     @Nullable

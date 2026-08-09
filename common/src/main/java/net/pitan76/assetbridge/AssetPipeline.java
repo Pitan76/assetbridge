@@ -8,8 +8,8 @@ import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
-import net.pitan76.assetbridge.asset.BridgedItemDefinition;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
+import net.pitan76.assetbridge.asset.ItemCandidates;
 import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,83 +42,38 @@ public class AssetPipeline {
     }
 
     /**
-     * @param namespaceInUse namespaces that already belong to a loaded mod (including
+     * @param isNamespaceUsed namespaces that already belong to a loaded mod (including
      *                       {@code minecraft}). Their assets are skipped entirely, so
      *                       Asset Bridge never shadows a mod the player actually installed.
      */
-    public static BridgedAssetManager build(List<AssetArchive> archives, Predicate<String> namespaceInUse) {
+    public static BridgedAssetManager build(List<AssetArchive> archives, Predicate<String> isNamespaceUsed) {
         BridgedAssetManager assets = new BridgedAssetManager();
         Set<String> seenBlocks = new HashSet<>();
         Set<String> skippedNamespaces = new HashSet<>();
-        // Item candidates cannot be resolved until everything has been read: a block item takes
-        // precedence over a standalone item of the same id, and 1.21.4+ item definitions take
-        // precedence over guessing from item models. First archive wins within each source.
-        Map<String, BridgedItemDefinition> fromDefinitions = new LinkedHashMap<>();
-        Map<String, BridgedItemDefinition> fromModels = new LinkedHashMap<>();
-        Set<String> namespacesWithDefinitions = new HashSet<>();
+        ItemCandidates itemCandidates = new ItemCandidates();
 
         for (AssetArchive archive : archives) {
-            AssetVersion version = archive.version();
-
             for (Map.Entry<AssetPath, AssetSource> entry : archive.entries().entrySet()) {
                 AssetPath path = entry.getKey();
-                AssetSource source = entry.getValue();
 
-                if (namespaceInUse.test(path.namespace())) {
+                if (isNamespaceUsed.test(path.namespace())) {
                     if (skippedNamespaces.add(path.namespace())) {
                         AssetBridge.LOGGER.info("Skipping namespace '{}' from {}: it is already provided by a loaded mod",
                                 path.namespace(), archive.fileName());
                     }
                     continue;
                 }
-
-                switch (path.category()) {
-                    case BLOCKSTATE -> readBlockState(assets, archive, version, path, source, seenBlocks);
-                    case ITEM_DEFINITION -> {
-                        // The file itself means nothing to this Minecraft version, so it is not
-                        // served; only its name is used, as the mod's own list of items.
-                        namespacesWithDefinitions.add(path.namespace());
-                        addCandidate(fromDefinitions, archive, version, path.namespace(),
-                                path.itemDefinitionName());
-                    }
-                    case ITEM_MODEL -> {
-                        if (convertInto(assets, MODELS, path, source, version, archive)) {
-                            addCandidate(fromModels, archive, version, path.namespace(), path.itemModelName());
-                        }
-                    }
-                    case BLOCK_MODEL, MODEL ->
-                            convertInto(assets, MODELS, path, source, version, archive);
-                    case TEXTURE, TEXTURE_META, LANG -> {
-                        // Nothing to convert, so the bytes never have to enter the heap:
-                        // the archive serves them when the game asks. An earlier archive
-                        // claiming the path still wins.
-                        if (!assets.hasResource(path)) assets.putResource(path, source);
-                    }
-                    case RECIPE -> {
-                        // Server-side data is a feature's business, not the core's;
-                        // RecipeFeature reads these straight from the archive.
-                    }
-                    case OTHER -> {
-                        // Filtered out at scan time; nothing to do.
-                    }
-                }
+                read(assets, archive, path, entry.getValue(), seenBlocks, itemCandidates);
             }
         }
 
-        Map<String, BridgedItemDefinition> itemCandidates = new LinkedHashMap<>(fromDefinitions);
-        for (Map.Entry<String, BridgedItemDefinition> candidate : fromModels.entrySet()) {
-            // A namespace that ships item definitions has already listed everything it has;
-            // its remaining item models are block items and shared fragments.
-            if (namespacesWithDefinitions.contains(candidate.getValue().namespace())) continue;
-            itemCandidates.putIfAbsent(candidate.getKey(), candidate.getValue());
-        }
-
+        Set<String> blockIds = new HashSet<>();
         for (BridgedBlockDefinition block : assets.blocks()) {
             generateItemModel(assets, block);
             // The block's own item owns this id, so it is not a standalone item.
-            itemCandidates.remove(block.id());
+            blockIds.add(block.id());
         }
-        itemCandidates.values().forEach(assets::addItem);
+        itemCandidates.resolve(blockIds).forEach(assets::addItem);
 
         // Last, because a model may inherit from one that another archive supplies.
         int repaired = ModelReferenceResolver.resolve(assets);
@@ -132,13 +86,45 @@ public class AssetPipeline {
         return assets;
     }
 
+    /** Routes one archive entry to whatever its category needs, if anything. */
+    private static void read(BridgedAssetManager assets, AssetArchive archive, AssetPath path, AssetSource source,
+                             Set<String> seenBlocks, ItemCandidates itemCandidates) {
+        AssetVersion version = archive.version();
+        switch (path.category()) {
+            case BLOCKSTATE -> readBlockState(assets, archive, version, path, source, seenBlocks);
+            case ITEM_DEFINITION ->
+                    // The file itself means nothing to this Minecraft version, so it is not
+                    // served; only its name is used, as the mod's own list of items.
+                    itemCandidates.addDefinition(path.namespace(), path.itemDefinitionName(),
+                            archive.fileName(), version);
+            case ITEM_MODEL -> {
+                if (convertInto(assets, MODELS, path, source, version, archive)) {
+                    itemCandidates.addModel(path.namespace(), path.itemModelName(), archive.fileName(), version);
+                }
+            }
+            case BLOCK_MODEL, MODEL -> convertInto(assets, MODELS, path, source, version, archive);
+            case TEXTURE, TEXTURE_META, LANG -> {
+                // Nothing to convert, so the bytes never have to enter the heap: the archive
+                // serves them when the game asks. An earlier archive claiming the path still wins.
+                if (!assets.hasResource(path)) assets.putResource(path, source);
+            }
+            case RECIPE -> {
+                // Server-side data is a feature's business, not the core's;
+                // RecipeFeature reads these straight from the archive.
+            }
+            case OTHER -> {
+                // Filtered out at scan time; nothing to do.
+            }
+        }
+    }
+
     private static void readBlockState(BridgedAssetManager assets, AssetArchive archive, AssetVersion version,
                                        AssetPath path, AssetSource source, Set<String> seenBlocks) {
         String name = path.blockStateName();
         if (name == null) return;
         String id = path.namespace() + ":" + name;
 
-        byte[] data = read(source, path, archive);
+        byte[] data = readBytes(source, path, archive);
         if (data == null) return;
 
         byte[] converted = BLOCKSTATES.convert(path, data, version);
@@ -185,17 +171,9 @@ public class AssetPipeline {
                 states, archive.fileName(), version));
     }
 
-    private static void addCandidate(Map<String, BridgedItemDefinition> candidates, AssetArchive archive,
-                                     AssetVersion version, String namespace, @Nullable String name) {
-        if (name == null) return;
-
-        candidates.putIfAbsent(namespace + ":" + name,
-                new BridgedItemDefinition(namespace, name, archive.fileName(), version));
-    }
-
     private static boolean convertInto(BridgedAssetManager assets, AssetConverter converter, AssetPath path, AssetSource source,
                                        AssetVersion version, AssetArchive archive) {
-        byte[] data = read(source, path, archive);
+        byte[] data = readBytes(source, path, archive);
         if (data == null) return false;
 
         byte[] converted = converter.convert(path, data, version);
@@ -221,7 +199,7 @@ public class AssetPipeline {
 
     /** Resources that have to be converted are read once, here, and never again. */
     @Nullable
-    private static byte[] read(AssetSource source, AssetPath path, AssetArchive archive) {
+    private static byte[] readBytes(AssetSource source, AssetPath path, AssetArchive archive) {
         try {
             return source.readAll();
         } catch (IOException e) {

@@ -66,11 +66,11 @@ public class Features {
 
     /** Runs every switched-on feature against the freshly built bundle. */
     public static void apply(Path gameDir, BridgedAssetManager assets, List<AssetArchive> archives,
-                             Predicate<String> namespaceInUse) {
+                             Predicate<String> isNamespaceUsed) {
         enabled = FeatureConfig.read(gameDir, registered());
         applied = true;
 
-        FeatureContext context = new FeatureContext(gameDir, assets, enabled, archives, namespaceInUse);
+        FeatureContext context = new FeatureContext(gameDir, assets, enabled, archives, isNamespaceUsed);
         for (Feature feature : REGISTERED) {
             if (!enabled.contains(feature.id())) {
                 AssetBridge.LOGGER.info("Feature '{}' is switched off", feature.id());

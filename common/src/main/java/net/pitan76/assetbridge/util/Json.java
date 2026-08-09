@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.util;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -27,5 +28,26 @@ public class Json {
 
     public static String toString(JsonElement element) {
         return GSON.toJson(element);
+    }
+
+    /** @return the value of {@code key} if it is a primitive, else {@code null}. */
+    @Nullable
+    public static String string(JsonObject object, String key) {
+        JsonElement value = object.get(key);
+        return value != null && value.isJsonPrimitive() ? value.getAsString() : null;
+    }
+
+    /** @return the value of {@code key} if it is an object, else {@code null}. */
+    @Nullable
+    public static JsonObject object(JsonObject parent, String key) {
+        JsonElement value = parent.get(key);
+        return value != null && value.isJsonObject() ? value.getAsJsonObject() : null;
+    }
+
+    /** @return the value of {@code key} if it is an array, else {@code null}. */
+    @Nullable
+    public static JsonArray array(JsonObject parent, String key) {
+        JsonElement value = parent.get(key);
+        return value != null && value.isJsonArray() ? value.getAsJsonArray() : null;
     }
 }

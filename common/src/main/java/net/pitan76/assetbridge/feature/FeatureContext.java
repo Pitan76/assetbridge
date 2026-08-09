@@ -20,12 +20,12 @@ import java.util.function.Predicate;
  *                       generated data such as loot tables reaches the packs.
  * @param enabled        the ids of every feature that is switched on this run
  * @param archives       the archives, still open, in load order
- * @param namespaceInUse whether a namespace already belongs to a loaded mod. A feature must
+ * @param isNamespaceUsed whether a namespace already belongs to a loaded mod. A feature must
  *                       honour this for the same reason the core does: never shadow a mod the
  *                       player actually installed.
  */
 public record FeatureContext(Path gameDir, BridgedAssetManager assets, Set<String> enabled,
-                             List<AssetArchive> archives, Predicate<String> namespaceInUse) {
+                             List<AssetArchive> archives, Predicate<String> isNamespaceUsed) {
     /** Whether another feature is switched on, for features that build on one another. */
     public boolean isEnabled(String featureId) {
         return enabled.contains(featureId);

@@ -55,7 +55,7 @@ public class RecipeFeature implements Feature {
             for (Map.Entry<AssetPath, AssetSource> entry : archive.entries().entrySet()) {
                 AssetPath path = entry.getKey();
                 if (path.category() != AssetPath.Category.RECIPE) continue;
-                if (context.namespaceInUse().test(path.namespace())) continue;
+                if (context.isNamespaceUsed().test(path.namespace())) continue;
                 // An archive read earlier claimed this recipe already.
                 if (context.assets().hasResource(path)) continue;
 

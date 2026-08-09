@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
+import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -51,31 +52,30 @@ public class BlockStateCoverage {
         List<Map<String, String>> combinations = combinations(states);
         if (combinations == null) return null;
 
-        boolean multipart = blockState.has("multipart") && blockState.get("multipart").isJsonArray();
-        if (!multipart && !(blockState.has("variants") && blockState.get("variants").isJsonObject())) return null;
+        JsonArray parts = Json.array(blockState, "multipart");
+        JsonObject variants = parts != null ? null : Json.object(blockState, "variants");
+        if (parts == null && variants == null) return null;
 
         List<Map<String, String>> missing = new ArrayList<>();
         for (Map<String, String> state : combinations) {
-            boolean covered = multipart
-                    ? matchesAnyPart(blockState.getAsJsonArray("multipart"), state)
-                    : matchesAnyVariant(blockState.getAsJsonObject("variants"), state);
+            boolean covered = parts != null ? matchesAnyPart(parts, state) : matchesAnyVariant(variants, state);
             if (!covered) missing.add(state);
         }
         if (missing.isEmpty()) return null;
 
         JsonObject completed = blockState.deepCopy();
-        if (multipart) {
-            JsonArray parts = completed.getAsJsonArray("multipart");
+        if (parts != null) {
+            JsonArray completedParts = completed.getAsJsonArray("multipart");
             for (Map<String, String> state : missing) {
                 JsonObject part = new JsonObject();
                 part.add("when", condition(state));
                 part.add("apply", fallback.deepCopy());
-                parts.add(part);
+                completedParts.add(part);
             }
         } else {
-            JsonObject variants = completed.getAsJsonObject("variants");
+            JsonObject completedVariants = completed.getAsJsonObject("variants");
             for (Map<String, String> state : missing) {
-                variants.add(variantKey(state), fallback.deepCopy());
+                completedVariants.add(variantKey(state), fallback.deepCopy());
             }
         }
         return completed;
@@ -87,13 +87,10 @@ public class BlockStateCoverage {
     }
 
     private static int size(JsonObject blockState) {
-        if (blockState.has("multipart") && blockState.get("multipart").isJsonArray()) {
-            return blockState.getAsJsonArray("multipart").size();
-        }
-        if (blockState.has("variants") && blockState.get("variants").isJsonObject()) {
-            return blockState.getAsJsonObject("variants").size();
-        }
-        return 0;
+        JsonArray parts = Json.array(blockState, "multipart");
+        if (parts != null) return parts.size();
+        JsonObject variants = Json.object(blockState, "variants");
+        return variants != null ? variants.size() : 0;
     }
 
     /** @return every combination of property values, or {@code null} if there are too many. */

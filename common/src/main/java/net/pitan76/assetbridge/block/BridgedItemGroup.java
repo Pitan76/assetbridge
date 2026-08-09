@@ -61,12 +61,13 @@ public class BridgedItemGroup {
         return itemsTab != null ? itemsTab : CreativeModeTab.TAB_MISC;
     }
 
+    /** The namespace's own tab when that feature is on and it got one; the shared tab otherwise. */
     public static CreativeModeTab getTab(String namespace, boolean isBlock) {
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
-            return isBlock ? blocks() : items();
-        }
-        CreativeModeTab tab = namespaceTabs.get(namespace);
-        return tab != null ? tab : (isBlock ? blocks() : items());
+        CreativeModeTab tab = Features.isEnabled(SplitTabByNamespaceFeature.ID)
+                ? namespaceTabs.get(namespace)
+                : null;
+        if (tab != null) return tab;
+        return isBlock ? blocks() : items();
     }
 
     public static void initTabs(Set<String> namespaces) {
@@ -110,24 +111,30 @@ public class BridgedItemGroup {
         return firstOf(BridgedItems.items().values());
     }
 
+    /** Prefers a block, which reads better as a tab icon than a loose item. */
     public static ItemStack namespaceIcon(String namespace) {
-        for (Map.Entry<ResourceLocation, Item> entry : BridgedBlocks.items().entrySet()) {
-            if (entry.getKey().getNamespace().equals(namespace)) {
-                return new ItemStack(entry.getValue());
-            }
+        Item item = firstIn(BridgedBlocks.items(), namespace);
+        if (item == null) item = firstIn(BridgedItems.items(), namespace);
+        return item != null ? new ItemStack(item) : fallbackIcon();
+    }
+
+    @Nullable
+    private static Item firstIn(Map<ResourceLocation, Item> items, String namespace) {
+        for (Map.Entry<ResourceLocation, Item> entry : items.entrySet()) {
+            if (entry.getKey().getNamespace().equals(namespace)) return entry.getValue();
         }
-        for (Map.Entry<ResourceLocation, Item> entry : BridgedItems.items().entrySet()) {
-            if (entry.getKey().getNamespace().equals(namespace)) {
-                return new ItemStack(entry.getValue());
-            }
-        }
-        return new ItemStack(Items.BRICKS);
+        return null;
     }
 
     private static ItemStack firstOf(Collection<? extends Item> candidates) {
         for (Item item : candidates) {
             return new ItemStack(item);
         }
+        return fallbackIcon();
+    }
+
+    /** Shown when a tab has no bridged content of its own to represent it. */
+    private static ItemStack fallbackIcon() {
         return new ItemStack(Items.BRICKS);
     }
 }
