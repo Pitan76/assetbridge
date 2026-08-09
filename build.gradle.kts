@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.*
+
 plugins {
     id("dev.architectury.loom") version "1.14-SNAPSHOT" apply false
     id("architectury-plugin") version "3.4-SNAPSHOT"
@@ -31,11 +33,9 @@ subprojects {
         mavenCentral()
     }
 
-    val loom = extensions.getByType<dev.architectury.loom.api.LoomExtensionAPI>()
-
     dependencies {
         "minecraft"("net.minecraft:minecraft:$minecraft_version")
-        "mappings"(loom.officialMojangMappings())
+        "mappings"((project.extensions.getByName("loom") as net.fabricmc.loom.LoomGradleExtension).officialMojangMappings())
     }
 
     configure<org.gradle.api.plugins.JavaPluginExtension> {
