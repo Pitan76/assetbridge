@@ -48,6 +48,10 @@ feature.resource_pack=true
 
 # データパックを適用する（ルートテーブルやレシピなど）
 feature.data_pack=true
+
+# cutoutを適用する
+#feature.cutout_blocks=true
+feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ## ビルド
