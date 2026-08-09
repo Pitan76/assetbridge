@@ -79,7 +79,7 @@ tasks.processResources {
 }
 
 tasks.shadowJar {
-    configurations.set(listOf(configurations["shadowBundle"]))
+    configurations.set(listOf(project.configurations["shadowBundle"]))
     archiveClassifier.set("dev-shadow")
 }
 
