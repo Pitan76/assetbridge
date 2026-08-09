@@ -123,6 +123,7 @@ publishMods {
             minecraftVersions.add(mcVersion)
             client.set(true)
             server.set(true)
+            requires("fabric-api")
         }
     }
 
@@ -133,6 +134,7 @@ publishMods {
             projectId.set(modrinthId)
             accessToken.set(modrinthToken)
             minecraftVersions.add(mcVersion)
+            requires("fabric-api")
         }
     }
 }
