@@ -4,10 +4,10 @@ plugins {
     id("com.gradleup.shadow") version "9.6.1" apply false
 }
 
-val minecraft_version: String by project
-val maven_group: String by project
-val mod_version: String by project
-val archives_name: String by project
+val minecraft_version = project.findProperty("minecraft_version") as String
+val maven_group = project.findProperty("maven_group") as String
+val mod_version = project.findProperty("mod_version") as String
+val archives_name = project.findProperty("archives_name") as String
 
 architectury {
     minecraft = minecraft_version
@@ -23,7 +23,7 @@ subprojects {
     apply(plugin = "architectury-plugin")
     apply(plugin = "maven-publish")
 
-    base {
+    configure<org.gradle.api.plugins.BasePluginExtension> {
         archivesName.set("$archives_name-${project.name}")
     }
 
@@ -31,12 +31,14 @@ subprojects {
         mavenCentral()
     }
 
+    val loom = extensions.getByType<dev.architectury.loom.api.LoomExtensionAPI>()
+
     dependencies {
         "minecraft"("net.minecraft:minecraft:$minecraft_version")
         "mappings"(loom.officialMojangMappings())
     }
 
-    java {
+    configure<org.gradle.api.plugins.JavaPluginExtension> {
         withSourcesJar()
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -46,9 +48,10 @@ subprojects {
         options.release.set(17)
     }
 
-    publishing {
+    configure<org.gradle.api.publish.PublishingExtension> {
         publications {
             create<MavenPublication>("mavenJava") {
+                val base = extensions.getByType<org.gradle.api.plugins.BasePluginExtension>()
                 artifactId = base.archivesName.get()
                 from(components["java"])
             }
