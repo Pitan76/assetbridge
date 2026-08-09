@@ -17,19 +17,24 @@ import java.util.Map;
 public class AssetBridgeFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        // The tabs have to exist before the items are built.
-        BridgedItemGroup.setBlocksTab(FabricItemGroupBuilder
-                .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.BLOCKS))
-                .icon(BridgedItemGroup::blocksIcon)
-                .build());
-        BridgedItemGroup.setItemsTab(FabricItemGroupBuilder
-                .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.ITEMS))
-                .icon(BridgedItemGroup::itemsIcon)
-                .build());
+        // Load config first to check enabled features during tab setup
+        net.pitan76.assetbridge.feature.Features.loadConfig(FabricLoader.getInstance().getGameDir());
 
-        BridgedItemGroup.setTabFactory((namespace, icon) -> FabricItemGroupBuilder
+        // The tabs have to exist before the items are built.
+        if (!net.pitan76.assetbridge.feature.Features.isEnabled(net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature.ID)) {
+            BridgedItemGroup.setBlocksTab(FabricItemGroupBuilder
+                    .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.BLOCKS))
+                    .icon(BridgedItemGroup::blocksIcon)
+                    .build());
+            BridgedItemGroup.setItemsTab(FabricItemGroupBuilder
+                    .create(new ResourceLocation(AssetBridge.MOD_ID, BridgedItemGroup.ITEMS))
+                    .icon(BridgedItemGroup::itemsIcon)
+                    .build());
+        }
+
+        BridgedItemGroup.setTabFactory((namespace, iconSupplier) -> FabricItemGroupBuilder
                 .create(new ResourceLocation(AssetBridge.MOD_ID, namespace))
-                .icon(() -> icon)
+                .icon(iconSupplier)
                 .build());
 
         AssetBridge.init(FabricLoader.getInstance().getGameDir(),

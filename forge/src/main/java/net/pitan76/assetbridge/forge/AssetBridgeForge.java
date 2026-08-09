@@ -27,25 +27,30 @@ public class AssetBridgeForge {
     private final Set<ResourceLocation> skipped = new LinkedHashSet<>();
 
     public AssetBridgeForge() {
+        // Load config first to check enabled features during tab setup
+        net.pitan76.assetbridge.feature.Features.loadConfig(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get());
+
         // Forge patches a String constructor into CreativeModeTab; the label becomes the
         // translation key suffix, so it is kept identical to Fabric's tab ids.
-        BridgedItemGroup.setBlocksTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.BLOCKS) {
-            @Override
-            public ItemStack makeIcon() {
-                return BridgedItemGroup.blocksIcon();
-            }
-        });
-        BridgedItemGroup.setItemsTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.ITEMS) {
-            @Override
-            public ItemStack makeIcon() {
-                return BridgedItemGroup.itemsIcon();
-            }
-        });
+        if (!net.pitan76.assetbridge.feature.Features.isEnabled(net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature.ID)) {
+            BridgedItemGroup.setBlocksTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.BLOCKS) {
+                @Override
+                public ItemStack makeIcon() {
+                    return BridgedItemGroup.blocksIcon();
+                }
+            });
+            BridgedItemGroup.setItemsTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.ITEMS) {
+                @Override
+                public ItemStack makeIcon() {
+                    return BridgedItemGroup.itemsIcon();
+                }
+            });
+        }
 
-        BridgedItemGroup.setTabFactory((namespace, icon) -> new CreativeModeTab(AssetBridge.MOD_ID + "." + namespace) {
+        BridgedItemGroup.setTabFactory((namespace, iconSupplier) -> new CreativeModeTab(AssetBridge.MOD_ID + "." + namespace) {
             @Override
             public ItemStack makeIcon() {
-                return icon;
+                return iconSupplier.get();
             }
         });
 

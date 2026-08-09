@@ -7,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
+import net.pitan76.assetbridge.asset.AssetPath;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,7 +32,7 @@ public class BridgedItemGroup {
     private static final Map<String, CreativeModeTab> namespaceTabs = new LinkedHashMap<>();
 
     public interface TabFactory {
-        CreativeModeTab create(String namespace, ItemStack icon);
+        CreativeModeTab create(String namespace, java.util.function.Supplier<ItemStack> iconSupplier);
     }
 
     @Nullable
@@ -71,20 +72,30 @@ public class BridgedItemGroup {
     }
 
     public static void initTabs(Set<String> namespaces) {
-        LanguageHelper.injectTranslation("itemGroup.assetbridge.blocks", "Asset Bridge Blocks");
-        LanguageHelper.injectTranslation("itemGroup.assetbridge.items", "Asset Bridge Items");
+        com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();
+        langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge Blocks");
+        langJson.addProperty("itemGroup.assetbridge.items", "Asset Bridge Items");
 
         if (!Features.isEnabled(SplitTabByNamespaceFeature.ID) || tabFactory == null) {
+            registerLang(langJson);
             return;
         }
         for (String namespace : namespaces) {
-            ItemStack icon = namespaceIcon(namespace);
-            CreativeModeTab tab = tabFactory.create(namespace, icon);
+            CreativeModeTab tab = tabFactory.create(namespace, () -> namespaceIcon(namespace));
             if (tab != null) {
                 namespaceTabs.put(namespace, tab);
-                LanguageHelper.injectTranslation("itemGroup.assetbridge." + namespace, "Asset Bridge: " + capitalize(namespace));
+                langJson.addProperty("itemGroup.assetbridge." + namespace, "Asset Bridge: " + capitalize(namespace));
             }
         }
+        registerLang(langJson);
+    }
+
+    private static void registerLang(com.google.gson.JsonObject langJson) {
+        byte[] data = net.pitan76.assetbridge.util.Json.toString(langJson).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        net.pitan76.assetbridge.AssetBridge.assets().putResource(
+                new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/en_us.json"), data);
+        net.pitan76.assetbridge.AssetBridge.assets().putResource(
+                new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/ja_jp.json"), data);
     }
 
     private static String capitalize(String str) {

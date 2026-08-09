@@ -38,14 +38,16 @@ public class AssetBridge {
     public static void init(Path gameDir, Predicate<String> isNamespaceUsed) {
         closeArchives();
 
+        Features.loadConfig(gameDir);
+
         archives = ArchiveScanner.scan(gameDir);
         assets = AssetPipeline.build(archives, isNamespaceUsed);
+
+        BridgedItemGroup.initTabs(assets.namespaces());
 
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
         Features.apply(gameDir, assets, archives, isNamespaceUsed);
-
-        BridgedItemGroup.initTabs(assets.namespaces());
     }
 
     public static BridgedAssetManager assets() {

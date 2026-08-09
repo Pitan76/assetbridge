@@ -64,6 +64,10 @@ public class Features {
         return enabled.contains(featureId);
     }
 
+    public static void loadConfig(Path gameDir) {
+        enabled = FeatureConfig.read(gameDir, registered());
+    }
+
     /** Runs every switched-on feature against the freshly built bundle. */
     public static void apply(Path gameDir, BridgedAssetManager assets, List<AssetArchive> archives,
                              Predicate<String> isNamespaceUsed) {
