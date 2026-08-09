@@ -16,6 +16,9 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
 import net.pitan76.assetbridge.block.BridgedItems;
+import net.pitan76.assetbridge.feature.Features;
+import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
+import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -28,11 +31,11 @@ public class AssetBridgeForge {
 
     public AssetBridgeForge() {
         // Load config first to check enabled features during tab setup
-        net.pitan76.assetbridge.feature.Features.loadConfig(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get());
+        Features.loadConfig(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get());
 
         // Forge patches a String constructor into CreativeModeTab; the label becomes the
         // translation key suffix, so it is kept identical to Fabric's tab ids.
-        if (!net.pitan76.assetbridge.feature.Features.isEnabled(net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature.ID)) {
+        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.BLOCKS) {
                 @Override
                 public ItemStack makeIcon() {
@@ -60,6 +63,19 @@ public class AssetBridgeForge {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addGenericListener(Block.class, EventPriority.LOWEST, this::registerBlocks);
         bus.addGenericListener(Item.class, EventPriority.LOWEST, this::registerItems);
+        bus.addListener(this::clientSetup);
+    }
+
+    private void clientSetup(final net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
+        if (Features.isEnabled(CutoutBlocksFeature.ID)) {
+            event.enqueueWork(() -> {
+                for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
+                    if (BridgedBlocks.isCutout(entry.getKey())) {
+                        net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(entry.getValue(), net.minecraft.client.renderer.RenderType.cutoutMipped());
+                    }
+                }
+            });
+        }
     }
 
     private void registerBlocks(RegistryEvent.Register<Block> event) {

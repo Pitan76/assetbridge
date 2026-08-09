@@ -50,4 +50,16 @@ public class BridgedBlocks {
     public static Map<ResourceLocation, Item> items() {
         return items;
     }
+
+    public static boolean isCutout(ResourceLocation id) {
+        String path = id.getPath().toLowerCase();
+        return path.contains("leaves")
+                || path.contains("glass")
+                || path.contains("sapling")
+                || path.contains("crop")
+                || path.contains("flower")
+                || path.contains("plant")
+                || path.contains("cutout")
+                || path.contains("portal");
+    }
 }

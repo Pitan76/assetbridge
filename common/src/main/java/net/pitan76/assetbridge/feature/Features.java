@@ -10,6 +10,7 @@ import net.pitan76.assetbridge.feature.builtin.LootTableFeature;
 import net.pitan76.assetbridge.feature.builtin.RecipeFeature;
 import net.pitan76.assetbridge.feature.builtin.ResourcePackFeature;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
+import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.function.Predicate;
 public class Features {
     private static final List<Feature> REGISTERED = new ArrayList<>(List.of(
             new SplitTabByNamespaceFeature(),
+            new CutoutBlocksFeature(),
             new BlockFeature(),
             new ItemFeature(),
             // Runs after the blocks it generates tables for, before the packs that serve them.
