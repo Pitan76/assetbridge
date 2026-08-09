@@ -1,7 +1,10 @@
 package net.pitan76.assetbridge.block;
 
+import net.minecraft.SharedConstants;
+import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.pitan76.assetbridge.asset.BridgedProperty;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -11,6 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class KnownPropertiesTest {
+    /** BlockStateProperties pulls in SoundEvents, which needs the registries to exist. */
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
+
     @Test
     void matchesTheFourWayFacingProperty() {
         assertSame(BlockStateProperties.HORIZONTAL_FACING,
