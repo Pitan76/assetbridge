@@ -1,6 +1,5 @@
 package net.pitan76.assetbridge.mixin;
 
-import com.google.common.collect.ImmutableSet;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.minecraft.server.packs.repository.ServerPacksSource;
@@ -38,8 +37,11 @@ public class PackRepositoryMixin {
             if (source instanceof AssetBridgeRepositorySource) return;
         }
 
+        // Stays mutable: other mods add their own sources to this set after the constructor
+        // returns. Fabric's resource loader does exactly that, and replacing the field with
+        // an immutable copy made it throw when the world creation screen opened.
         Set<RepositorySource> merged = new LinkedHashSet<>(sources);
         merged.add(serverSide ? AssetBridgeRepositorySource.DATA : AssetBridgeRepositorySource.RESOURCES);
-        this.sources = ImmutableSet.copyOf(merged);
+        this.sources = merged;
     }
 }
