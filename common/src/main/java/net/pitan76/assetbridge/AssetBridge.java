@@ -40,11 +40,12 @@ public class AssetBridge {
 
         archives = ArchiveScanner.scan(gameDir);
         assets = AssetPipeline.build(archives, isNamespaceUsed);
-        BridgedItemGroup.initTabs(assets.namespaces());
 
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
         Features.apply(gameDir, assets, archives, isNamespaceUsed);
+
+        BridgedItemGroup.initTabs(assets.namespaces());
     }
 
     public static BridgedAssetManager assets() {
