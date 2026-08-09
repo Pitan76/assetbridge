@@ -29,10 +29,12 @@ mods/
 ```
 
 ## テスト
-入力/解析/変換の各層はJUnitで検証します。
+入力/解析/変換の各層はJUnit/GameTestで検証します。
 
 ```sh
 ./gradlew :common:test
+
+./gradlew :fabric:runGametest
 ```
 
 ## リリース
