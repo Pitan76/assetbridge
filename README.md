@@ -4,6 +4,10 @@
 
 なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。
 
+- CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
+- Modrinth: https://modrinth.com/mod/assetbridge
+- ModParks: https://modparks.pitan76.net/projects/assetbridge
+
 ## 使い方
 ゲームディレクトリの`mods/`に`assetbridge/`を作り、その中に読み込むMODのjarやzipを置きます。
 （なお、初回起動時にAsset Bridgeが`assetbridge/`を自動で生成する）
