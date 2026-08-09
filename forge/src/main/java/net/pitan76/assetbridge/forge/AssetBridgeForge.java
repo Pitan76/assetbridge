@@ -189,6 +189,7 @@ public class AssetBridgeForge {
                     id -> net.minecraftforge.registries.ForgeRegistries.ITEMS.containsKey(id),
                     (id, item) -> event.register(net.minecraft.core.registries.Registries.ITEM, id, () -> item));
         } else if (event.getRegistryKey().equals(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB)) {
+            System.out.println("AssetBridge Debug: Registering creative mode tabs: " + TABS_TO_REGISTER.keySet());
             TABS_TO_REGISTER.forEach((id, tab) -> {
                 event.register(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, id, () -> tab);
             });
@@ -196,9 +197,14 @@ public class AssetBridgeForge {
     }
 
     private void onBuildCreativeModeTabContents(net.minecraftforge.event.BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().location().getNamespace().equals(AssetBridge.MOD_ID)) {
+            System.out.println("AssetBridge Debug: Tab contents build event for: " + event.getTabKey());
+        }
         Supplier<java.util.List<Item>> contents = TAB_CONTENTS.get(event.getTabKey());
         if (contents != null) {
-            contents.get().forEach(event::accept);
+            java.util.List<Item> items = contents.get();
+            System.out.println("AssetBridge Debug: Adding " + items.size() + " items to tab " + event.getTabKey());
+            items.forEach(event::accept);
         }
     }
     //?} else if >=1.19 {
