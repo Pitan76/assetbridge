@@ -21,7 +21,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -97,7 +97,7 @@ public class AssetBridgePackResources implements PackResources {
     public Set<String> getNamespaces(PackType type) {
         if (!serves(type)) return Set.of();
 
-        Set<String> namespaces = new HashSet<>();
+        Set<String> namespaces = new LinkedHashSet<>();
         for (AssetPath key : bundle.resources().keySet()) {
             if (key.kind() == kind) namespaces.add(key.namespace());
         }

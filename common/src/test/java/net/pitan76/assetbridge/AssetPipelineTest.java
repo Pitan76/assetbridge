@@ -108,7 +108,8 @@ class AssetPipelineTest {
     void generatesAnItemModelOnlyWhenTheArchiveHasNone() {
         AssetBundle generated = build(TestArchives.archive("a.jar", AssetVersion.MODERN, Map.of(
                 "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}"
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
+                "assets/examplemod/models/block/foo.json", "{}"
         )));
         assertEquals("examplemod:block/foo",
                 json(generated, AssetPath.itemModel("examplemod", "foo")).get("parent").getAsString());
@@ -116,6 +117,8 @@ class AssetPipelineTest {
         AssetBundle shipped = build(TestArchives.archive("b.jar", AssetVersion.MODERN, Map.of(
                 "assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
+                "assets/examplemod/models/block/foo.json", "{}",
+                "assets/examplemod/models/block/custom_item.json", "{}",
                 "assets/examplemod/models/item/foo.json", "{\"parent\": \"examplemod:block/custom_item\"}"
         )));
         assertEquals("examplemod:block/custom_item",
@@ -308,6 +311,36 @@ class AssetPipelineTest {
 
         // A blockstate we could not use must not be served either.
         assertFalse(bundle.hasResource(AssetPath.blockState("examplemod", "broken")));
+    }
+
+    @Test
+    void replacesAGeneratedItemModelWhoseBlockModelNeverArrived() {
+        // The blockstate names a model the archive does not contain, so the item model
+        // generated from it would inherit from nothing.
+        AssetBundle bundle = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+                "assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}"
+        )));
+
+        assertEquals("minecraft:item/generated",
+                json(bundle, AssetPath.itemModel("examplemod", "foo")).get("parent").getAsString());
+    }
+
+    @Test
+    void bridgesAnimationMetadataByteForByte() {
+        // A .mcmeta is what makes a texture animate. Nothing in it is version specific, so
+        // it must reach the pack exactly as the archive wrote it.
+        String mcmeta = "{\"animation\": {\"frametime\": 2, \"frames\": [0, 1, 2, 1]}}";
+        AssetBundle bundle = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+                "assets/examplemod/textures/block/foo.png", "png bytes",
+                "assets/examplemod/textures/block/foo.png.mcmeta", mcmeta
+        )));
+
+        AssetPath path = new AssetPath(AssetPath.PackKind.CLIENT, "examplemod",
+                "textures/block/foo.png.mcmeta");
+        byte[] served = assertDoesNotThrow(() -> bundle.readResource(path));
+        assertNotNull(served, "missing resource: " + path);
+        assertEquals(mcmeta, new String(served, StandardCharsets.UTF_8));
     }
 
     private static AssetBundle build(AssetArchive... archives) {

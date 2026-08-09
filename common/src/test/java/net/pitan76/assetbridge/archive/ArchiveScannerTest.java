@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -143,6 +144,86 @@ class ArchiveScannerTest {
         archive.close();
 
         assertThrows(IllegalStateException.class, source::readAll);
+    }
+
+    @Test
+    void loadsArchivesInTheSameOrderOnEveryPlatform() throws IOException {
+        // Upper and lower case must not sort into two different orders depending on whether
+        // the file system happens to be case sensitive.
+        writeArchive("Beta.jar", Map.of("assets/b/blockstates/foo.json", "{}"));
+        writeArchive("alpha.jar", Map.of("assets/a/blockstates/foo.json", "{}"));
+        writeArchive("Charlie.zip", Map.of("assets/c/blockstates/foo.json", "{}"));
+
+        assertEquals(List.of("alpha.jar", "Beta.jar", "Charlie.zip"),
+                scan().stream().map(AssetArchive::fileName).toList());
+    }
+
+    @Test
+    void keepsTheOrderOfTheEntriesInsideAnArchive() throws IOException {
+        Map<String, String> entries = new java.util.LinkedHashMap<>();
+        entries.put("assets/examplemod/blockstates/c.json", "{}");
+        entries.put("assets/examplemod/blockstates/a.json", "{}");
+        entries.put("assets/examplemod/blockstates/b.json", "{}");
+        writeArchive("example-mod.jar", entries);
+
+        assertEquals(List.copyOf(entries.keySet()),
+                single().entries().keySet().stream().map(AssetPath::toFullPath).toList());
+    }
+
+    @Test
+    void bridgesAnArchiveThatIsItselfInsideAnArchive() throws IOException {
+        // A mod carrying its own resource pack, and the jar-in-jar case, are the same shape.
+        writeNested("example-mod.jar",
+                Map.of("assets/examplemod/blockstates/outer.json", "{}"),
+                Map.of("META-INF/jars/inner.jar",
+                        Map.of("assets/innermod/blockstates/inner.json", "{}")));
+
+        List<AssetArchive> archives = scan();
+
+        // The nested one loads right after its parent, so the outer still wins a collision.
+        assertEquals(List.of("example-mod.jar", "example-mod.jar!META-INF_jars_inner.jar"),
+                archives.stream().map(AssetArchive::fileName).toList());
+        assertEquals(Set.of("assets/innermod/blockstates/inner.json"),
+                archives.get(1).entries().keySet().stream()
+                        .map(AssetPath::toFullPath).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Test
+    void dropsANestedLibraryThatCarriesNoAssets() throws IOException {
+        writeNested("example-mod.jar",
+                Map.of("assets/examplemod/blockstates/outer.json", "{}"),
+                Map.of("META-INF/jars/library.jar", Map.of("net/example/Library.class", "cafebabe")));
+
+        assertEquals(List.of("example-mod.jar"), scan().stream().map(AssetArchive::fileName).toList());
+
+        // Nothing useful came out of it, so the extracted copy is not left behind either.
+        Path cached = NestedArchives.cacheDirectory(gameDir)
+                .resolve("example-mod.jar").resolve("META-INF_jars_library.jar");
+        assertFalse(Files.exists(cached), "the cached copy should have been removed");
+    }
+
+    @Test
+    void readsTheNestedAssetsLazilyFromTheCachedCopy() throws IOException {
+        writeNested("example-mod.jar", Map.of(),
+                Map.of("inner.zip", Map.of("assets/innermod/textures/block/foo.png", "png bytes")));
+
+        AssetArchive archive = single();
+        AssetSource source = archive.entries()
+                .get(AssetPath.parse("assets/innermod/textures/block/foo.png"));
+
+        assertEquals("png bytes", new String(source.readAll(), StandardCharsets.UTF_8));
+    }
+
+    private void writeNested(String name, Map<String, String> own,
+                             Map<String, Map<String, String>> nested) throws IOException {
+        Map<String, byte[]> entries = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : own.entrySet()) {
+            entries.put(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8));
+        }
+        for (Map.Entry<String, Map<String, String>> entry : nested.entrySet()) {
+            entries.put(entry.getKey(), TestArchives.bytes(entry.getValue()));
+        }
+        TestArchives.writeRaw(bridgeDir().resolve(name), entries);
     }
 
     private List<AssetArchive> scan() {

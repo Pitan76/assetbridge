@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +13,8 @@ import java.util.Map;
  * the format the running Minecraft version expects.
  */
 public class AssetBundle {
-    private final Map<AssetPath, AssetSource> resources = new HashMap<>();
+    // Insertion ordered: what a pack lists, and in which order, must not depend on a hash.
+    private final Map<AssetPath, AssetSource> resources = new LinkedHashMap<>();
     private final List<BridgedBlockAsset> blocks = new ArrayList<>();
     private final List<BridgedItemAsset> items = new ArrayList<>();
 

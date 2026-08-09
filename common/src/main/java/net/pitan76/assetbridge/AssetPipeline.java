@@ -13,6 +13,7 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
+import net.pitan76.assetbridge.convert.ModelReferenceResolver;
 import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
@@ -119,6 +120,12 @@ public class AssetPipeline {
             itemCandidates.remove(block.id());
         }
         itemCandidates.values().forEach(bundle::addItem);
+
+        // Last, because a model may inherit from one that another archive supplies.
+        int repaired = ModelReferenceResolver.resolve(bundle);
+        if (repaired > 0) {
+            AssetBridge.LOGGER.info("Replaced {} model(s) whose parent was not available", repaired);
+        }
 
         AssetBridge.LOGGER.info("Prepared {} bridged blocks, {} items and {} resources from {} archive(s)",
                 bundle.blocks().size(), bundle.items().size(), bundle.resources().size(), archives.size());
