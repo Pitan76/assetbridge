@@ -20,6 +20,6 @@ public class ItemFeature implements Feature {
 
     @Override
     public void apply(FeatureContext context) {
-        BridgedItems.create(context.bundle());
+        BridgedItems.create(context.assets());
     }
 }

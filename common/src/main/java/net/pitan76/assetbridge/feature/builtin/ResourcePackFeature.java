@@ -26,6 +26,6 @@ public class ResourcePackFeature implements Feature {
 
     @Override
     public void apply(FeatureContext context) {
-        AssetBridge.LOGGER.info("Serving {} bridged resource(s)", context.bundle().resources().size());
+        AssetBridge.LOGGER.info("Serving {} bridged resource(s)", context.assets().resources().size());
     }
 }

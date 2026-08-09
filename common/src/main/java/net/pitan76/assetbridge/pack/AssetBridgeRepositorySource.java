@@ -38,12 +38,12 @@ public class AssetBridgeRepositorySource implements RepositorySource {
     public void loadPacks(Consumer<Pack> consumer, Pack.PackConstructor constructor) {
         if (!Features.isEnabled(featureId)) return;
         // An empty pack is not an error, but Minecraft has no reason to load one.
-        if (!AssetBridge.bundle().hasResources(kind)) return;
+        if (!AssetBridge.assets().hasResources(kind)) return;
 
         Pack pack = Pack.create(
                 packId,
                 true,
-                () -> new AssetBridgePackResources(AssetBridge.bundle(), kind),
+                () -> new AssetBridgePackResources(AssetBridge.assets(), kind),
                 constructor,
                 // Above vanilla so the bridged assets resolve, but below the packs the
                 // player enabled themselves so their own pack still wins.

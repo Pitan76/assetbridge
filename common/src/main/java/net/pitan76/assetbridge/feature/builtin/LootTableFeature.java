@@ -2,7 +2,7 @@ package net.pitan76.assetbridge.feature.builtin;
 
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
-import net.pitan76.assetbridge.asset.BridgedBlockAsset;
+import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.data.LootTables;
 import net.pitan76.assetbridge.feature.Feature;
 import net.pitan76.assetbridge.feature.FeatureContext;
@@ -40,12 +40,12 @@ public class LootTableFeature implements Feature {
         }
 
         int generated = 0;
-        for (BridgedBlockAsset block : context.bundle().blocks()) {
+        for (BridgedBlockDefinition block : context.assets().blocks()) {
             AssetPath path = AssetPath.blockLootTable(block.namespace(), block.path());
             // An archive that shipped its own table keeps it.
-            if (context.bundle().hasResource(path)) continue;
+            if (context.assets().hasResource(path)) continue;
 
-            context.bundle().putResource(path,
+            context.assets().putResource(path,
                     Json.toString(LootTables.dropSelf(block.id())).getBytes(StandardCharsets.UTF_8));
             generated++;
         }

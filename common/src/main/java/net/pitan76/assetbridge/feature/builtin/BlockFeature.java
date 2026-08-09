@@ -20,6 +20,6 @@ public class BlockFeature implements Feature {
 
     @Override
     public void apply(FeatureContext context) {
-        BridgedBlocks.create(context.bundle());
+        BridgedBlocks.create(context.assets());
     }
 }

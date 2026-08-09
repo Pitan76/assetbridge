@@ -57,7 +57,7 @@ public class RecipeFeature implements Feature {
                 if (path.category() != AssetPath.Category.RECIPE) continue;
                 if (context.namespaceInUse().test(path.namespace())) continue;
                 // An archive read earlier claimed this recipe already.
-                if (context.bundle().hasResource(path)) continue;
+                if (context.assets().hasResource(path)) continue;
 
                 byte[] data;
                 try {
@@ -72,7 +72,7 @@ public class RecipeFeature implements Feature {
                     skipped++;
                     continue;
                 }
-                context.bundle().putResource(path, converted);
+                context.assets().putResource(path, converted);
                 bridged++;
             }
         }
