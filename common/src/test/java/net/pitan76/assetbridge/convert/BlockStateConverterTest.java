@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge.convert;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
@@ -82,6 +83,37 @@ class BlockStateConverterTest {
                 .getBytes(StandardCharsets.UTF_8);
 
         assertSame(data, converter.convert(PATH, data, AssetVersion.LEGACY));
+    }
+
+    @Test
+    void keepsUsableVariantWeights() {
+        byte[] data = "{\"variants\": {\"\": [{\"model\": \"m:block/a\", \"weight\": 3}, {\"model\": \"m:block/b\"}]}}"
+                .getBytes(StandardCharsets.UTF_8);
+
+        assertSame(data, converter.convert(PATH, data, AssetVersion.LEGACY));
+    }
+
+    @Test
+    void pullsUnusableWeightsBackToOne() {
+        // A weight of zero or below makes the weighted draw fail and the state renders nothing.
+        JsonObject result = convert("""
+                {"variants": {"": [{"model": "m:block/a", "weight": 0}, {"model": "m:block/b", "weight": -2}]}}""",
+                AssetVersion.MODERN);
+
+        JsonArray variants = result.getAsJsonObject("variants").getAsJsonArray("");
+        assertEquals(1, variants.get(0).getAsJsonObject().get("weight").getAsInt());
+        assertEquals(1, variants.get(1).getAsJsonObject().get("weight").getAsInt());
+    }
+
+    @Test
+    void pullsFractionalAndNonNumericWeightsBackToOne() {
+        JsonObject result = convert("""
+                {"multipart": [{"apply": [{"model": "m:block/a", "weight": 1.5},
+                                          {"model": "m:block/b", "weight": "many"}]}]}""", AssetVersion.MODERN);
+
+        JsonArray applied = result.getAsJsonArray("multipart").get(0).getAsJsonObject().getAsJsonArray("apply");
+        assertEquals(1, applied.get(0).getAsJsonObject().get("weight").getAsInt());
+        assertEquals(1, applied.get(1).getAsJsonObject().get("weight").getAsInt());
     }
 
     @Test

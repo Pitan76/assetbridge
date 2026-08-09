@@ -20,10 +20,23 @@ public class BlockStateParser {
 
     @Nullable
     public static String findModel(JsonObject blockState) {
+        return modelOf(findVariant(blockState));
+    }
+
+    /**
+     * The same choice as {@link #findModel}, but keeping the variant value whole: a weighted
+     * variant is a list of models with a {@code weight} each, and collapsing it to one model
+     * would throw away the randomisation the original mod intended. Callers that need a
+     * stand-in for a state use this so the weights survive.
+     *
+     * @return a {@code {"model": ...}} object or an array of them, or {@code null}
+     */
+    @Nullable
+    public static JsonElement findVariant(JsonObject blockState) {
         if (blockState.has("variants")) {
             JsonObject variants = blockState.getAsJsonObject("variants");
             JsonElement chosen = variants.has("") ? variants.get("") : firstValue(variants);
-            return modelOf(chosen);
+            return modelOf(chosen) == null ? null : chosen;
         }
         if (blockState.has("multipart")) {
             JsonArray parts = blockState.getAsJsonArray("multipart");
@@ -31,15 +44,12 @@ public class BlockStateParser {
                 if (!part.isJsonObject()) continue;
                 // Prefer an unconditional part: it is the one always visible.
                 JsonObject obj = part.getAsJsonObject();
-                if (!obj.has("when")) {
-                    String model = modelOf(obj.get("apply"));
-                    if (model != null) return model;
-                }
+                if (!obj.has("when") && modelOf(obj.get("apply")) != null) return obj.get("apply");
             }
             for (JsonElement part : parts) {
                 if (!part.isJsonObject()) continue;
-                String model = modelOf(part.getAsJsonObject().get("apply"));
-                if (model != null) return model;
+                JsonElement apply = part.getAsJsonObject().get("apply");
+                if (modelOf(apply) != null) return apply;
             }
         }
         return null;

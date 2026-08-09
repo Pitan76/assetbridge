@@ -29,10 +29,10 @@ public class BlockStateConverter implements AssetConverter {
         JsonObject blockState = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (blockState == null) return null;
 
-        boolean changed = false;
+        boolean changed = normaliseWeights(blockState);
         if (blockState.has("variants") && blockState.get("variants").isJsonObject()) {
             JsonObject variants = blockState.getAsJsonObject("variants");
-            changed = qualifyModels(variants);
+            changed |= qualifyModels(variants);
             if (variants.has("normal")) {
                 JsonObject renamed = renameKey(variants, "normal", "");
                 blockState.add("variants", renamed);
@@ -43,6 +43,42 @@ public class BlockStateConverter implements AssetConverter {
             changed |= qualifyModels(blockState.getAsJsonArray("multipart"));
         }
         return changed ? Json.toString(blockState).getBytes(StandardCharsets.UTF_8) : data;
+    }
+
+    /**
+     * A weighted variant is an array of models with a {@code weight} each. Minecraft picks from
+     * it with a weighted random draw, so a weight that is missing, negative or not a whole
+     * number makes the draw fail and the state renders as nothing. Anything unusable is pulled
+     * back to the default weight of 1, which is what a single-model variant behaves like.
+     */
+    private static boolean normaliseWeights(JsonElement element) {
+        boolean changed = false;
+        if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) {
+                changed |= normaliseWeights(child);
+            }
+            return changed;
+        }
+        if (!element.isJsonObject()) return false;
+
+        JsonObject object = element.getAsJsonObject();
+        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+            if (entry.getKey().equals("weight")) {
+                if (weightOf(entry.getValue()) < 1) {
+                    entry.setValue(new com.google.gson.JsonPrimitive(1));
+                    changed = true;
+                }
+            } else if (entry.getValue().isJsonObject() || entry.getValue().isJsonArray()) {
+                changed |= normaliseWeights(entry.getValue());
+            }
+        }
+        return changed;
+    }
+
+    private static int weightOf(JsonElement element) {
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) return 0;
+        double value = element.getAsDouble();
+        return value == Math.floor(value) ? (int) value : 0;
     }
 
     private static JsonObject renameKey(JsonObject object, String from, String to) {
@@ -91,6 +127,14 @@ public class BlockStateConverter implements AssetConverter {
     public static JsonObject singleVariant(String model) {
         JsonObject variant = new JsonObject();
         variant.addProperty("model", model);
+        return singleVariant(variant);
+    }
+
+    /**
+     * Same, but for a variant value taken straight out of the source file, so a weighted list
+     * of models keeps all of its entries instead of collapsing to the first one.
+     */
+    public static JsonObject singleVariant(JsonElement variant) {
         JsonObject variants = new JsonObject();
         variants.add("", variant);
         JsonObject root = new JsonObject();

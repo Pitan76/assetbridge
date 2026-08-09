@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.AssetBundle;
@@ -12,6 +13,7 @@ import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.PassthroughConverter;
+import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
 import net.pitan76.assetbridge.util.Json;
@@ -126,8 +128,9 @@ public class AssetPipeline {
             AssetBridge.LOGGER.warn("Skipping unreadable blockstate {} in {}", id, archive.fileName());
             return;
         }
+        JsonElement variant = BlockStateParser.findVariant(json);
         String model = BlockStateParser.findModel(json);
-        if (model == null) {
+        if (variant == null || model == null) {
             AssetBridge.LOGGER.warn("Skipping blockstate {} in {}: no model reference found", id, archive.fileName());
             return;
         }
@@ -138,15 +141,24 @@ public class AssetPipeline {
 
         BridgedStateDefinition states = BlockStatePropertyParser.parse(json);
         if (states != null) {
-            // Every property can be registered, so the original blockstate resolves as-is.
-            bundle.putResource(path, converted);
+            // Every property can be registered, so the original blockstate resolves as-is —
+            // except for states the file never described, which would render as the missing
+            // model. Those are pointed at the block's representative variant instead.
+            JsonObject completed = BlockStateCoverage.complete(json, states, variant);
+            if (completed == null) {
+                bundle.putResource(path, converted);
+            } else {
+                AssetBridge.LOGGER.info("Filled {} uncovered state(s) of {} in {} with a fallback model",
+                        BlockStateCoverage.missingCount(json, completed), id, archive.fileName());
+                bundle.putResource(path, Json.toString(completed).getBytes(StandardCharsets.UTF_8));
+            }
         } else {
             // Passing it through would make the model loader fail on a property we cannot
             // register, so fall back to a single property-free variant.
             AssetBridge.LOGGER.warn("{} in {} uses properties Asset Bridge cannot register; "
                     + "falling back to a single model", id, archive.fileName());
             states = BridgedStateDefinition.empty();
-            bundle.putResource(path, Json.toString(BlockStateConverter.singleVariant(model))
+            bundle.putResource(path, Json.toString(BlockStateConverter.singleVariant(variant))
                     .getBytes(StandardCharsets.UTF_8));
         }
 
