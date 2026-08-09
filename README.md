@@ -21,6 +21,35 @@ mods/
 登録され、クリエイティブタブとして
 「Asset Bridge: ブロック」、「Asset Bridge: アイテム」から取り出せる。
 
+## 設定 (Config)
+`config/assetbridge.properties` でAsset Bridgeの設定をします。<br />
+初回起動でconfigフォルダの中に設定ファイルが作成されます。
+
+### assetbridge.properties
+
+```properties
+# クリエイティブタブをMOD単位で分割する（falseなら「ブロック」「アイテム」のタブの2つに）
+feature.split_tab_by_namespace=true
+
+# ブロックを登録する
+feature.blocks=true
+
+# アイテムを登録する (ブロック以外のアイテム)
+feature.items=true
+
+# ルートテーブルを生成する（ブロックなどをドロップする）
+feature.loot_tables=true
+
+# レシピを読み込む
+feature.recipes=true
+
+# リソースパックを適用する（モデルやテクスチャなど）
+feature.resource_pack=true
+
+# データパックを適用する（ルートテーブルやレシピなど）
+feature.data_pack=true
+```
+
 ## ビルド
 ```sh
 ./gradlew build
