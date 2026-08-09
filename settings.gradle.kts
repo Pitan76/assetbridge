@@ -19,9 +19,10 @@ plugins {
 // and gaining a `versions/` directory. The root branch gets no versions, so no
 // node is created for it. Plugin versions live in `stonecutter.gradle.kts`.
 stonecutter.create(rootProject) {
-    branch("common") { versions("1.18.2") }
-    branch("fabric") { versions("1.18.2") }
-    branch("forge") { versions("1.18.2") }
+    branch("common") { versions("1.18.2", "1.19.2") }
+    branch("fabric") { versions("1.18.2", "1.19.2") }
+    branch("forge") { versions("1.18.2", "1.19.2") }
+    vcsVersion = "1.18.2"
 }
 
 rootProject.name = "assetbridge"

@@ -85,10 +85,15 @@ dependencies {
 }
 
 tasks.processResources {
+    // Dependency ranges come from the node's gradle.properties, so adding a version
+    // means adding a property rather than editing the manifest.
+    val mcDep = project.findProperty("mc_dep") as String
+
     inputs.property("version", project.version)
+    inputs.property("mc_dep", mcDep)
 
     filesMatching("fabric.mod.json") {
-        expand("version" to project.version)
+        expand("version" to project.version, "mc_dep" to mcDep)
     }
 }
 

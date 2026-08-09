@@ -53,10 +53,21 @@ dependencies {
 }
 
 tasks.processResources {
+    // Dependency ranges come from the node's gradle.properties, so adding a version
+    // means adding a property rather than editing the manifest.
+    val mcDep = project.findProperty("mc_dep") as String
+    val forgeLoaderDep = project.findProperty("forge_loader_dep") as String
+
     inputs.property("version", project.version)
+    inputs.property("mc_dep", mcDep)
+    inputs.property("forge_loader_dep", forgeLoaderDep)
 
     filesMatching("META-INF/mods.toml") {
-        expand("version" to project.version)
+        expand(
+            "version" to project.version,
+            "mc_dep" to mcDep,
+            "forge_loader_dep" to forgeLoaderDep,
+        )
     }
 }
 

@@ -98,9 +98,17 @@ public class AssetBridgePackResources implements PackResources {
         return null;
     }
 
-    @Override
-    public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
-                                                     int maxDepth, Predicate<String> filter) {
+    /**
+     * Collects every bridged resource under {@code path}, version-independently.
+     *
+     * <p>The {@code getResources} override below is the only part that differs between
+     * Minecraft versions, so the traversal lives here and the overrides stay thin.
+     *
+     * @param maxDepth directory levels below {@code path} to descend; pass
+     *                 {@link Integer#MAX_VALUE} on versions that dropped the limit
+     */
+    private List<ResourceLocation> collectResources(PackType type, String namespace, String path,
+                                                    int maxDepth) {
         if (!serves(type)) return List.of();
 
         String prefix = path.endsWith("/") ? path : path + "/";
@@ -111,14 +119,35 @@ public class AssetBridgePackResources implements PackResources {
             if (!key.path().startsWith(prefix)) continue;
 
             String relative = key.path().substring(prefix.length());
-            // maxDepth counts directory levels below `path`.
             if (countSlashes(relative) >= maxDepth) continue;
-            if (!filter.test(fileNameOf(relative))) continue;
 
             found.add(new ResourceLocation(namespace, key.path()));
         }
         return found;
     }
+
+    //? if >=1.19 {
+    /*@Override
+    public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
+                                                     Predicate<ResourceLocation> filter) {
+        // 1.19 dropped the depth limit and moved the filter onto the full identifier.
+        List<ResourceLocation> found = new ArrayList<>();
+        for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
+            if (filter.test(id)) found.add(id);
+        }
+        return found;
+    }
+    *///?} else {
+    @Override
+    public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
+                                                     int maxDepth, Predicate<String> filter) {
+        List<ResourceLocation> found = new ArrayList<>();
+        for (ResourceLocation id : collectResources(type, namespace, path, maxDepth)) {
+            if (filter.test(fileNameOf(id.getPath()))) found.add(id);
+        }
+        return found;
+    }
+    //?}
 
     @Override
     public Set<String> getNamespaces(PackType type) {
