@@ -58,7 +58,7 @@ feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 本プロジェクトは、複数のMCバージョンおよびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
 
 ### クロスプラットフォーム (Architectury Loom)
-- Architectury Loomを採用し、共通のMojangマッピングを適用して開発しています（※実行時ライブラリへの依存はありません）。
+- Architectury Loomを採用し、共通のMojangマッピングを適用して開発しています
 
 ### クロスバージョン管理 (Stonecutter)
 - Stonecutterを導入し、`versions/` 配下にバージョンごとのサブプロジェクトを展開しています。
