@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -25,7 +24,6 @@ public class ModelConverter implements AssetConverter {
     private static final String[] UNKNOWN_FUTURE_KEYS = {"overrides_v2", "oversized_in_gui"};
 
     @Override
-    @Nullable
     public byte[] convert(AssetPath path, byte[] data, AssetVersion from) {
         JsonObject model = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (model == null) return null;
@@ -64,17 +62,34 @@ public class ModelConverter implements AssetConverter {
                 }
             }
         }
+
         return changed;
     }
+
+    private static final Map<String, String> VANILLA_REMAP = Map.of(
+        "block/glass_white", "block/white_stained_glass",
+        "block/anvil_base", "block/anvil"
+        // Add more common legacy mappings as needed
+    );
 
     private static String renameDirectory(String reference) {
         int colon = reference.indexOf(':');
         String namespace = colon < 0 ? "" : reference.substring(0, colon + 1);
         String path = reference.substring(colon + 1);
         if (namespace.isEmpty() || namespace.equals("minecraft:")) {
-            if (path.startsWith("blocks/")) return namespace + "block/" + path.substring("blocks/".length());
-            if (path.startsWith("items/")) return namespace + "item/" + path.substring("items/".length());
+            if (path.startsWith("blocks/")) {
+                path = "block/" + path.substring("blocks/".length());
+            } else if (path.startsWith("items/")) {
+                path = "item/" + path.substring("items/".length());
+            }
+
+            // Apply legacy vanilla name mapping
+            String remapped = VANILLA_REMAP.get(path);
+            if (remapped != null) path = remapped;
+
+            return namespace + path;
         }
+
         return reference;
     }
 }
