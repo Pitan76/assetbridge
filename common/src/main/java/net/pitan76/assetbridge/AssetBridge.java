@@ -3,8 +3,7 @@ package net.pitan76.assetbridge;
 import net.pitan76.assetbridge.archive.ArchiveScanner;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.AssetBundle;
-import net.pitan76.assetbridge.block.BridgedBlocks;
-import net.pitan76.assetbridge.block.BridgedItems;
+import net.pitan76.assetbridge.feature.Features;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +43,9 @@ public class AssetBridge {
         // Build the asset bundle from the archives (assets)
         bundle = AssetPipeline.build(archives, namespaceInUse);
 
-        // Create the bridged blocks and items
-        BridgedBlocks.create(bundle);
-        BridgedItems.create(bundle);
+        // Everything done with the bundle — blocks, items, packs, and whatever is added
+        // later — lives behind a feature, so the core ends here.
+        Features.apply(gameDir, bundle);
     }
 
     public static AssetBundle bundle() {

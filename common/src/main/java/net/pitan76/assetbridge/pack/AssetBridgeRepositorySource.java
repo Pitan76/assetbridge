@@ -4,6 +4,8 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.pitan76.assetbridge.AssetBridge;
+import net.pitan76.assetbridge.feature.Features;
+import net.pitan76.assetbridge.feature.builtin.ResourcePackFeature;
 
 import java.util.function.Consumer;
 
@@ -19,7 +21,7 @@ public class AssetBridgeRepositorySource implements RepositorySource {
 
     @Override
     public void loadPacks(Consumer<Pack> consumer, Pack.PackConstructor constructor) {
-        if (AssetBridge.bundle().isEmpty()) return;
+        if (!Features.isEnabled(ResourcePackFeature.ID) || AssetBridge.bundle().isEmpty()) return;
 
         Pack pack = Pack.create(
                 AssetBridgePackResources.PACK_ID,
