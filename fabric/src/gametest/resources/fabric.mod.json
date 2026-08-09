@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "assetbridge-gametest",
+  "version": "1.0.0",
+  "name": "Asset Bridge Game Tests",
+  "description": "Development-only in-game tests for Asset Bridge. Never shipped.",
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.pitan76.assetbridge.fabric.gametest.GameTestBlocks"
+    ],
+    "fabric-gametest": [
+      "net.pitan76.assetbridge.fabric.gametest.BridgedBlockPlacementTest"
+    ]
+  },
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "1.18.*",
+    "assetbridge": "*"
+  }
+}

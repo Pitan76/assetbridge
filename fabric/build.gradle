@@ -7,6 +7,29 @@ architectury {
     fabric()
 }
 
+// The game tests live in their own source set so they never reach the published jar. Loom puts
+// the source set on the classpath of the `runGametest` task only, where its fabric.mod.json is
+// picked up as a separate dev-only mod.
+sourceSets {
+    gametest {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
+loom {
+    runs {
+        gametest {
+            server()
+            name 'Game Test'
+            source sourceSets.gametest
+            // Without this Fabric API leaves the game test framework off and the server just boots.
+            vmArg '-Dfabric-api.gametest'
+            vmArg "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.get().asFile}/gametest-report.xml"
+        }
+    }
+}
+
 configurations {
     common {
         canBeResolved = true
