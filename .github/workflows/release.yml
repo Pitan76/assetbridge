@@ -27,15 +27,14 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew chiseledBuild
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            fabric/build/libs/*.jar
-            forge/build/libs/*.jar
-            neoforge/build/libs/*.jar
+            fabric/versions/*/build/libs/*.jar
+            forge/versions/*/build/libs/*.jar
           body: |
             ${{ github.event.head_commit.message }}
           generate_release_notes: true
