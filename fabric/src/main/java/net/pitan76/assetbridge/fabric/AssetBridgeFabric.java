@@ -42,6 +42,8 @@ public class AssetBridgeFabric implements ModInitializer {
 
         AssetBridge.init(FabricLoader.getInstance().getGameDir(),
                 namespace -> FabricLoader.getInstance().isModLoaded(namespace));
+        AssetBridge.applyFeatures(FabricLoader.getInstance().getGameDir(),
+                namespace -> FabricLoader.getInstance().isModLoaded(namespace));
 
         // Mod initialisation runs before the registries freeze, so direct registration is fine.
         int registeredBlocks = 0;

@@ -44,7 +44,9 @@ public class AssetBridge {
         assets = AssetPipeline.build(archives, isNamespaceUsed);
 
         BridgedItemGroup.initTabs(assets.namespaces());
+    }
 
+    public static void applyFeatures(Path gameDir, Predicate<String> isNamespaceUsed) {
         // Everything done with the bundle — blocks, items, packs, and whatever is added
         // later — lives behind a feature, so the core ends here.
         Features.apply(gameDir, assets, archives, isNamespaceUsed);

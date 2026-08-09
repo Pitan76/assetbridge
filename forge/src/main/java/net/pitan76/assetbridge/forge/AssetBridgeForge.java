@@ -32,6 +32,17 @@ public class AssetBridgeForge {
     /** Ids that lost the race against a real mod, so their items must be skipped too. */
     private final Set<ResourceLocation> skipped = new LinkedHashSet<>();
 
+    private static boolean featuresApplied = false;
+
+    private static void ensureFeaturesApplied() {
+        if (!featuresApplied) {
+            featuresApplied = true;
+            AssetBridge.applyFeatures(
+                    FMLPaths.GAMEDIR.get(),
+                    namespace -> ModList.get().isLoaded(namespace));
+        }
+    }
+
     //? if >=1.20.1 {
     private static final Map<ResourceLocation, CreativeModeTab> TABS_TO_REGISTER = new LinkedHashMap<>();
     private static final Map<net.minecraft.resources.ResourceKey<CreativeModeTab>, Supplier<java.util.List<Item>>> TAB_CONTENTS = new java.util.HashMap<>();
@@ -144,6 +155,7 @@ public class AssetBridgeForge {
 
     private void registerBlocksInto(Predicate<ResourceLocation> taken,
                                     BiConsumer<ResourceLocation, Block> register) {
+        ensureFeaturesApplied();
         for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
             if (taken.test(entry.getKey())) {
                 AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", entry.getKey());
@@ -157,6 +169,7 @@ public class AssetBridgeForge {
 
     private void registerItemsInto(Predicate<ResourceLocation> taken,
                                    BiConsumer<ResourceLocation, Item> register) {
+        ensureFeaturesApplied();
         for (Map.Entry<ResourceLocation, Item> entry : BridgedBlocks.items().entrySet()) {
             if (skipped.contains(entry.getKey()) || taken.test(entry.getKey())) continue;
             register.accept(entry.getKey(), entry.getValue());

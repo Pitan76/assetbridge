@@ -179,7 +179,7 @@ public class AssetBridgePackResources implements PackResources {
     }
 
     //? if >=1.20 {
-    // Replaced by listResources above.
+     Replaced by listResources above.
     //?} elif >=1.19 {
     /*@Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
