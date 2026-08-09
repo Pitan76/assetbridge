@@ -39,7 +39,16 @@ public class Features {
     ));
 
     private static Set<String> enabled = Set.of();
+    private static java.util.Map<String, String> configValues = java.util.Collections.emptyMap();
     private static boolean applied;
+
+    public static String getConfigValue(String featureId) {
+        return configValues.get(featureId);
+    }
+
+    public static void setConfigValues(java.util.Map<String, String> values) {
+        configValues = java.util.Collections.unmodifiableMap(new java.util.HashMap<>(values));
+    }
 
     private Features() {
     }

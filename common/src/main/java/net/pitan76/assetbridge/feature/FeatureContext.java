@@ -30,4 +30,8 @@ public record FeatureContext(Path gameDir, BridgedAssetManager assets, Set<Strin
     public boolean isEnabled(String featureId) {
         return enabled.contains(featureId);
     }
+
+    public String getConfigValue(String featureId) {
+        return Features.getConfigValue(featureId);
+    }
 }

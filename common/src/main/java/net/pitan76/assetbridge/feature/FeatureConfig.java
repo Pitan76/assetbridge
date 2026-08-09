@@ -46,29 +46,45 @@ public class FeatureConfig {
         }
 
         Set<String> enabled = new LinkedHashSet<>();
+        java.util.Map<String, String> valuesMap = new java.util.HashMap<>();
         boolean complete = true;
         for (Feature feature : features) {
             String value = properties.getProperty(KEY_PREFIX + feature.id());
             if (value == null) {
                 complete = false;
+                String defaultValue = String.valueOf(feature.enabledByDefault());
+                valuesMap.put(feature.id(), defaultValue);
                 if (feature.enabledByDefault()) enabled.add(feature.id());
-            } else if (Boolean.parseBoolean(value.trim())) {
-                enabled.add(feature.id());
+            } else {
+                String trimmed = value.trim();
+                valuesMap.put(feature.id(), trimmed);
+                if (trimmed.equalsIgnoreCase("true") || (!trimmed.equalsIgnoreCase("false") && isCustomValidValue(feature.id(), trimmed))) {
+                    enabled.add(feature.id());
+                }
             }
         }
 
-        if (!complete) write(path, features, enabled);
+        Features.setConfigValues(valuesMap);
+
+        if (!complete) write(path, features, valuesMap);
         return enabled;
     }
 
-    private static void write(Path path, List<Feature> features, Set<String> enabled) {
+    private static boolean isCustomValidValue(String featureId, String value) {
+        if (featureId.equals("cutout_blocks")) {
+            return value.contains(":") || value.contains(",");
+        }
+        return false;
+    }
+
+    private static void write(Path path, List<Feature> features, java.util.Map<String, String> valuesMap) {
         StringBuilder text = new StringBuilder("# ").append(AssetBridge.MOD_NAME)
                 .append(" features. Set a line to false to switch that part off.\n");
         for (Feature feature : features) {
             text.append('\n')
                     .append("# ").append(feature.description()).append('\n')
                     .append(KEY_PREFIX).append(feature.id()).append('=')
-                    .append(enabled.contains(feature.id())).append('\n');
+                    .append(valuesMap.getOrDefault(feature.id(), String.valueOf(feature.enabledByDefault()))).append('\n');
         }
 
         try {
