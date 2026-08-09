@@ -9,15 +9,17 @@ pluginManagement {
         }
         gradlePluginPortal()
     }
+    plugins {
+        id("dev.architectury.loom") version "1.14-SNAPSHOT"
+        id("architectury-plugin") version "3.4-SNAPSHOT"
+        id("com.gradleup.shadow") version "9.6.1"
+    }
 }
 
 plugins {
     id("dev.kikugie.stonecutter") version "0.9.7"
 }
 
-// Each existing subproject becomes a Stonecutter branch, keeping its own `src/`
-// and gaining a `versions/` directory. The root branch is left without versions
-// so no node is created for it.
 stonecutter.create(rootProject) {
     branch("common") { versions("1.18.2") }
     branch("fabric") { versions("1.18.2") }

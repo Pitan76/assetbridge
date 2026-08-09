@@ -1,11 +1,21 @@
+plugins {
+    id("dev.architectury.loom")
+    id("architectury-plugin")
+    id("maven-publish")
+}
+
 val enabled_platforms = project.findProperty("enabled_platforms") as String
 val fabric_loader_version = project.findProperty("fabric_loader_version") as String
+val minecraft_version = project.findProperty("minecraft_version") as String
 
 architectury {
     common(enabled_platforms.split(","))
 }
 
 dependencies {
+    "minecraft"("net.minecraft:minecraft:$minecraft_version")
+    "mappings"((project.extensions.getByName("loom") as net.fabricmc.loom.LoomGradleExtension).officialMojangMappings())
+
     "modImplementation"("net.fabricmc:fabric-loader:$fabric_loader_version")
 
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
