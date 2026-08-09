@@ -2,6 +2,13 @@ plugins {
     id 'com.github.johnrengelman.shadow'
 }
 
+// Workaround for Architectury Transformer FileNotFoundException: debug.log
+def transformerDebugLog = file("run/.architectury-transformer/debug.log")
+if (!transformerDebugLog.exists()) {
+    transformerDebugLog.parentFile.mkdirs()
+    transformerDebugLog.createNewFile()
+}
+
 architectury {
     platformSetupLoomIde()
     fabric()
