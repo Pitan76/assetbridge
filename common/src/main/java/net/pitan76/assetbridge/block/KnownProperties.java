@@ -1,0 +1,49 @@
+package net.pitan76.assetbridge.block;
+
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.pitan76.assetbridge.asset.BridgedProperty;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+
+/**
+ * Recognises recovered properties that have an exact vanilla counterpart.
+ *
+ * <p>{@link StringProperty} would render these correctly on its own; the point of using the
+ * vanilla property instead is its type. A {@code DirectionProperty} is what lets
+ * {@link BridgedBlock} decide an orientation when the block is placed.
+ *
+ * <p>The match has to be exact — same name, same value set — otherwise a property that merely
+ * looks familiar would get vanilla's values rather than the ones the blockstate file uses.
+ */
+public class KnownProperties {
+    private static final Set<String> HORIZONTAL = Set.of("north", "south", "west", "east");
+    private static final Set<String> ALL_DIRECTIONS = Set.of("north", "south", "west", "east", "up", "down");
+    private static final Set<String> ALL_AXES = Set.of("x", "y", "z");
+    private static final Set<String> HORIZONTAL_AXES = Set.of("x", "z");
+
+    private KnownProperties() {
+    }
+
+    /** @return the vanilla property to use, or {@code null} to fall back to a StringProperty */
+    @Nullable
+    public static Property<?> match(BridgedProperty property) {
+        Set<String> values = Set.copyOf(property.values());
+        if (values.size() != property.values().size()) return null;
+
+        return switch (property.name()) {
+            case "facing" -> {
+                if (values.equals(HORIZONTAL)) yield BlockStateProperties.HORIZONTAL_FACING;
+                if (values.equals(ALL_DIRECTIONS)) yield BlockStateProperties.FACING;
+                yield null;
+            }
+            case "axis" -> {
+                if (values.equals(ALL_AXES)) yield BlockStateProperties.AXIS;
+                if (values.equals(HORIZONTAL_AXES)) yield BlockStateProperties.HORIZONTAL_AXIS;
+                yield null;
+            }
+            default -> null;
+        };
+    }
+}
