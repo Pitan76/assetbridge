@@ -2,6 +2,7 @@ plugins {
     id("dev.architectury.loom")
     id("architectury-plugin")
     id("com.gradleup.shadow")
+    id("me.modmuss50.mod-publish-plugin") version "2.2.0"
 }
 
 val forge_version = project.findProperty("forge_version") as String
@@ -78,4 +79,32 @@ tasks.shadowJar {
 
 tasks.remapJar {
     inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
+}
+
+publishMods {
+    val mcVersion = project.name
+    file.set(tasks.remapJar.flatMap { it.archiveFile })
+    changelog.set("Release of version ${project.version} for Minecraft $mcVersion (Forge)")
+    type.set(me.modmuss50.mpp.ReleaseType.STABLE)
+    modLoaders.add("forge")
+
+    val curseforgeId = project.findProperty("curseforge_project_id") as? String
+    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN").orNull ?: project.findProperty("curseforge_token") as? String
+    if (curseforgeId != null && curseforgeToken != null) {
+        curseforge {
+            projectId.set(curseforgeId)
+            accessToken.set(curseforgeToken)
+            minecraftVersions.add(mcVersion)
+        }
+    }
+
+    val modrinthId = project.findProperty("modrinth_project_id") as? String
+    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orNull ?: project.findProperty("modrinth_token") as? String
+    if (modrinthId != null && modrinthToken != null) {
+        modrinth {
+            projectId.set(modrinthId)
+            accessToken.set(modrinthToken)
+            minecraftVersions.add(mcVersion)
+        }
+    }
 }
