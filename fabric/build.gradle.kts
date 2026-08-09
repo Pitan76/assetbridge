@@ -6,6 +6,7 @@ plugins {
 
 val fabric_loader_version = project.findProperty("fabric_loader_version") as String
 val fabric_api_version = project.findProperty("fabric_api_version") as String
+val minecraft_version = project.findProperty("minecraft_version") as String
 
 fun createTransformerDebugLog() {
     val logFile = file("run/.architectury-transformer/debug.log")
@@ -64,12 +65,21 @@ configurations.create("shadowBundle") {
     isCanBeConsumed = false
 }
 
+// Under Stonecutter the artifact-producing project is the node (`:common:1.18.2`),
+// not the branch container (`:common`). Resolve it through the sibling branch.
+val commonProject: Project = requireNotNull(stonecutter.node.sibling("common")?.project) {
+    "No common node matching $project"
+}
+
 dependencies {
+    "minecraft"("net.minecraft:minecraft:$minecraft_version")
+    "mappings"((project.extensions.getByName("loom") as net.fabricmc.loom.LoomGradleExtension).officialMojangMappings())
+
     "modImplementation"("net.fabricmc:fabric-loader:$fabric_loader_version")
     "modImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric_api_version")
 
-    "common"(project(path = ":common", configuration = "namedElements")) { isTransitive = false }
-    "shadowBundle"(project(path = ":common", configuration = "transformProductionFabric"))
+    "common"(project(commonProject.path, "namedElements")) { isTransitive = false }
+    "shadowBundle"(project(commonProject.path, "transformProductionFabric"))
 }
 
 tasks.processResources {

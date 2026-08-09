@@ -5,6 +5,7 @@ plugins {
 }
 
 val forge_version = project.findProperty("forge_version") as String
+val minecraft_version = project.findProperty("minecraft_version") as String
 
 loom {
     forge {
@@ -33,11 +34,20 @@ configurations.create("shadowBundle") {
     isCanBeConsumed = false
 }
 
+// Under Stonecutter the artifact-producing project is the node (`:common:1.18.2`),
+// not the branch container (`:common`). Resolve it through the sibling branch.
+val commonProject: Project = requireNotNull(stonecutter.node.sibling("common")?.project) {
+    "No common node matching $project"
+}
+
 dependencies {
+    "minecraft"("net.minecraft:minecraft:$minecraft_version")
+    "mappings"((project.extensions.getByName("loom") as net.fabricmc.loom.LoomGradleExtension).officialMojangMappings())
+
     "forge"("net.minecraftforge:forge:$forge_version")
 
-    "common"(project(path = ":common", configuration = "namedElements")) { isTransitive = false }
-    "shadowBundle"(project(path = ":common", configuration = "transformProductionForge"))
+    "common"(project(commonProject.path, "namedElements")) { isTransitive = false }
+    "shadowBundle"(project(commonProject.path, "transformProductionForge"))
 }
 
 tasks.processResources {
