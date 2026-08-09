@@ -1,6 +1,9 @@
 package net.pitan76.assetbridge.asset;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Locale;
 
 /**
  * A resource location inside a pack, split into its meaningful parts.
@@ -15,6 +18,11 @@ import org.jetbrains.annotations.Nullable;
  * @param path      everything below the namespace, e.g. {@code models/block/foo.json}
  */
 public record AssetPath(PackKind kind, String namespace, String path) {
+    public AssetPath {
+        namespace = namespace.toLowerCase(Locale.ROOT);
+        path = path.toLowerCase(Locale.ROOT);
+    }
+
     /** Pack roots. Mirrors Minecraft's {@code PackType} without depending on it. */
     public enum PackKind {
         CLIENT("assets"),
@@ -155,7 +163,7 @@ public record AssetPath(PackKind kind, String namespace, String path) {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return toFullPath();
     }
 }
