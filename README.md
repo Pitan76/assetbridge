@@ -54,6 +54,8 @@ feature.data_pack=true
 feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
+## 技術的な話
+
 ## ビルド
 ```sh
 ./gradlew build
