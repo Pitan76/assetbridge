@@ -14,7 +14,7 @@ architectury {
 
 dependencies {
     "minecraft"("net.minecraft:minecraft:$minecraft_version")
-    "mappings"((project.extensions.getByName("loom") as net.fabricmc.loom.LoomGradleExtension).officialMojangMappings())
+    "mappings"(loom.officialMojangMappings())
 
     "modImplementation"("net.fabricmc:fabric-loader:$fabric_loader_version")
 

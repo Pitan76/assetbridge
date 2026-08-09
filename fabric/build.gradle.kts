@@ -65,15 +65,17 @@ configurations.create("shadowBundle") {
     isCanBeConsumed = false
 }
 
-// Under Stonecutter the artifact-producing project is the node (`:common:1.18.2`),
-// not the branch container (`:common`). Resolve it through the sibling branch.
-val commonProject: Project = requireNotNull(stonecutter.node.sibling("common")?.project) {
-    "No common node matching $project"
-}
+// Under Stonecutter the artifact-producing project is the common *node*
+// (`:common:1.18.2`), not the branch container (`:common`).
+val commonProject: Project = project(":common:${stonecutter.current.project}")
+
+// Architectury creates the `transformProduction*` configurations while the common
+// node is evaluated, so it must be configured before this script resolves them.
+evaluationDependsOn(commonProject.path)
 
 dependencies {
     "minecraft"("net.minecraft:minecraft:$minecraft_version")
-    "mappings"((project.extensions.getByName("loom") as net.fabricmc.loom.LoomGradleExtension).officialMojangMappings())
+    "mappings"(loom.officialMojangMappings())
 
     "modImplementation"("net.fabricmc:fabric-loader:$fabric_loader_version")
     "modImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric_api_version")
