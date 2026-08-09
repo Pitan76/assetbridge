@@ -1,5 +1,5 @@
-val enabled_platforms: String by project
-val fabric_loader_version: String by project
+val enabled_platforms = project.findProperty("enabled_platforms") as String
+val fabric_loader_version = project.findProperty("fabric_loader_version") as String
 
 architectury {
     common(enabled_platforms.split(","))

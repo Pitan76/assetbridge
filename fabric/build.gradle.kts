@@ -2,8 +2,8 @@ plugins {
     id("com.gradleup.shadow")
 }
 
-val fabric_loader_version: String by project
-val fabric_api_version: String by project
+val fabric_loader_version = project.findProperty("fabric_loader_version") as String
+val fabric_api_version = project.findProperty("fabric_api_version") as String
 
 fun createTransformerDebugLog() {
     val logFile = file("run/.architectury-transformer/debug.log")
@@ -28,7 +28,7 @@ architectury {
     fabric()
 }
 
-val gametest by sourceSets.creating {
+val gametest = sourceSets.create("gametest") {
     val main = sourceSets.main.get()
     compileClasspath += main.compileClasspath + main.output
     runtimeClasspath += main.runtimeClasspath + main.output
@@ -46,7 +46,7 @@ loom {
     }
 }
 
-val common by configurations.creating {
+val common = configurations.create("common") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -54,11 +54,10 @@ val common by configurations.creating {
 configurations {
     compileClasspath.get().extendsFrom(common)
     runtimeClasspath.get().extendsFrom(common)
-    val developmentFabric by getting
-    developmentFabric.extendsFrom(common)
+    getByName("developmentFabric").extendsFrom(common)
 }
 
-val shadowBundle by configurations.creating {
+val shadowBundle = configurations.create("shadowBundle") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -85,5 +84,5 @@ tasks.shadowJar {
 }
 
 tasks.remapJar {
-    input.set(tasks.shadowJar.flatMap { it.archiveFile })
+    inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
 }

@@ -2,7 +2,7 @@ plugins {
     id("com.gradleup.shadow")
 }
 
-val forge_version: String by project
+val forge_version = project.findProperty("forge_version") as String
 
 loom {
     forge {
@@ -15,7 +15,7 @@ architectury {
     forge()
 }
 
-val common by configurations.creating {
+val common = configurations.create("common") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -23,11 +23,10 @@ val common by configurations.creating {
 configurations {
     compileClasspath.get().extendsFrom(common)
     runtimeClasspath.get().extendsFrom(common)
-    val developmentForge by getting
-    developmentForge.extendsFrom(common)
+    getByName("developmentForge").extendsFrom(common)
 }
 
-val shadowBundle by configurations.creating {
+val shadowBundle = configurations.create("shadowBundle") {
     isCanBeResolved = true
     isCanBeConsumed = false
 }
@@ -53,5 +52,5 @@ tasks.shadowJar {
 }
 
 tasks.remapJar {
-    input.set(tasks.shadowJar.flatMap { it.archiveFile })
+    inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
 }
