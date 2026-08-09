@@ -169,7 +169,11 @@ public class AssetBridgePackResources implements PackResources {
             String relative = key.path().substring(prefix.length());
             if (countSlashes(relative) >= maxDepth) continue;
 
-            found.add(new ResourceLocation(namespace, key.path()));
+            try {
+                found.add(new ResourceLocation(namespace, key.path()));
+            } catch (Exception e) {
+                // Ignore files with invalid characters in path
+            }
         }
         return found;
     }
