@@ -20,6 +20,48 @@ plugins {
 }
 stonecutter active "1.18.2" /* [SC] DO NOT EDIT */
 
+// 26.1 renamed vanilla types that this mod touches in ~85 places. These are pure identifier
+// swaps with no behavioural difference, so a string replacement keeps a single source shape;
+// wrapping every use in `//? if` blocks would bury the code in preprocessor comments.
+//
+// The source is written with the pre-26 names and rewritten when a node at 26 or above is
+// active. Both renames stay inside their original package, so the import lines migrate too.
+// Verified before adding these: the old names never appear as part of a longer identifier, so
+// a plain textual replacement cannot hit anything unintended.
+//
+// Renames that change more than the name (MetadataSectionType is a record where the old
+// serializer was an interface) still need a `//? if` branch at the call site.
+stonecutter parameters {
+    replacements {
+        string {
+            direction = eval(current.version, ">=26")
+            replace("ResourceLocation", "Identifier")
+        }
+        string {
+            direction = eval(current.version, ">=26")
+            replace("MetadataSectionSerializer", "MetadataSectionType")
+        }
+        // Fabric API moved its creative tab helpers out of `itemgroup.v1` and renamed them. The
+        // shapes are unchanged -- `builder()` still returns CreativeModeTab.Builder, and the new
+        // output type implements CreativeModeTab.Output, so the existing `accept` method reference
+        // still resolves -- which keeps these to plain renames.
+        string {
+            direction = eval(current.version, ">=26")
+            replace(
+                "net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup",
+                "net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab",
+            )
+        }
+        string {
+            direction = eval(current.version, ">=26")
+            replace(
+                "net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent",
+                "net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent",
+            )
+        }
+    }
+}
+
 // A node is named after its Minecraft version, which decides the Java level:
 // Minecraft moved to 21 in 1.20.5, and to 25 in the 26.x scheme.
 fun javaFor(nodeName: String): JavaVersion {

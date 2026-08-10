@@ -1,6 +1,9 @@
 package net.pitan76.assetbridge.pack;
 
 import com.google.gson.JsonObject;
+// Only the >=26 branch of getMetadataSection uses this, but the class exists in every supported
+// version, so importing it unconditionally is cheaper than a preprocessor block.
+import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
@@ -232,9 +235,20 @@ public class AssetBridgePackResources implements PackResources {
     @Nullable
     public <T> T getMetadataSection(MetadataSectionSerializer<T> serializer) {
         JsonObject root = GsonHelper.parse(new StringReader(mcmeta));
+        //? if >=26 {
+        /*// 26.1 turned the serializer into a record carrying a Codec, so the section name and the
+        // deserialisation both come from different members than before.
+        String section = serializer.name();
+        if (!root.has(section)) return null;
+        return serializer.codec()
+                .parse(JsonOps.INSTANCE, GsonHelper.getAsJsonObject(root, section))
+                .result()
+                .orElse(null);
+        *///?} else {
         String section = serializer.getMetadataSectionName();
         if (!root.has(section)) return null;
         return serializer.fromJson(GsonHelper.getAsJsonObject(root, section));
+        //?}
     }
 
     /** This pack only answers for the root it was built for; the other one is a separate pack. */

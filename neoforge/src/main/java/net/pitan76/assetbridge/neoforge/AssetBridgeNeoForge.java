@@ -129,7 +129,12 @@ public class AssetBridgeNeoForge {
 
     /** 1.19.3 onwards a tab collects its own contents rather than items naming their tab. */
     private void onBuildTabContents(BuildCreativeModeTabContentsEvent event) {
+        //? if >=26 {
+        /*// 26.1 renamed ResourceKey#location to #identifier.
+        ResourceLocation key = event.getTabKey().identifier();
+        *///?} else {
         ResourceLocation key = event.getTabKey().location();
+        //?}
         if (!AssetBridge.MOD_ID.equals(key.getNamespace())) return;
 
         String path = key.getPath();
@@ -146,6 +151,12 @@ public class AssetBridgeNeoForge {
 
     private void clientSetup(FMLClientSetupEvent event) {
         if (!Features.isEnabled(CutoutBlocksFeature.ID)) return;
+        //? if >=26 {
+        /*// 26.1 removed ItemBlockRenderTypes; the layer a block draws on now comes from its block
+        // model JSON (`"render_type"`), so there is nothing to register from code. Assets from
+        // pre-26 mods carry no such field, so CutoutBlocksFeature has no effect on this version
+        // until the served model JSON is rewritten -- see memo/MC-26.1.2.md.
+        *///?} else {
         event.enqueueWork(() -> {
             for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
                 if (BridgedBlocks.isCutout(entry.getKey())) {
@@ -154,6 +165,7 @@ public class AssetBridgeNeoForge {
                 }
             }
         });
+        //?}
     }
 
     private static ResourceLocation id(String path) {

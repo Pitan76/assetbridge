@@ -7,7 +7,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -29,8 +28,13 @@ public class BridgedBlock extends Block {
      */
     private static final ThreadLocal<BridgedStateDefinition> PENDING = new ThreadLocal<>();
 
+    /**
+     * Typed as {@code EnumProperty<Direction>} rather than {@code DirectionProperty}: 26.1 dropped
+     * the latter, and before it the two were the same thing -- {@code DirectionProperty} extended
+     * exactly this. One declaration therefore covers every version.
+     */
     @Nullable
-    private final DirectionProperty facing;
+    private final EnumProperty<Direction> facing;
     @Nullable
     private final EnumProperty<Direction.Axis> axis;
 
@@ -91,9 +95,16 @@ public class BridgedBlock extends Block {
     }
 
     @Nullable
-    private DirectionProperty directionProperty() {
+    @SuppressWarnings("unchecked")
+    private EnumProperty<Direction> directionProperty() {
         Property<?> property = getStateDefinition().getProperty("facing");
-        return property instanceof DirectionProperty direction ? direction : null;
+        // A generic type cannot appear in an `instanceof` pattern, so the element type is checked
+        // separately. This is what `instanceof DirectionProperty` amounted to before 26.1 removed
+        // that class.
+        if (property instanceof EnumProperty<?> && property.getValueClass() == Direction.class) {
+            return (EnumProperty<Direction>) property;
+        }
+        return null;
     }
 
     @Nullable
