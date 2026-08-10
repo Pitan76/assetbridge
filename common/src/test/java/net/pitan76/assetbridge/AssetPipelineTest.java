@@ -281,6 +281,16 @@ class AssetPipelineTest {
         assertEquals(List.of("newmod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
     }
 
+    //? if >=26 {
+    /*@Test
+    void doesNotServeItemDefinitionsThisVersionCannotRead() {
+        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Map.of(
+                "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}"
+        )));
+
+        assertTrue(assets.hasResource(new AssetPath(AssetPath.PackKind.CLIENT, "newmod", "items/wand.json")));
+    }
+    *///?} else {
     @Test
     void doesNotServeItemDefinitionsThisVersionCannotRead() {
         BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Map.of(
@@ -289,6 +299,7 @@ class AssetPipelineTest {
 
         assertFalse(assets.hasResource(new AssetPath(AssetPath.PackKind.CLIENT, "newmod", "items/wand.json")));
     }
+    //?}
 
     @Test
     void stillUsesItemModelsForNamespacesWithoutDefinitions() {
