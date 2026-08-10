@@ -31,6 +31,7 @@ jobs:
 
       - name: Publish to CurseForge and Modrinth
         run: ./gradlew publishMods
+        continue-on-error: true
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
