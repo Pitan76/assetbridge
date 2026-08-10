@@ -43,7 +43,7 @@ public class AssetBridge {
         archives = ArchiveScanner.scan(gameDir);
         assets = AssetPipeline.build(archives, isNamespaceUsed);
 
-        BridgedItemGroup.initTabs(assets.namespaces());
+        BridgedItemGroup.initTabs(assets.namespaces(), assets.modNames());
     }
 
     public static void applyFeatures(Path gameDir, Predicate<String> isNamespaceUsed) {
