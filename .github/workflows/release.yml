@@ -41,6 +41,7 @@ jobs:
           files: |
             fabric/versions/*/build/libs/*.jar
             forge/versions/*/build/libs/*.jar
+            neoforge/versions/*/build/libs/*.jar
           body: |
             ${{ github.event.head_commit.message }}
           generate_release_notes: true

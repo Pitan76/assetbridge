@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# A newer push to the same branch/PR makes the in-flight run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Stonecutter rewrites preprocessor comments in `src/` when the active version is
+  # switched, so a commit made while a non-default version was active carries that
+  # rewrite as diff noise. `stonecutter active` is the single source of that state:
+  # if it matches `vcsVersion`, the committed comments are the default ones.
+  # This replaces the "commit 前に Reset active project" manual rule.
+  active-version:
+    name: Active version is reset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check active version matches vcsVersion
+        run: |
+          vcs=$(sed -n 's/.*vcsVersion *= *"\([^"]*\)".*/\1/p' settings.gradle.kts | head -n1)
+          active=$(sed -n 's/^stonecutter active *"\([^"]*\)".*/\1/p' stonecutter.gradle.kts | head -n1)
+
+          if [ -z "$vcs" ]; then
+            echo "::error file=settings.gradle.kts::vcsVersion が読み取れませんでした"
+            exit 1
+          fi
+          if [ -z "$active" ]; then
+            echo "::error file=stonecutter.gradle.kts::stonecutter active の行が読み取れませんでした"
+            exit 1
+          fi
+
+          echo "vcsVersion=$vcs  active=$active"
+          if [ "$vcs" != "$active" ]; then
+            echo "::error file=stonecutter.gradle.kts::active version が $active のままコミットされています。" \
+                 "'./gradlew \"Reset active project\"' を実行して $vcs に戻してからコミットしてください。"
+            exit 1
+          fi
+
+  build:
+    name: chiseledBuild
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Nodes below 1.20.5 target Java 17 and 1.21.1 targets 21, but the build sets
+      # this per node via `options.release`, so one JDK 21 compiles them all.
+      # Matches release.yml deliberately: CI must build the way releases build.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build every registered version
+        run: ./gradlew chiseledBuild
+
+      # A chiseled build must not touch tracked sources. If it does, the version
+      # switching leaked out of build/ and the working tree is no longer the state
+      # that was reviewed.
+      - name: Build left the working tree clean
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::chiseledBuild が追跡対象ファイルを書き換えました (上の diff を参照)"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jars
+          path: |
+            fabric/versions/*/build/libs/*.jar
+            forge/versions/*/build/libs/*.jar
+            neoforge/versions/*/build/libs/*.jar
+          if-no-files-found: error
