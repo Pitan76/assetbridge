@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
@@ -68,7 +69,7 @@ class AssetPipelineTest {
         JsonObject variants = served.getAsJsonObject("variants");
 
         // Every variant survives, rotations included, so the block renders like the original.
-        assertEquals(Set.of("facing=north", "facing=south"), variants.keySet());
+        assertEquals(Set.of("facing=north", "facing=south"), keysOf(variants));
         assertEquals(90, variants.getAsJsonObject("facing=north").get("y").getAsInt());
 
         BridgedStateDefinition states = assets.blocks().get(0).states();
@@ -85,7 +86,7 @@ class AssetPipelineTest {
 
         // Serving the original would make the model loader fail on the unknown property.
         JsonObject served = json(assets, AssetPath.blockState("examplemod", "foo"));
-        assertEquals(Set.of(""), served.getAsJsonObject("variants").keySet());
+        assertEquals(Set.of(""), keysOf(served.getAsJsonObject("variants")));
         assertEquals("examplemod:block/foo",
                 served.getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString());
         assertTrue(assets.blocks().get(0).states().isEmpty());
@@ -100,7 +101,7 @@ class AssetPipelineTest {
         JsonObject served = json(assets, AssetPath.blockState("oldmod", "foo"));
         JsonObject variants = served.getAsJsonObject("variants");
 
-        assertEquals(Set.of(""), variants.keySet());
+        assertEquals(Set.of(""), keysOf(variants));
         assertEquals("block/cube_all", variants.getAsJsonObject("").get("model").getAsString());
         assertTrue(assets.blocks().get(0).states().isEmpty());
     }
@@ -391,5 +392,13 @@ class AssetPipelineTest {
         JsonObject parsed = Json.parse(new String(data, StandardCharsets.UTF_8));
         assertNotNull(parsed);
         return parsed;
+    }
+
+    private static Set<String> keysOf(JsonObject obj) {
+        Set<String> keys = new java.util.HashSet<>();
+        for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+            keys.add(entry.getKey());
+        }
+        return keys;
     }
 }

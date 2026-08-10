@@ -6,9 +6,9 @@ import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
 import net.pitan76.assetbridge.feature.Features;
 //? if <=1.17 {
-import org.apache.logging.log4j.LogManager;
+/*import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//?} else {
+*///?} else {
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 //?}
@@ -23,8 +23,8 @@ public class AssetBridge {
     public static final String MOD_ID = "assetbridge";
 
     //? if <=1.17 {
-    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
-    //?} else {
+    /*public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
+    *///?} else {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
     //?}
 

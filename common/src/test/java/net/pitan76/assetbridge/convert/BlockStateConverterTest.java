@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.convert;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
@@ -8,6 +9,7 @@ import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +27,7 @@ class BlockStateConverterTest {
         JsonObject result = convert("""
                 {"variants": {"normal": {"model": "oldmod:block/foo"}}}""", AssetVersion.LEGACY);
 
-        assertEquals(Set.of(""), result.getAsJsonObject("variants").keySet());
+        assertEquals(Set.of(""), keysOf(result.getAsJsonObject("variants")));
     }
 
     @Test
@@ -34,7 +36,7 @@ class BlockStateConverterTest {
                 {"variants": {"normal": {"model": "oldmod:block/a"}, "facing=north": {"model": "oldmod:block/b"}}}""",
                 AssetVersion.LEGACY);
 
-        assertEquals(Set.of("", "facing=north"), result.getAsJsonObject("variants").keySet());
+        assertEquals(Set.of("", "facing=north"), keysOf(result.getAsJsonObject("variants")));
     }
 
     @Test
@@ -127,5 +129,13 @@ class BlockStateConverterTest {
         JsonObject parsed = Json.parse(new String(result, StandardCharsets.UTF_8));
         assertNotNull(parsed);
         return parsed;
+    }
+
+    private static Set<String> keysOf(JsonObject obj) {
+        Set<String> keys = new java.util.HashSet<>();
+        for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+            keys.add(entry.getKey());
+        }
+        return keys;
     }
 }

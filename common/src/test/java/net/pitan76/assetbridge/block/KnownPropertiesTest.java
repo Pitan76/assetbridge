@@ -17,7 +17,9 @@ class KnownPropertiesTest {
     /** BlockStateProperties pulls in SoundEvents, which needs the registries to exist. */
     @BeforeAll
     static void bootstrapMinecraft() {
+        //? if >=1.18 {
         SharedConstants.tryDetectVersion();
+        //?}
         Bootstrap.bootStrap();
     }
 
