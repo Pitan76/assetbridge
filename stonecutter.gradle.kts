@@ -6,18 +6,29 @@
 // under two classloaders (ClassCastException on LoomGradleExtension).
 plugins {
     id("dev.kikugie.stonecutter")
-    id("dev.architectury.loom") version "1.14-SNAPSHOT" apply false
-    id("architectury-plugin") version "3.4-SNAPSHOT" apply false
+    id("dev.architectury.loom") version "1.17.491" apply false
+    // MC 26.1+ is unobfuscated, so no mappings exist and the regular Loom -- which requires
+    // them -- cannot prepare a node. `loom-no-remap` is the variant with remapping removed.
+    //
+    // Both IDs are marker artifacts for the *same* `dev.architectury:architectury-loom` jar at
+    // the same version, so declaring both here puts exactly one copy of Loom on the shared
+    // buildscript classpath. That is what makes the per-node choice below safe: it selects
+    // which plugin to apply, never which classes to load. Keep the two versions identical.
+    id("dev.architectury.loom-no-remap") version "1.17.491" apply false
+    id("architectury-plugin") version "3.5.169" apply false
     id("com.gradleup.shadow") version "9.6.1" apply false
 }
 stonecutter active "1.18.2" /* [SC] DO NOT EDIT */
 
 // A node is named after its Minecraft version, which decides the Java level:
-// Minecraft moved to 21 in 1.20.5.
+// Minecraft moved to 21 in 1.20.5, and to 25 in the 26.x scheme.
 fun javaFor(nodeName: String): JavaVersion {
     val parts = nodeName.split('.').mapNotNull { it.toIntOrNull() }
+    val major = parts.getOrElse(0) { 0 }
     val minor = parts.getOrElse(1) { 0 }
     val patch = parts.getOrElse(2) { 0 }
+    // 26.x dropped the leading `1.`, so a major of 26 or more is the new scheme.
+    if (major >= 26) return JavaVersion.VERSION_25
     val atLeast1205 = minor > 20 || (minor == 20 && patch >= 5)
     return if (atLeast1205) JavaVersion.VERSION_21 else JavaVersion.VERSION_17
 }
