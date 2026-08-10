@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
@@ -37,7 +36,6 @@ public class RecipeConverter implements AssetConverter {
     );
 
     @Override
-    @Nullable
     public byte[] convert(AssetPath path, byte[] data, AssetVersion from) {
         if (from.resolved() == AssetVersion.LEGACY) return null;
 

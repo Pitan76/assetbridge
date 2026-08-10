@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -24,7 +23,6 @@ import java.util.Map;
  */
 public class BlockStateConverter implements AssetConverter {
     @Override
-    @Nullable
     public byte[] convert(AssetPath path, byte[] data, AssetVersion from) {
         JsonObject blockState = Json.parse(new String(data, StandardCharsets.UTF_8));
         if (blockState == null) return null;

@@ -50,15 +50,15 @@ public class BridgedItemGroup {
     private BridgedItemGroup() {
     }
 
-    public static void setBlocksTab(CreativeModeTab tab) {
+    public static void setBlocksTab(@Nullable CreativeModeTab tab) {
         blocksTab = tab;
     }
 
-    public static void setItemsTab(CreativeModeTab tab) {
+    public static void setItemsTab(@Nullable CreativeModeTab tab) {
         itemsTab = tab;
     }
 
-    public static void setTabFactory(TabFactory factory) {
+    public static void setTabFactory(@Nullable TabFactory factory) {
         tabFactory = factory;
     }
 
@@ -178,7 +178,7 @@ public class BridgedItemGroup {
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.isEmpty()) continue;
-            if (sb.length() > 0) sb.append(" ");
+            if (!sb.isEmpty()) sb.append(" ");
             sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
         }
         return sb.toString();

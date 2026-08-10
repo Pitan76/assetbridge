@@ -22,7 +22,6 @@ import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
 import net.pitan76.assetbridge.util.Json;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -142,10 +141,8 @@ public class AssetPipeline {
                         byte[] raw = readBytes(source, path, archive);
                         if (raw != null) {
                             byte[] jsonBytes = convertLangToJson(raw);
-                            if (jsonBytes != null) {
-                                AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
-                                assets.putResource(jsonTarget, jsonBytes);
-                            }
+                            AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
+                            assets.putResource(jsonTarget, jsonBytes);
                         }
                     }
                 } else {
@@ -245,7 +242,6 @@ public class AssetPipeline {
     }
 
     /** Resources that have to be converted are read once, here, and never again. */
-    @Nullable
     private static byte[] readBytes(AssetSource source, AssetPath path, AssetArchive archive) {
         try {
             return source.readAll();

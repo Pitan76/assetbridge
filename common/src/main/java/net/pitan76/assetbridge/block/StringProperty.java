@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.block;
 
 import net.minecraft.world.level.block.state.properties.Property;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -36,17 +37,17 @@ public class StringProperty extends Property<String> {
      * covariant override of the older {@code Collection}-returning declaration.
      */
     @Override
-    public List<String> getPossibleValues() {
+    public @NotNull List<String> getPossibleValues() {
         return values;
     }
 
     @Override
-    public String getName(String value) {
+    public @NotNull String getName(String value) {
         return value;
     }
 
     @Override
-    public Optional<String> getValue(String name) {
+    public @NotNull Optional<String> getValue(String name) {
         return values.contains(name) ? Optional.of(name) : Optional.empty();
     }
 
@@ -67,8 +68,7 @@ public class StringProperty extends Property<String> {
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof StringProperty property
-                && super.equals(other)
-                && values.equals(property.values);
+                && super.equals(other) && values.equals(property.values);
     }
 
     /** {@code Property#hashCode} is final and delegates here. */

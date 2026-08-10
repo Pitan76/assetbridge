@@ -14,6 +14,7 @@ import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.RuntimePack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -155,7 +156,7 @@ public class AssetBridgePackResources implements PackResources {
     }
 
     @Override
-    public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
+    public @NotNull InputStream getResource(PackType type, ResourceLocation location) throws IOException {
         AssetSource source = sourceOf(type, location);
         if (source == null)
             throw new FileNotFoundException(location.toString());
@@ -188,7 +189,7 @@ public class AssetBridgePackResources implements PackResources {
     }
     *///?} else {
     @Override
-    public String getName() {
+    public @NotNull String getName() {
         return displayName();
     }
     //?}
@@ -261,8 +262,8 @@ public class AssetBridgePackResources implements PackResources {
     }
     *///?} else {
     @Override
-    public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
-                                                     int maxDepth, Predicate<String> filter) {
+    public @NotNull Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
+                                                              int maxDepth, Predicate<String> filter) {
         List<ResourceLocation> found = new ArrayList<>();
         for (ResourceLocation id : collectResources(type, namespace, path, maxDepth)) {
             if (filter.test(fileNameOf(id.getPath()))) found.add(id);
@@ -272,7 +273,7 @@ public class AssetBridgePackResources implements PackResources {
     //?}
 
     @Override
-    public Set<String> getNamespaces(PackType type) {
+    public @NotNull Set<String> getNamespaces(PackType type) {
         if (!serves(type))
             return Set.of();
 
