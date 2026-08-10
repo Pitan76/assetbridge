@@ -37,6 +37,9 @@ public class BridgedItemGroup {
 
     private static Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
 
+    /** Display names read from the archives themselves, keyed by namespace. */
+    private static Map<String, String> archiveModNames = Map.of();
+
     public interface TabFactory {
         CreativeModeTab create(String namespace, Supplier<ItemStack> iconSupplier);
     }
@@ -59,8 +62,22 @@ public class BridgedItemGroup {
         tabFactory = factory;
     }
 
+    /**
+     * The fallback used when the archive named no mod. The loader can only answer for mods
+     * that are actually installed, which the bridged archives are not, so this is rarely
+     * more than {@link #capitalize}.
+     */
     public static void setModNameProvider(Function<String, String> provider) {
         modNameProvider = provider;
+    }
+
+    /**
+     * What to call a namespace: the name the mod gives itself in its own metadata, else
+     * whatever the platform can offer, else the namespace capitalised.
+     */
+    public static String modName(String namespace) {
+        String declared = archiveModNames.get(namespace);
+        return declared != null ? declared : modNameProvider.apply(namespace);
     }
 
     /** The namespace's own tab, when that feature is on and it got one. */
@@ -126,7 +143,9 @@ public class BridgedItemGroup {
     }
     //?}
 
-    public static void initTabs(Set<String> namespaces) {
+    public static void initTabs(Set<String> namespaces, Map<String, String> modNames) {
+        archiveModNames = Map.copyOf(modNames);
+
         com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();
         langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge Blocks");
         langJson.addProperty("itemGroup.assetbridge.items", "Asset Bridge Items");
@@ -139,7 +158,7 @@ public class BridgedItemGroup {
             CreativeModeTab tab = tabFactory.create(namespace, () -> namespaceIcon(namespace));
             if (tab != null) {
                 namespaceTabs.put(namespace, tab);
-                langJson.addProperty("itemGroup.assetbridge." + namespace, "Asset Bridge: " + modNameProvider.apply(namespace));
+                langJson.addProperty("itemGroup.assetbridge." + namespace, "Asset Bridge: " + modName(namespace));
             }
         }
         registerLang(langJson);

@@ -142,6 +142,32 @@ class AssetPipelineTest {
     }
 
     @Test
+    void servesLegacySpritesFromTheFlattenedDirectory() throws Exception {
+        // From 1.19.3 the block atlas is defined as the contents of textures/block/, so a
+        // sprite left in the plural directory is never stitched and the model renders as
+        // missing. Both the file and the reference to it have to move.
+        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, Map.of(
+                "assets/oldmod/blockstates/foo.json",
+                "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}",
+                "assets/oldmod/models/block/foo.json",
+                "{\"parent\": \"block/cube_all\", \"textures\": {\"all\": \"oldmod:blocks/foo\"}}",
+                "assets/oldmod/textures/blocks/foo.png", "png bytes",
+                "assets/oldmod/textures/blocks/foo.png.mcmeta", "{}",
+                "assets/oldmod/textures/items/wand.png", "png bytes"
+        )));
+
+        assertNotNull(assets.readResource(
+                new AssetPath(AssetPath.PackKind.CLIENT, "oldmod", "textures/block/foo.png")));
+        assertNotNull(assets.readResource(
+                new AssetPath(AssetPath.PackKind.CLIENT, "oldmod", "textures/block/foo.png.mcmeta")));
+        assertNotNull(assets.readResource(
+                new AssetPath(AssetPath.PackKind.CLIENT, "oldmod", "textures/item/wand.png")));
+
+        JsonObject model = json(assets, new AssetPath(AssetPath.PackKind.CLIENT, "oldmod", "models/block/foo.json"));
+        assertEquals("oldmod:block/foo", model.getAsJsonObject("textures").get("all").getAsString());
+    }
+
+    @Test
     void fixesLegacyShapedContentRegardlessOfTheDeclaredVersion() {
         // A mod that declares a current version can still ship a pre-flattening model, and
         // 'blocks/' simply does not resolve here, so the fix keys off the content.

@@ -136,7 +136,8 @@ public class ArchiveScanner {
         VersionDetector.Detection detection = VersionDetector.detect(displayName, metadata, structure);
         AssetBridge.LOGGER.info("Indexed {} asset entries from {} (assets look like {}, from {})",
                 entries.size(), displayName, detection.version(), detection.source());
-        return new AssetArchive(displayName, detection.version(), detection.source(), entries, zip);
+        return new AssetArchive(displayName, detection.version(), detection.source(), entries,
+                ModMetadata.displayNames(metadata), zip);
     }
 
     private static String readText(ZipFile zip, ZipEntry entry) throws IOException {

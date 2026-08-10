@@ -149,6 +149,26 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         return name.indexOf('/') < 0 ? name : null;
     }
 
+    /**
+     * This path with the pre-1.13 texture directories renamed to their flattened form,
+     * or {@code this} when there is nothing to rename.
+     *
+     * <p>Serving a legacy texture where it was found is not enough on 1.19.3+: the block
+     * atlas is assembled from {@code textures/block/} by definition, so a sprite left in
+     * {@code textures/blocks/} is never stitched and every model using it renders as
+     * missing. The model references are rewritten to match.
+     */
+    public AssetPath flattened() {
+        if (kind != PackKind.CLIENT) return this;
+        if (path.startsWith("textures/blocks/")) {
+            return new AssetPath(kind, namespace, "textures/block/" + path.substring("textures/blocks/".length()));
+        }
+        if (path.startsWith("textures/items/")) {
+            return new AssetPath(kind, namespace, "textures/item/" + path.substring("textures/items/".length()));
+        }
+        return this;
+    }
+
     public static AssetPath blockState(String namespace, String name) {
         return new AssetPath(PackKind.CLIENT, namespace, "blockstates/" + name + ".json");
     }

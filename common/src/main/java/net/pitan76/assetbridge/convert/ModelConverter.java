@@ -42,7 +42,7 @@ public class ModelConverter implements AssetConverter {
         boolean changed = false;
         if (model.has("parent")) {
             String parent = model.get("parent").getAsString();
-            String renamed = renameDirectory(parent);
+            String renamed = renameParent(parent);
             if (!renamed.equals(parent)) {
                 model.addProperty("parent", renamed);
                 changed = true;
@@ -55,7 +55,7 @@ public class ModelConverter implements AssetConverter {
                 String value = entry.getValue().getAsString();
                 // '#name' is a texture variable reference, not a path.
                 if (value.startsWith("#")) continue;
-                String renamed = renameDirectory(value);
+                String renamed = renameTexture(value);
                 if (!renamed.equals(value)) {
                     entry.setValue(new com.google.gson.JsonPrimitive(renamed));
                     changed = true;
@@ -72,24 +72,45 @@ public class ModelConverter implements AssetConverter {
         // Add more common legacy mappings as needed
     );
 
-    private static String renameDirectory(String reference) {
+    /**
+     * A texture reference. {@code blocks/} and {@code items/} are flattened whatever the
+     * namespace: the sprite files themselves are relocated the same way when the archive is
+     * read, because from 1.19.3 the block atlas is defined as the contents of
+     * {@code textures/block/} and would never stitch a sprite left behind in the plural
+     * directory. See {@code AssetPath#flattened()}.
+     */
+    private static String renameTexture(String reference) {
+        return rename(reference, true);
+    }
+
+    /**
+     * A parent reference. Only vanilla is flattened here: model directories were never
+     * renamed, so a mod that happens to keep its models under {@code models/blocks/} still
+     * has them there and rewriting the reference would break it.
+     */
+    private static String renameParent(String reference) {
+        return rename(reference, false);
+    }
+
+    private static String rename(String reference, boolean anyNamespace) {
         int colon = reference.indexOf(':');
         String namespace = colon < 0 ? "" : reference.substring(0, colon + 1);
         String path = reference.substring(colon + 1);
-        if (namespace.isEmpty() || namespace.equals("minecraft:")) {
-            if (path.startsWith("blocks/")) {
-                path = "block/" + path.substring("blocks/".length());
-            } else if (path.startsWith("items/")) {
-                path = "item/" + path.substring("items/".length());
-            }
+        boolean vanilla = namespace.isEmpty() || namespace.equals("minecraft:");
+        if (!vanilla && !anyNamespace) return reference;
 
-            // Apply legacy vanilla name mapping
-            String remapped = VANILLA_REMAP.get(path);
-            if (remapped != null) path = remapped;
-
-            return namespace + path;
+        if (path.startsWith("blocks/")) {
+            path = "block/" + path.substring("blocks/".length());
+        } else if (path.startsWith("items/")) {
+            path = "item/" + path.substring("items/".length());
         }
 
-        return reference;
+        // Apply legacy vanilla name mapping
+        if (vanilla) {
+            String remapped = VANILLA_REMAP.get(path);
+            if (remapped != null) path = remapped;
+        }
+
+        return namespace + path;
     }
 }
