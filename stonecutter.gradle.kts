@@ -74,7 +74,7 @@ fun javaFor(nodeName: String): JavaVersion {
     if (major >= 26) return JavaVersion.VERSION_25
     val atLeast1205 = minor > 20 || (minor == 20 && patch >= 5)
     if (atLeast1205) return JavaVersion.VERSION_21
-    if (minor <= 16) return JavaVersion.VERSION_16
+    if (minor <= 16) return JavaVersion.VERSION_1_8
     return JavaVersion.VERSION_17
 }
 
@@ -119,7 +119,12 @@ subprojects {
         }
  
         tasks.withType<JavaCompile>().configureEach {
-            options.release.set(javaFor(project.name).majorVersion.toInt())
+            val major = javaFor(project.name).majorVersion.toInt()
+            if (major >= 9) {
+                options.release.set(major)
+            } else {
+                options.release.set(null as Int?)
+            }
         }
     }
 }

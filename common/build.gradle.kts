@@ -59,3 +59,11 @@ tasks.test {
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
+
+tasks.processResources {
+    val mixinCompat = if (project.name == "1.16.5") "JAVA_8" else "JAVA_17"
+    inputs.property("mixin_compat", mixinCompat)
+    filesMatching("assetbridge.mixins.json") {
+        expand("mixin_compat" to mixinCompat)
+    }
+}
