@@ -114,15 +114,35 @@ public class AssetBridgePackResources implements PackResources {
     @Override
     @Nullable
     public net.minecraft.server.packs.resources.IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
+        if (location.getPath().contains("lang")) {
+            AssetBridge.LOGGER.info("getResource (lang): location={}", location);
+        }
         AssetSource source = sourceOf(type, location);
-        return source == null ? null : source::open;
+        if (source == null) {
+            if (location.getPath().contains("lang")) {
+                AssetBridge.LOGGER.info("getResource (lang) NOT FOUND: location={}", location);
+            }
+            return null;
+        }
+        if (location.getPath().contains("lang")) {
+            AssetBridge.LOGGER.info("getResource (lang) FOUND: location={}", location);
+        }
+        return source::open;
     }
 
     @Override
     public void listResources(PackType type, String namespace, String path, PackResources.ResourceOutput output) {
+        if (path.contains("lang")) {
+            AssetBridge.LOGGER.info("listResources (lang): namespace={}, path={}", namespace, path);
+        }
         for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
             AssetSource source = sourceOf(type, id);
-            if (source != null) output.accept(id, source::open);
+            if (source != null) {
+                if (path.contains("lang")) {
+                    AssetBridge.LOGGER.info("listResources found: {}", id);
+                }
+                output.accept(id, source::open);
+            }
         }
     }
 

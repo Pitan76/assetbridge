@@ -40,7 +40,8 @@ public class BridgedBlocks {
             /*// 26.1 derives the translation key from the item's own id and throws if it was never
             // set, so it has to be on the properties before construction.
             createdItems.put(id, new BlockItem(block, new Item.Properties()
-                    .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ITEM, id))));
+                    .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ITEM, id))
+                    .useBlockDescriptionPrefix()));
             *///?} elif >=1.19.3 {
             /*// 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
             createdItems.put(id, new BlockItem(block, new Item.Properties()));

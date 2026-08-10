@@ -143,12 +143,16 @@ public class AssetPipeline {
                         if (raw != null) {
                             byte[] jsonBytes = convertLangToJson(raw);
                             if (jsonBytes != null) {
+                                AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
                                 assets.putResource(jsonTarget, jsonBytes);
                             }
                         }
                     }
                 } else {
-                    if (!assets.hasResource(target)) assets.putResource(target, source);
+                    if (!assets.hasResource(target)) {
+                        AssetBridge.LOGGER.info("Registered existing json lang: namespace={}, path={}", target.namespace(), target.path());
+                        assets.putResource(target, source);
+                    }
                 }
             }
             case RECIPE -> {
