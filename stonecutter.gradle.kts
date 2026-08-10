@@ -74,7 +74,7 @@ fun javaFor(nodeName: String): JavaVersion {
     if (major >= 26) return JavaVersion.VERSION_25
     val atLeast1205 = minor > 20 || (minor == 20 && patch >= 5)
     if (atLeast1205) return JavaVersion.VERSION_21
-    if (minor <= 16) return JavaVersion.VERSION_1_8
+    if (minor <= 16) return JavaVersion.VERSION_16
     return JavaVersion.VERSION_17
 }
 
