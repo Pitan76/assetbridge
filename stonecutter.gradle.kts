@@ -72,8 +72,8 @@ fun javaFor(nodeName: String): JavaVersion {
     val patch = parts.getOrElse(2) { 0 }
     // 26.x dropped the leading `1.`, so a major of 26 or more is the new scheme.
     if (major >= 26) return JavaVersion.VERSION_25
-    val atLeast1205 = minor > 20 || (minor == 20 && patch >= 5)
-    if (atLeast1205) return JavaVersion.VERSION_21
+    if (minor > 20 || (minor == 20 && patch >= 5)) return JavaVersion.VERSION_21
+//    if (minor <= 16) return JavaVersion.VERSION_1_8
     if (minor <= 16) return JavaVersion.VERSION_16
     return JavaVersion.VERSION_17
 }
