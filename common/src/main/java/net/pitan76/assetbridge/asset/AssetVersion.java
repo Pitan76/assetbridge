@@ -56,6 +56,10 @@ public enum AssetVersion {
         } catch (NumberFormatException e) {
             return null;
         }
+        // 26.1 is the first release under the year-based scheme; everything from there on is at
+        // least the 1.21.4 generation. Without this, `26.1.2` fails the `major != 1` check below
+        // and reports an unrecognisable version.
+        if (major >= 26) return ITEM_DEFINITIONS;
         if (major != 1 || minor < 6) return null;
 
         if (minor <= 12) return LEGACY;

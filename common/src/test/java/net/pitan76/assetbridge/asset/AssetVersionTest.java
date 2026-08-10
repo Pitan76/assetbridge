@@ -20,7 +20,8 @@ class AssetVersionTest {
             "1.18.2,  MODERN",
             "1.19.2,  MODERN",
             "1.20.1,  ATLASES",
-            "1.21.1,  COMPONENTS"
+            "1.21.1,  COMPONENTS",
+            "26.1.2,  ITEM_DEFINITIONS"
     })
     void separatesTheTargetsThisModBuildsFor(String version, AssetVersion expected) {
         assertEquals(expected, AssetVersion.fromMinecraftVersion(version));
@@ -34,7 +35,10 @@ class AssetVersionTest {
             "1.20.4,  ATLASES",
             "1.20.5,  COMPONENTS",
             "1.21.3,  COMPONENTS",
-            "1.21.4,  ITEM_DEFINITIONS"
+            "1.21.4,  ITEM_DEFINITIONS",
+            // 26.1 dropped the leading `1.`; the year-based scheme must not read as pre-1.6.
+            "26.1,    ITEM_DEFINITIONS",
+            "26.1.2,  ITEM_DEFINITIONS"
     })
     void placesTheBoundariesWhereTheAssetSpecChanged(String version, AssetVersion expected) {
         assertEquals(expected, AssetVersion.fromMinecraftVersion(version));
@@ -87,9 +91,26 @@ class AssetVersionTest {
     /**
      * Guards the bug where the pack format was a constant: whatever version this node
      * builds for, the declared format has to belong to the generation it targets.
+     *
+     * <p>The expected generation is stated per node rather than derived from
+     * {@code RuntimePack}, because {@code generation()} is defined as
+     * {@code fromPackFormat(resourcePackFormat())} -- comparing the two only restates the
+     * definition and passes however wrong the format is. That is exactly what let 26.1.2
+     * through: it satisfies {@code >=1.21}, so it declared format 34 and the mod believed it
+     * targeted 1.21.3, which meant no {@code assets/*&#47;items/} definitions and every item
+     * rendering as missing.
      */
     @Test
     void reportsAPackFormatConsistentWithTheTargetGeneration() {
+        //? if >=26 {
+        /*assertEquals(AssetVersion.ITEM_DEFINITIONS, RuntimePack.generation());
+        *///?} elif >=1.21 {
+        /*assertEquals(AssetVersion.COMPONENTS, RuntimePack.generation());
+        *///?} elif >=1.20 {
+        /*assertEquals(AssetVersion.ATLASES, RuntimePack.generation());
+        *///?} else {
+        assertEquals(AssetVersion.MODERN, RuntimePack.generation());
+        //?}
         assertEquals(RuntimePack.generation(),
                 AssetVersion.fromPackFormat(RuntimePack.resourcePackFormat()));
         assertTrue(RuntimePack.dataPackFormat() >= RuntimePack.resourcePackFormat(),
