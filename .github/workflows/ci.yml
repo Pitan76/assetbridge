@@ -50,13 +50,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Nodes below 1.20.5 target Java 17 and 1.21.1 targets 21, but the build sets
-      # this per node via `options.release`, so one JDK 21 compiles them all.
+      # Nodes below 1.20.5 target Java 17, 1.21.1 targets 21, and 26.1.2 targets 25.
+      # The build sets this per node via `options.release`, so one JDK 25 compiles them all.
       # Matches release.yml deliberately: CI must build the way releases build.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 25
           cache: gradle
 
       - uses: gradle/actions/setup-gradle@v4
