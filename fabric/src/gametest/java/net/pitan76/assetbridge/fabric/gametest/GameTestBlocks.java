@@ -22,13 +22,13 @@ import java.util.Objects;
 public class GameTestBlocks implements ModInitializer {
     public static final String NAMESPACE = "assetbridge-gametest";
 
-    public static final Block FACING = create(
+    public static final Block FACING = create("facing",
             property("facing", List.of("north", "south", "west", "east", "up", "down")));
-    public static final Block HORIZONTAL_FACING = create(
+    public static final Block HORIZONTAL_FACING = create("horizontal_facing",
             property("facing", List.of("north", "south", "west", "east")));
-    public static final Block AXIS = create(
+    public static final Block AXIS = create("axis",
             property("axis", List.of("x", "y", "z")));
-    public static final Block CUSTOM_PROPERTY = create(
+    public static final Block CUSTOM_PROPERTY = create("custom_property",
             property("variant", List.of("plain", "carved")));
 
     @Override
@@ -41,14 +41,19 @@ public class GameTestBlocks implements ModInitializer {
     }
 
     private static void register(String name, Block block) {
-        ResourceLocation id = new ResourceLocation(NAMESPACE, name);
+        ResourceLocation id = id(name);
         Registry.register(Registry.BLOCK, id, block);
         Registry.register(Registry.ITEM, id,
                 new BlockItem(block, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
     }
 
-    private static Block create(BridgedProperty... properties) {
-        return BridgedBlock.create(new BridgedStateDefinition(List.of(properties)));
+    /** The id is now part of a block's properties, so it has to be known before construction. */
+    private static Block create(String name, BridgedProperty... properties) {
+        return BridgedBlock.create(id(name), new BridgedStateDefinition(List.of(properties)));
+    }
+
+    private static ResourceLocation id(String name) {
+        return new ResourceLocation(NAMESPACE, name);
     }
 
     private static BridgedProperty property(String name, List<String> values) {

@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.block;
 
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,24 +39,37 @@ public class BridgedBlock extends Block {
     @Nullable
     private final EnumProperty<Direction.Axis> axis;
 
-    private BridgedBlock(BridgedStateDefinition states) {
-        //? if >=1.20 {
-        /*// 1.20 removed Material; a block's sounds and map colour now come from the
-        // properties themselves, and the defaults match what Material.STONE gave us.
-        super(Properties.of().strength(1.5F, 6.0F));
-        *///?} else {
-        super(Properties.of(net.minecraft.world.level.material.Material.STONE).strength(1.5F, 6.0F));
-        //?}
+    private BridgedBlock(ResourceLocation id, BridgedStateDefinition states) {
+        super(propertiesFor(id));
 
         this.facing = directionProperty();
         this.axis = axisProperty();
         registerDefaultState(defaultStateOf(states));
     }
 
-    public static BridgedBlock create(BridgedStateDefinition states) {
+    /**
+     * The properties differ enough between versions that building them inline in the
+     * {@code super(...)} call would put three preprocessor branches inside the constructor.
+     */
+    private static Properties propertiesFor(ResourceLocation id) {
+        //? if >=26 {
+        /*// 26.1 derives the loot table and the translation key from the block's own id, and throws
+        // if it was never set, so the id has to be on the properties before construction.
+        return Properties.of().strength(1.5F, 6.0F)
+                .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BLOCK, id));
+        *///?} elif >=1.20 {
+        /*// 1.20 removed Material; a block's sounds and map colour now come from the properties
+        // themselves, and the defaults match what Material.STONE gave us.
+        return Properties.of().strength(1.5F, 6.0F);
+        *///?} else {
+        return Properties.of(net.minecraft.world.level.material.Material.STONE).strength(1.5F, 6.0F);
+        //?}
+    }
+
+    public static BridgedBlock create(ResourceLocation id, BridgedStateDefinition states) {
         PENDING.set(states);
         try {
-            return new BridgedBlock(states);
+            return new BridgedBlock(id, states);
         } finally {
             PENDING.remove();
         }

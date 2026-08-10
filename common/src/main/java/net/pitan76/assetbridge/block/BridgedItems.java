@@ -31,7 +31,12 @@ public class BridgedItems {
                 AssetBridge.LOGGER.warn("Skipping item with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
             }
-            //? if >=1.19.3 {
+            //? if >=26 {
+            /*// 26.1 derives the translation key from the item's own id and throws if it was never
+            // set, so it has to be on the properties before construction.
+            created.put(id, new Item(new Item.Properties()
+                    .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ITEM, id))));
+            *///?} elif >=1.19.3 {
             /*// 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
             created.put(id, new Item(new Item.Properties()));
             *///?} else {
