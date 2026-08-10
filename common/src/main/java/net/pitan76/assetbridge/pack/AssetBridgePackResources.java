@@ -25,15 +25,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;import java.util.Set;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
  * Serves the bridged assets to Minecraft as an in-memory pack.
  *
- * <p>One instance covers one pack root: a resource pack for {@link AssetPath.PackKind#CLIENT}
- * and a data pack for {@link AssetPath.PackKind#SERVER}. They are separate packs because
- * Minecraft keeps a separate repository, and a separate {@code pack_format}, for each.
+ * <p>
+ * One instance covers one pack root: a resource pack for
+ * {@link AssetPath.PackKind#CLIENT}
+ * and a data pack for {@link AssetPath.PackKind#SERVER}. They are separate
+ * packs because
+ * Minecraft keeps a separate repository, and a separate {@code pack_format},
+ * for each.
  */
 public class AssetBridgePackResources implements PackResources {
     public static final String PACK_ID = AssetBridge.MOD_ID + "_external";
@@ -52,19 +57,23 @@ public class AssetBridgePackResources implements PackResources {
         int formatMinor = kind == AssetPath.PackKind.SERVER
                 ? RuntimePack.dataPackFormatMinor()
                 : RuntimePack.resourcePackFormatMinor();
-        //? if >=26 {
-        /*// 26.1 split pack_format into major (pack_format) and minor (pack_format_minor).
-        // PackFormat's Codec requires both fields; a missing pack_format_minor causes the
-        // metadata section to fail parsing and Pack.readMetaAndCreate to return null.
+        // ? if >=26 {
+        /*
+         * // 26.1 split pack_format into major (pack_format) and minor
+         * (pack_format_minor).
+         * // PackFormat's Codec requires both fields; a missing pack_format_minor
+         * causes the
+         * // metadata section to fail parsing and Pack.readMetaAndCreate to return
+         * null.
+         * this.mcmeta = "{\"pack\":{\"pack_format\":" + format
+         * + ",\"pack_format_minor\":" + formatMinor
+         * + ",\"min_format\":" + format
+         * + ",\"max_format\":" + format
+         * + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
+         */// ?} else {
         this.mcmeta = "{\"pack\":{\"pack_format\":" + format
-                + ",\"pack_format_minor\":" + formatMinor
-                + ",\"min_format\":" + format
-                + ",\"max_format\":" + format
                 + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
-        *///?} else {
-        this.mcmeta = "{\"pack\":{\"pack_format\":" + format
-                + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
-        //?}
+        // ?}
     }
 
     /**
@@ -73,10 +82,12 @@ public class AssetBridgePackResources implements PackResources {
      */
     @Nullable
     private AssetSource sourceOf(PackType type, ResourceLocation location) {
-        if (!serves(type)) return null;
+        if (!serves(type))
+            return null;
         AssetPath path = pathOf(type, location);
         AssetSource source = assets.resources().get(path);
-        if (source != null) return source;
+        if (source != null)
+            return source;
         AssetPath alt = getAlternativePath(path);
         return alt == null ? null : assets.resources().get(alt);
     }
@@ -93,42 +104,53 @@ public class AssetBridgePackResources implements PackResources {
     // ---------------------------------------------------------------------------
     // The PackResources surface. 1.20 rewrote it: lookups return an IoSupplier and
     // report absence with null instead of throwing, listing became a callback, and
-    // getName() became packId(). Only these wrappers differ; the logic above does not.
+    // getName() became packId(). Only these wrappers differ; the logic above does
+    // not.
     // ---------------------------------------------------------------------------
 
-    //? if >=1.20 {
-    /*@Override
-    @Nullable
-    public net.minecraft.server.packs.resources.IoSupplier<InputStream> getRootResource(String... elements) {
-        return elements.length == 1 && "pack.mcmeta".equals(elements[0]) ? this::openMcmeta : null;
-    }
-
-    @Override
-    @Nullable
-    public net.minecraft.server.packs.resources.IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
-        AssetSource source = sourceOf(type, location);
-        return source == null ? null : source::open;
-    }
-
-    @Override
-    public void listResources(PackType type, String namespace, String path, PackResources.ResourceOutput output) {
-        for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
-            AssetSource source = sourceOf(type, id);
-            if (source != null) output.accept(id, source::open);
-        }
-    }
-
-    *///?} else {
+    // ? if >=1.20 {
+    /*
+     * @Override
+     * 
+     * @Nullable
+     * public net.minecraft.server.packs.resources.IoSupplier<InputStream>
+     * getRootResource(String... elements) {
+     * return elements.length == 1 && "pack.mcmeta".equals(elements[0]) ?
+     * this::openMcmeta : null;
+     * }
+     * 
+     * @Override
+     * 
+     * @Nullable
+     * public net.minecraft.server.packs.resources.IoSupplier<InputStream>
+     * getResource(PackType type, ResourceLocation location) {
+     * AssetSource source = sourceOf(type, location);
+     * return source == null ? null : source::open;
+     * }
+     * 
+     * @Override
+     * public void listResources(PackType type, String namespace, String path,
+     * PackResources.ResourceOutput output) {
+     * for (ResourceLocation id : collectResources(type, namespace, path,
+     * Integer.MAX_VALUE)) {
+     * AssetSource source = sourceOf(type, id);
+     * if (source != null) output.accept(id, source::open);
+     * }
+     * }
+     * 
+     */// ?} else {
     @Override
     public InputStream getRootResource(String fileName) throws IOException {
-        if ("pack.mcmeta".equals(fileName)) return openMcmeta();
+        if ("pack.mcmeta".equals(fileName))
+            return openMcmeta();
         throw new FileNotFoundException(fileName);
     }
 
     @Override
     public InputStream getResource(PackType type, ResourceLocation location) throws IOException {
         AssetSource source = sourceOf(type, location);
-        if (source == null) throw new FileNotFoundException(location.toString());
+        if (source == null)
+            throw new FileNotFoundException(location.toString());
         return source.open();
     }
 
@@ -136,35 +158,39 @@ public class AssetBridgePackResources implements PackResources {
     public boolean hasResource(PackType type, ResourceLocation location) {
         return sourceOf(type, location) != null;
     }
-    //?}
+    // ?}
 
     // How the pack names itself: getName() up to 1.19, packId() in 1.20,
     // and a PackLocationInfo record from 1.21. A separate chain, because Java block
-    // comments do not nest and the block above is already commented out per version.
-    //? if >=1.21 {
-    /*@Override
-    public net.minecraft.server.packs.PackLocationInfo location() {
-        return new net.minecraft.server.packs.PackLocationInfo(
-                packName(),
-                net.minecraft.network.chat.Component.literal(displayName()),
-                net.minecraft.server.packs.repository.PackSource.BUILT_IN,
-                java.util.Optional.empty());
-    }
-    *///?} elif >=1.20 {
-    /*@Override
-    public String packId() {
-        return displayName();
-    }
-    *///?} else {
+    // comments do not nest and the block above is already commented out per
+    // version.
+    // ? if >=1.21 {
+    /*
+     * @Override
+     * public net.minecraft.server.packs.PackLocationInfo location() {
+     * return new net.minecraft.server.packs.PackLocationInfo(
+     * packName(),
+     * net.minecraft.network.chat.Component.literal(displayName()),
+     * net.minecraft.server.packs.repository.PackSource.BUILT_IN,
+     * java.util.Optional.empty());
+     * }
+     */// ?} elif >=1.20 {
+    /*
+     * @Override
+     * public String packId() {
+     * return displayName();
+     * }
+     */// ?} else {
     @Override
     public String getName() {
         return displayName();
     }
-    //?}
+    // ?}
 
     @Nullable
     private AssetPath getAlternativePath(AssetPath original) {
-        if (original.kind() != AssetPath.PackKind.CLIENT) return null;
+        if (original.kind() != AssetPath.PackKind.CLIENT)
+            return null;
         String path = original.path();
         if (path.startsWith("textures/block/")) {
             return new AssetPath(original.kind(), original.namespace(),
@@ -180,25 +206,30 @@ public class AssetBridgePackResources implements PackResources {
     /**
      * Collects every bridged resource under {@code path}, version-independently.
      *
-     * <p>The {@code getResources} override below is the only part that differs between
+     * <p>
+     * The {@code getResources} override below is the only part that differs between
      * Minecraft versions, so the traversal lives here and the overrides stay thin.
      *
      * @param maxDepth directory levels below {@code path} to descend; pass
      *                 {@link Integer#MAX_VALUE} on versions that dropped the limit
      */
     private List<ResourceLocation> collectResources(PackType type, String namespace, String path,
-                                                    int maxDepth) {
-        if (!serves(type)) return List.of();
+            int maxDepth) {
+        if (!serves(type))
+            return List.of();
 
         String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();
 
         for (AssetPath key : assets.resources().keySet()) {
-            if (key.kind() != kind || !key.namespace().equals(namespace)) continue;
-            if (!key.path().startsWith(prefix)) continue;
+            if (key.kind() != kind || !key.namespace().equals(namespace))
+                continue;
+            if (!key.path().startsWith(prefix))
+                continue;
 
             String relative = key.path().substring(prefix.length());
-            if (countSlashes(relative) >= maxDepth) continue;
+            if (countSlashes(relative) >= maxDepth)
+                continue;
 
             try {
                 found.add(resourceLocation(namespace, key.path()));
@@ -209,38 +240,46 @@ public class AssetBridgePackResources implements PackResources {
         return found;
     }
 
-    //? if >=1.20 {
-    /*// Replaced by listResources above.
-    *///?} elif >=1.19 {
-    /*@Override
-    public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
-                                                     Predicate<ResourceLocation> filter) {
-        // 1.19 dropped the depth limit and moved the filter onto the full identifier.
-        List<ResourceLocation> found = new ArrayList<>();
-        for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
-            if (filter.test(id)) found.add(id);
-        }
-        return found;
-    }
-    *///?} else {
+    // ? if >=1.20 {
+    /*
+     * // Replaced by listResources above.
+     */// ?} elif >=1.19 {
+    /*
+     * @Override
+     * public Collection<ResourceLocation> getResources(PackType type, String
+     * namespace, String path,
+     * Predicate<ResourceLocation> filter) {
+     * // 1.19 dropped the depth limit and moved the filter onto the full
+     * identifier.
+     * List<ResourceLocation> found = new ArrayList<>();
+     * for (ResourceLocation id : collectResources(type, namespace, path,
+     * Integer.MAX_VALUE)) {
+     * if (filter.test(id)) found.add(id);
+     * }
+     * return found;
+     * }
+     */// ?} else {
     @Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
-                                                     int maxDepth, Predicate<String> filter) {
+            int maxDepth, Predicate<String> filter) {
         List<ResourceLocation> found = new ArrayList<>();
         for (ResourceLocation id : collectResources(type, namespace, path, maxDepth)) {
-            if (filter.test(fileNameOf(id.getPath()))) found.add(id);
+            if (filter.test(fileNameOf(id.getPath())))
+                found.add(id);
         }
         return found;
     }
-    //?}
+    // ?}
 
     @Override
     public Set<String> getNamespaces(PackType type) {
-        if (!serves(type)) return Set.of();
+        if (!serves(type))
+            return Set.of();
 
         Set<String> namespaces = new LinkedHashSet<>();
         for (AssetPath key : assets.resources().keySet()) {
-            if (key.kind() == kind) namespaces.add(key.namespace());
+            if (key.kind() == kind)
+                namespaces.add(key.namespace());
         }
         return namespaces;
     }
@@ -249,40 +288,50 @@ public class AssetBridgePackResources implements PackResources {
     @Nullable
     public <T> T getMetadataSection(MetadataSectionSerializer<T> serializer) {
         JsonObject root = GsonHelper.parse(new StringReader(mcmeta));
-        //? if >=26 {
-        /*// 26.1 turned the serializer into a record carrying a Codec, so the section name and the
-        // deserialisation both come from different members than before.
-        String section = serializer.name();
-        if (!root.has(section)) return null;
-        return serializer.codec()
-                .parse(JsonOps.INSTANCE, GsonHelper.getAsJsonObject(root, section))
-                .resultOrPartial(err -> AssetBridge.LOGGER.error("Failed to parse metadata section '{}' (JSON: {}): {}", section, root, err))
-                .orElse(null);
-        *///?} else {
+        // ? if >=26 {
+        /*
+         * // 26.1 turned the serializer into a record carrying a Codec, so the section
+         * name and the
+         * // deserialisation both come from different members than before.
+         * String section = serializer.name();
+         * if (!root.has(section)) return null;
+         * return serializer.codec()
+         * .parse(JsonOps.INSTANCE, GsonHelper.getAsJsonObject(root, section))
+         * .resultOrPartial(err -> AssetBridge.LOGGER.
+         * error("Failed to parse metadata section '{}' (JSON: {}): {}", section, root,
+         * err))
+         * .orElse(null);
+         */// ?} else {
         String section = serializer.getMetadataSectionName();
-        if (!root.has(section)) return null;
+        if (!root.has(section))
+            return null;
         return serializer.fromJson(GsonHelper.getAsJsonObject(root, section));
-        //?}
+        // ?}
     }
 
-    /** This pack only answers for the root it was built for; the other one is a separate pack. */
+    /**
+     * This pack only answers for the root it was built for; the other one is a
+     * separate pack.
+     */
     private boolean serves(PackType type) {
         return kindOf(type) == kind;
     }
 
     @Override
     public void close() {
-        // A new instance is created on every resource reload, while the archives behind the
+        // A new instance is created on every resource reload, while the archives behind
+        // the
         // bundle live as long as the game does, so there is nothing to release here.
     }
 
     private static ResourceLocation resourceLocation(String namespace, String path) {
-        //? if >=1.21 {
-        /*// 1.21 made the ResourceLocation constructor private.
-        return ResourceLocation.fromNamespaceAndPath(namespace, path);
-        *///?} else {
+        // ? if >=1.21 {
+        /*
+         * // 1.21 made the ResourceLocation constructor private.
+         * return ResourceLocation.fromNamespaceAndPath(namespace, path);
+         */// ?} else {
         return new ResourceLocation(namespace, path);
-        //?}
+        // ?}
     }
 
     /** The pack's registry id, distinct from the name shown to the player. */
@@ -301,7 +350,8 @@ public class AssetBridgePackResources implements PackResources {
     private static int countSlashes(String value) {
         int count = 0;
         for (int i = 0; i < value.length(); i++) {
-            if (value.charAt(i) == '/') count++;
+            if (value.charAt(i) == '/')
+                count++;
         }
         return count;
     }
