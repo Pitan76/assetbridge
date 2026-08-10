@@ -182,6 +182,10 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         return new AssetPath(PackKind.CLIENT, namespace, "models/item/" + name + ".json");
     }
 
+    public static AssetPath itemDefinition(String namespace, String name) {
+        return new AssetPath(PackKind.CLIENT, namespace, "items/" + name + ".json");
+    }
+
     /**
      * The canonical path for a block model, e.g. {@code namespace:block/name} →
      * {@code assets/namespace/models/block/name.json}.

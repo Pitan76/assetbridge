@@ -7,6 +7,7 @@ import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.AssetVersion;
+import net.pitan76.assetbridge.asset.RuntimePack;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.asset.ItemCandidates;
@@ -98,6 +99,9 @@ public class AssetPipeline {
         if (injected > 0) {
             AssetBridge.LOGGER.info("Injected render_type=cutout into {} block model(s) for pre-26 assets", injected);
         }
+
+        // Generate 1.21.4+ standalone item definition JSONs from item models.
+        generateItemDefinitions(assets);
 
         AssetBridge.LOGGER.info("Prepared {} bridged blocks, {} items and {} resources from {} archive(s)",
                 assets.blocks().size(), assets.items().size(), assets.resources().size(), archives.size());
@@ -306,5 +310,48 @@ public class AssetPipeline {
             if (targetId.trim().equals(id)) return true;
         }
         return false;
+    }
+
+    /**
+     * Generates a 1.21.4+ item definition JSON for every registered item, pointing to its
+     * corresponding item model JSON.
+     *
+     * <p>On 1.21.4+ (ITEM_DEFINITIONS), item models are no longer loaded implicitly. Minecraft
+     * instead requires an item definition file under {@code assets/namespace/items/item_name.json}
+     * describing the model configuration for each item registry entry.
+     */
+    private static void generateItemDefinitions(BridgedAssetManager assets) {
+        if (!RuntimePack.generation().isAtLeast(AssetVersion.ITEM_DEFINITIONS)) return;
+
+        int generated = 0;
+        for (net.pitan76.assetbridge.asset.BridgedItemDefinition item : assets.items()) {
+            generated += generateSingleItemDefinition(assets, item.id());
+        }
+        for (net.pitan76.assetbridge.asset.BridgedBlockDefinition block : assets.blocks()) {
+            generated += generateSingleItemDefinition(assets, block.id());
+        }
+        if (generated > 0) {
+            AssetBridge.LOGGER.info("Generated {} item definition(s) for 1.21.4+ (ITEM_DEFINITIONS)", generated);
+        }
+    }
+
+    private static int generateSingleItemDefinition(BridgedAssetManager assets, String itemId) {
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(itemId);
+        if (id == null) return 0;
+
+        String namespace = id.getNamespace();
+        String name = id.getPath();
+
+        AssetPath defPath = AssetPath.itemDefinition(namespace, name);
+        if (assets.hasResource(defPath)) return 0;
+
+        JsonObject root = new JsonObject();
+        JsonObject modelObj = new JsonObject();
+        modelObj.addProperty("type", "minecraft:model");
+        modelObj.addProperty("model", namespace + ":item/" + name);
+        root.add("model", modelObj);
+
+        assets.putResource(defPath, Json.toString(root).getBytes(StandardCharsets.UTF_8));
+        return 1;
     }
 }

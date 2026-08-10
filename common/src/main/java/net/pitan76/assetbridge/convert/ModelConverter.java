@@ -46,6 +46,7 @@ public class ModelConverter implements AssetConverter {
             changed |= model.remove(key) != null;
         }
         changed |= sanitizeRotations(model, path);
+        changed |= sanitizeElements(model);
         return changed ? Json.toString(model).getBytes(StandardCharsets.UTF_8) : data;
     }
 
@@ -111,7 +112,12 @@ public class ModelConverter implements AssetConverter {
      * has them there and rewriting the reference would break it.
      */
     private static String renameParent(String reference) {
-        return rename(reference, false);
+        String renamed = rename(reference, false);
+        int colon = renamed.indexOf(':');
+        if (colon < 0) {
+            return renamed.toLowerCase(Locale.ROOT);
+        }
+        return renamed.substring(0, colon + 1) + renamed.substring(colon + 1).toLowerCase(Locale.ROOT);
     }
 
     private static String rename(String reference, boolean anyNamespace) {
@@ -188,5 +194,39 @@ public class ModelConverter implements AssetConverter {
         AssetBridge.LOGGER.debug("Sanitized rotation {}={} \u2192 {} in {}", key, raw, rounded, path);
         obj.addProperty(key, rounded);
         return true;
+    }
+
+    private static boolean sanitizeElements(JsonObject model) {
+        if (!model.has("elements") || !model.get("elements").isJsonArray()) return false;
+        boolean changed = false;
+        JsonArray elements = model.getAsJsonArray("elements");
+        for (JsonElement el : elements) {
+            if (!el.isJsonObject()) continue;
+            JsonObject element = el.getAsJsonObject();
+            changed |= sanitizeVector3f(element, "from");
+            changed |= sanitizeVector3f(element, "to");
+        }
+        return changed;
+    }
+
+    private static boolean sanitizeVector3f(JsonObject element, String key) {
+        if (!element.has(key) || !element.get(key).isJsonArray()) return false;
+        JsonArray arr = element.getAsJsonArray(key);
+        if (arr.size() != 3) return false;
+        boolean changed = false;
+        for (int i = 0; i < 3; i++) {
+            JsonElement item = arr.get(i);
+            if (item.isJsonPrimitive() && item.getAsJsonPrimitive().isString()) {
+                float val = 0.0f;
+                try {
+                    val = Float.parseFloat(item.getAsString());
+                } catch (NumberFormatException e) {
+                    // Falls back to 0.0f when coordinates are written as non-numeric strings (e.g. formulas)
+                }
+                arr.set(i, new com.google.gson.JsonPrimitive(val));
+                changed = true;
+            }
+        }
+        return changed;
     }
 }

@@ -120,7 +120,12 @@ public class BlockStateConverter implements AssetConverter {
         int colon = model.indexOf(':');
         String namespace = colon < 0 ? "" : model.substring(0, colon + 1);
         String path = model.substring(colon + 1);
-        return path.indexOf('/') < 0 ? namespace + "block/" + path : model;
+        String qualified = path.indexOf('/') < 0 ? namespace + "block/" + path : model;
+        int qColon = qualified.indexOf(':');
+        if (qColon < 0) {
+            return qualified.toLowerCase(java.util.Locale.ROOT);
+        }
+        return qualified.substring(0, qColon + 1) + qualified.substring(qColon + 1).toLowerCase(java.util.Locale.ROOT);
     }
 
     /** Exposed so the pipeline can build the fallback for blockstates it cannot pass through. */
