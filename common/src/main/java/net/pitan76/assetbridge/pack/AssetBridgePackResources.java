@@ -104,37 +104,29 @@ public class AssetBridgePackResources implements PackResources {
     // not.
     // ---------------------------------------------------------------------------
 
-    // ? if >=1.20 {
-    /*
-     * @Override
-     * 
-     * @Nullable
-     * public net.minecraft.server.packs.resources.IoSupplier<InputStream>
-     * getRootResource(String... elements) {
-     * return elements.length == 1 && "pack.mcmeta".equals(elements[0]) ?
-     * this::openMcmeta : null;
-     * }
-     * 
-     * @Override
-     * 
-     * @Nullable
-     * public net.minecraft.server.packs.resources.IoSupplier<InputStream>
-     * getResource(PackType type, ResourceLocation location) {
-     * AssetSource source = sourceOf(type, location);
-     * return source == null ? null : source::open;
-     * }
-     * 
-     * @Override
-     * public void listResources(PackType type, String namespace, String path,
-     * PackResources.ResourceOutput output) {
-     * for (ResourceLocation id : collectResources(type, namespace, path,
-     * Integer.MAX_VALUE)) {
-     * AssetSource source = sourceOf(type, id);
-     * if (source != null) output.accept(id, source::open);
-     * }
-     * }
-     * 
-     */// ?} else {
+    //? if >=1.20 {
+    /*@Override
+    @Nullable
+    public net.minecraft.server.packs.resources.IoSupplier<InputStream> getRootResource(String... elements) {
+        return elements.length == 1 && "pack.mcmeta".equals(elements[0]) ? this::openMcmeta : null;
+    }
+
+    @Override
+    @Nullable
+    public net.minecraft.server.packs.resources.IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
+        AssetSource source = sourceOf(type, location);
+        return source == null ? null : source::open;
+    }
+
+    @Override
+    public void listResources(PackType type, String namespace, String path, PackResources.ResourceOutput output) {
+        for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
+            AssetSource source = sourceOf(type, id);
+            if (source != null) output.accept(id, source::open);
+        }
+    }
+
+    *///?} else {
     @Override
     public InputStream getRootResource(String fileName) throws IOException {
         if ("pack.mcmeta".equals(fileName))
@@ -235,8 +227,8 @@ public class AssetBridgePackResources implements PackResources {
     }
 
     //? if >=1.20 {
-    // Replaced by listResources above.
-    //?} elif >=1.19 {
+    /*// Replaced by listResources above.
+    *///?} elif >=1.19 {
     /*@Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
                                                      Predicate<ResourceLocation> filter) {
