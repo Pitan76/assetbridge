@@ -43,6 +43,20 @@ public class AssetBridgeNeoForge {
     /** Tabs built during construction, registered once RegisterEvent reaches that registry. */
     private final Map<String, CreativeModeTab> tabs = new LinkedHashMap<>();
 
+    private static boolean featuresApplied = false;
+
+    /**
+     * The features are what actually build the blocks and items, so they have to have run
+     * before anything is registered. Not done in the constructor: {@code ModList} only knows
+     * every mod once all of them are constructed, and the features ask it which namespaces
+     * are already taken. The first {@link RegisterEvent} is the earliest point that holds.
+     */
+    private static void ensureFeaturesApplied() {
+        if (featuresApplied) return;
+        featuresApplied = true;
+        AssetBridge.applyFeatures(FMLPaths.GAMEDIR.get(), namespace -> ModList.get().isLoaded(namespace));
+    }
+
     public AssetBridgeNeoForge(IEventBus modBus) {
         Features.loadConfig(FMLPaths.GAMEDIR.get());
 
@@ -74,6 +88,8 @@ public class AssetBridgeNeoForge {
     }
 
     private void onRegister(RegisterEvent event) {
+        ensureFeaturesApplied();
+
         if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) {
             tabs.forEach((path, tab) -> event.register(Registries.CREATIVE_MODE_TAB,
                     id(path), () -> tab));

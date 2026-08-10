@@ -11,6 +11,7 @@ import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.asset.ItemCandidates;
 import net.pitan76.assetbridge.convert.AssetConverter;
+import net.pitan76.assetbridge.convert.AtlasSources;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.ModelReferenceResolver;
@@ -83,6 +84,9 @@ public class AssetPipeline {
         if (repaired > 0) {
             AssetBridge.LOGGER.info("Replaced {} model(s) whose parent was not available", repaired);
         }
+
+        // After the models are final, so a stand-in's textures are the ones declared.
+        AtlasSources.declare(assets);
 
         AssetBridge.LOGGER.info("Prepared {} bridged blocks, {} items and {} resources from {} archive(s)",
                 assets.blocks().size(), assets.items().size(), assets.resources().size(), archives.size());
