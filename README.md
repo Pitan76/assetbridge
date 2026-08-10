@@ -2,8 +2,8 @@
 取り込んだMODからブロックなどのアセットを読み込み、機能を持たず見た目だけのブロック、アイテムを利用するMOD<br />
 ゲームバージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
 
-なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。
-Fabric/Forge 1.18.2-1.20.1対応です。
+なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。<>
+Fabric/Forge 1.18.2-1.20.1, Fabric/NeoForge 1.21.1対応です。
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
@@ -60,7 +60,7 @@ feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ## 技術的な話
-本プロジェクトは、複数のMCバージョンおよびプラットフォーム（Fabric、Forge）向けのMODをビルドする構成をとっています。
+本プロジェクトは、複数のMCバージョンおよびプラットフォーム（Fabric、Forge、NeoForge）向けのMODをビルドする構成をとっています。
 
 ### クロスプラットフォーム (Architectury Loom)
 - Architectury Loomを採用し、共通のMojangマッピングを適用して開発しています
@@ -106,7 +106,7 @@ Load assets from imported mods and use them as blocks, items, etc.
 Perfect for when you want to add visual elements from other mods, even across different game versions or platforms.
 
 Note that the code from imported mods is not executed; only assets are used, so specific features will not function.
-Supports both Fabric and Forge (versions 1.18.2-1.20.1).
+Supports Fabric/Forge 1.18.2-1.20.1 and Fabric/NeoForge 1.21.1.
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
