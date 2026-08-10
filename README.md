@@ -3,7 +3,7 @@
 ゲームバージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
 
 なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。<br />
-Fabric/Forge 1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2対応です。
+Fabric/Forge 1.16.5/1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2対応です。
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
