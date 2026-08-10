@@ -14,6 +14,7 @@ loom {
     }
 }
 
+
 architectury {
     platformSetupLoomIde()
     forge()

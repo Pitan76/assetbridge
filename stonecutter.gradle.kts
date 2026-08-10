@@ -59,6 +59,7 @@ stonecutter parameters {
                 "net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent",
             )
         }
+
     }
 }
 
@@ -72,23 +73,25 @@ fun javaFor(nodeName: String): JavaVersion {
     // 26.x dropped the leading `1.`, so a major of 26 or more is the new scheme.
     if (major >= 26) return JavaVersion.VERSION_25
     val atLeast1205 = minor > 20 || (minor == 20 && patch >= 5)
-    return if (atLeast1205) JavaVersion.VERSION_21 else JavaVersion.VERSION_17
+    if (atLeast1205) return JavaVersion.VERSION_21
+    if (minor <= 16) return JavaVersion.VERSION_16
+    return JavaVersion.VERSION_17
 }
 
 val maven_group = project.findProperty("maven_group") as String
 val mod_version = project.findProperty("mod_version") as String
 val archives_name = project.findProperty("archives_name") as String
-
+ 
 allprojects {
     group = maven_group
     version = mod_version
 }
-
+ 
 subprojects {
     repositories {
         mavenCentral()
     }
-
+ 
     pluginManager.withPlugin("java") {
         // A node's `project.name` is the version directory, so it is identical across
         // branches (`:common:1.18.2`, `:fabric:1.18.2`, ...). Naming the archive after
@@ -98,22 +101,23 @@ subprojects {
         configure<BasePluginExtension> {
             archivesName.set("$archives_name-$branchName")
         }
-
+ 
         // Every node is named after its version directory, so `group:name:version` is
         // identical across branches and Gradle treats the nodes as the same component.
         // Qualify the group by branch to keep them distinct.
         group = "$maven_group.$branchName"
-
+ 
         // Keep the Minecraft version in the artifact version so jars from different
         // nodes never overwrite each other.
         version = "$mod_version+${project.name}"
-
+ 
         configure<JavaPluginExtension> {
             withSourcesJar()
-            sourceCompatibility = javaFor(project.name)
-            targetCompatibility = javaFor(project.name)
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(javaFor(project.name).majorVersion))
+            }
         }
-
+ 
         tasks.withType<JavaCompile>().configureEach {
             options.release.set(javaFor(project.name).majorVersion.toInt())
         }

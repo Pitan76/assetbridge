@@ -27,6 +27,6 @@
   "depends": {
     "fabricloader": "*",
     "minecraft": "${mc_dep}",
-    "fabric-api": "*"
+    "${fabric_api_id}": "*"
   }
 }
