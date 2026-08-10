@@ -30,6 +30,12 @@ public class Json {
         return GSON.toJson(element);
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T extends JsonElement> T copy(T element) {
+        if (element == null) return null;
+        return (T) GSON.fromJson(GSON.toJson(element), element.getClass());
+    }
+
     /** @return the value of {@code key} if it is a primitive, else {@code null}. */
     @Nullable
     public static String string(JsonObject object, String key) {

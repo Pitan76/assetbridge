@@ -82,7 +82,7 @@ public class ModelReferenceResolver {
      */
     private static JsonObject substituteFor(JsonObject model, AssetPath path) {
         if (model.has("elements")) {
-            JsonObject standalone = Json.parse(Json.toString(model));
+            JsonObject standalone = Json.copy(model);
             standalone.remove("parent");
             return standalone;
         }

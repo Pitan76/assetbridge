@@ -63,19 +63,19 @@ public class BlockStateCoverage {
         }
         if (missing.isEmpty()) return null;
 
-        JsonObject completed = Json.parse(Json.toString(blockState));
+        JsonObject completed = Json.copy(blockState);
         if (parts != null) {
             JsonArray completedParts = completed.getAsJsonArray("multipart");
             for (Map<String, String> state : missing) {
                 JsonObject part = new JsonObject();
                 part.add("when", condition(state));
-                part.add("apply", Json.parse(Json.toString(fallback)));
+                part.add("apply", Json.copy(fallback));
                 completedParts.add(part);
             }
         } else {
             JsonObject completedVariants = completed.getAsJsonObject("variants");
             for (Map<String, String> state : missing) {
-                completedVariants.add(variantKey(state), Json.parse(Json.toString(fallback)));
+                completedVariants.add(variantKey(state), Json.copy(fallback));
             }
         }
         return completed;
