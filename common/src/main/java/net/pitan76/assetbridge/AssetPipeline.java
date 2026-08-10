@@ -53,6 +53,9 @@ public class AssetPipeline {
         ItemCandidates itemCandidates = new ItemCandidates();
 
         for (AssetArchive archive : archives) {
+            archive.modNames().forEach((namespace, name) -> {
+                if (!isNamespaceUsed.test(namespace)) assets.addModName(namespace, name);
+            });
             for (Map.Entry<AssetPath, AssetSource> entry : archive.entries().entrySet()) {
                 AssetPath path = entry.getKey();
 
@@ -106,7 +109,10 @@ public class AssetPipeline {
             case TEXTURE, TEXTURE_META, LANG -> {
                 // Nothing to convert, so the bytes never have to enter the heap: the archive
                 // serves them when the game asks. An earlier archive claiming the path still wins.
-                if (!assets.hasResource(path)) assets.putResource(path, source);
+                // Pre-1.13 texture directories are flattened here so the sprite ends up where
+                // the atlas looks for it; ModelConverter rewrites the references to match.
+                AssetPath target = path.flattened();
+                if (!assets.hasResource(target)) assets.putResource(target, source);
             }
             case RECIPE -> {
                 // Server-side data is a feature's business, not the core's;

@@ -16,6 +16,8 @@ public class BridgedAssetManager {
     private final Map<AssetPath, AssetSource> resources = new LinkedHashMap<>();
     private final List<BridgedBlockDefinition> blocks = new ArrayList<>();
     private final List<BridgedItemDefinition> items = new ArrayList<>();
+    /** Namespace to the display name its archive declared, when it declared one. */
+    private final Map<String, String> modNames = new LinkedHashMap<>();
 
     /** For resources Asset Bridge produced itself; they exist nowhere on disk. */
     public void putResource(AssetPath path, byte[] data) {
@@ -33,6 +35,21 @@ public class BridgedAssetManager {
 
     public void addItem(BridgedItemDefinition item) {
         items.add(item);
+    }
+
+    /** The first archive to name a namespace wins, matching how resources are claimed. */
+    public void addModName(String namespace, String displayName) {
+        modNames.putIfAbsent(namespace, displayName);
+    }
+
+    /** The name the mod calls itself, or {@code null} if no archive declared one. */
+    @Nullable
+    public String modName(String namespace) {
+        return modNames.get(namespace);
+    }
+
+    public Map<String, String> modNames() {
+        return modNames;
     }
 
     public boolean hasResource(AssetPath path) {

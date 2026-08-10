@@ -24,20 +24,23 @@ public class AssetArchive implements Closeable {
     private final AssetVersion version;
     private final String versionSource;
     private final Map<AssetPath, AssetSource> entries;
+    private final Map<String, String> modNames;
     @Nullable
     private final ZipFile zip;
 
     public AssetArchive(String fileName, AssetVersion version, String versionSource,
                         Map<AssetPath, AssetSource> entries) {
-        this(fileName, version, versionSource, entries, null);
+        this(fileName, version, versionSource, entries, Map.of(), null);
     }
 
     public AssetArchive(String fileName, AssetVersion version, String versionSource,
-                        Map<AssetPath, AssetSource> entries, @Nullable ZipFile zip) {
+                        Map<AssetPath, AssetSource> entries, Map<String, String> modNames,
+                        @Nullable ZipFile zip) {
         this.fileName = fileName;
         this.version = version;
         this.versionSource = versionSource;
         this.entries = Collections.unmodifiableMap(entries);
+        this.modNames = Collections.unmodifiableMap(modNames);
         this.zip = zip;
     }
 
@@ -57,6 +60,14 @@ public class AssetArchive implements Closeable {
 
     public Map<AssetPath, AssetSource> entries() {
         return entries;
+    }
+
+    /**
+     * The display names the archive's own loader metadata declares, keyed by namespace.
+     * Empty when it carries none.
+     */
+    public Map<String, String> modNames() {
+        return modNames;
     }
 
     @Override

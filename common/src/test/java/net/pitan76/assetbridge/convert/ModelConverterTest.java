@@ -27,7 +27,19 @@ class ModelConverterTest {
                 AssetVersion.LEGACY);
 
         assertEquals("block/cube_all", result.get("parent").getAsString());
-        assertEquals("examplemod:blocks/foo", result.getAsJsonObject("textures").get("all").getAsString());
+        // A mod's own sprites are flattened too: the archive's textures/blocks/ is relocated
+        // to textures/block/ on the way in, so the reference has to follow it.
+        assertEquals("examplemod:block/foo", result.getAsJsonObject("textures").get("all").getAsString());
+    }
+
+    @Test
+    void leavesModNamespacedParentsAlone() {
+        // Model directories were never flattened, so a mod keeping models under
+        // models/blocks/ still has them there.
+        JsonObject result = convert("""
+                {"parent": "examplemod:blocks/base"}""", AssetVersion.LEGACY);
+
+        assertEquals("examplemod:blocks/base", result.get("parent").getAsString());
     }
 
     @Test
