@@ -17,7 +17,9 @@ public final class RuntimePack {
 
     /** {@code pack_format} for resource packs. */
     public static int resourcePackFormat() {
-        //? if >=1.20 {
+        //? if >=1.21 {
+        /*return 34;
+        *///?} elif >=1.20 {
         /*return 15;
         *///?} elif >=1.19 {
         /*return 9;
@@ -28,7 +30,9 @@ public final class RuntimePack {
 
     /** {@code pack_format} for data packs, which is versioned separately from resources. */
     public static int dataPackFormat() {
-        //? if >=1.20 {
+        //? if >=1.21 {
+        /*return 48;
+        *///?} elif >=1.20 {
         /*return 15;
         *///?} elif >=1.19 {
         /*return 10;

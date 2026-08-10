@@ -4,23 +4,29 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
 import net.pitan76.assetbridge.block.BridgedItems;
+import net.pitan76.assetbridge.feature.Features;
+import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class AssetBridgeFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         // Load config first to check enabled features during tab setup
-        net.pitan76.assetbridge.feature.Features.loadConfig(FabricLoader.getInstance().getGameDir());
+        Features.loadConfig(FabricLoader.getInstance().getGameDir());
 
         // The tabs have to exist before the items are built.
-        if (!net.pitan76.assetbridge.feature.Features.isEnabled(net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature.ID)) {
+        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(createTab(
                     BridgedItemGroup.BLOCKS,
                     BridgedItemGroup::blocksIcon,
@@ -87,16 +93,16 @@ public class AssetBridgeFabric implements ModInitializer {
     }
 
     // Builds a tab, registers it, and points it at the contents it should collect.
-    private static net.minecraft.world.item.CreativeModeTab createTab(
+    private static CreativeModeTab createTab(
             String path,
-            java.util.function.Supplier<net.minecraft.world.item.ItemStack> icon,
-            java.util.function.Supplier<java.util.List<Item>> contents) {
-        ResourceLocation id = new ResourceLocation(AssetBridge.MOD_ID, path);
-        net.minecraft.resources.ResourceKey<net.minecraft.world.item.CreativeModeTab> key =
+            Supplier<ItemStack> icon,
+            Supplier<List<Item>> contents) {
+        ResourceLocation id = modId(path);
+        net.minecraft.resources.ResourceKey<CreativeModeTab> key =
                 net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, id);
 
-        net.minecraft.world.item.CreativeModeTab tab = net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
+        CreativeModeTab tab = net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
                 .title(net.minecraft.network.chat.Component.translatable("itemGroup." + AssetBridge.MOD_ID + "." + path))
                 .icon(icon)
                 .build();
@@ -117,14 +123,26 @@ public class AssetBridgeFabric implements ModInitializer {
     }
 
     /** Up to 1.19.2 a tab only needs to exist; the items name it themselves. */
-    private static net.minecraft.world.item.CreativeModeTab createTab(
+    private static CreativeModeTab createTab(
             String path,
-            java.util.function.Supplier<net.minecraft.world.item.ItemStack> icon,
-            java.util.function.Supplier<java.util.List<Item>> contents) {
+            Supplier<ItemStack> icon,
+            Supplier<List<Item>> contents) {
         return net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder
-                .create(new ResourceLocation(AssetBridge.MOD_ID, path))
+                .create(modId(path))
                 .icon(icon)
                 .build();
+    }
+    //?}
+
+    // 1.21 made the ResourceLocation constructor private. Its own chain, because the
+    // tab block above is already commented out per version and comments do not nest.
+    //? if >=1.21 {
+    /*private static ResourceLocation modId(String path) {
+        return ResourceLocation.fromNamespaceAndPath(AssetBridge.MOD_ID, path);
+    }
+    *///?} else {
+    private static ResourceLocation modId(String path) {
+        return new ResourceLocation(AssetBridge.MOD_ID, path);
     }
     //?}
 }

@@ -53,7 +53,40 @@ public class AssetBridgeRepositorySource implements RepositorySource {
     // Position.BOTTOM in both branches: above vanilla so the bridged assets resolve, but
     // below the packs the player enabled themselves so their own pack still wins.
 
-    //? if >=1.20 {
+    //? if >=1.21 {
+    /*@Override
+    public void loadPacks(Consumer<Pack> consumer) {
+        if (!shouldLoad()) return;
+        // 1.21 moved the id, title and source into PackLocationInfo, and the placement
+        // flags into PackSelectionConfig.
+        emit(consumer, Pack.readMetaAndCreate(
+                new net.minecraft.server.packs.PackLocationInfo(
+                        packId,
+                        net.minecraft.network.chat.Component.literal(packId),
+                        PackSource.BUILT_IN,
+                        java.util.Optional.empty()),
+                // 1.21 gave ResourcesSupplier a second method, so it is no longer a lambda.
+                new Pack.ResourcesSupplier() {
+                    @Override
+                    public net.minecraft.server.packs.PackResources openPrimary(
+                            net.minecraft.server.packs.PackLocationInfo info) {
+                        return new AssetBridgePackResources(AssetBridge.assets(), kind);
+                    }
+
+                    @Override
+                    public net.minecraft.server.packs.PackResources openFull(
+                            net.minecraft.server.packs.PackLocationInfo info, Pack.Metadata metadata) {
+                        return new AssetBridgePackResources(AssetBridge.assets(), kind);
+                    }
+                },
+                kind == AssetPath.PackKind.SERVER
+                        ? net.minecraft.server.packs.PackType.SERVER_DATA
+                        : net.minecraft.server.packs.PackType.CLIENT_RESOURCES,
+                new net.minecraft.server.packs.PackSelectionConfig(
+                        true, Pack.Position.BOTTOM, false)
+        ));
+    }
+    *///?} elif >=1.20 {
     /*@Override
     public void loadPacks(Consumer<Pack> consumer) {
         if (!shouldLoad()) return;

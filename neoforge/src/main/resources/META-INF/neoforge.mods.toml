@@ -1,0 +1,29 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_dep}"
+license = "MIT"
+
+[[mods]]
+modId = "assetbridge"
+version = "${version}"
+displayName = "Asset Bridge "
+authors = "Pitan"
+description = '''
+A Minecraft mod that loads assets such as blocks from other mods, allowing them to be used visually without their original functionality.
+'''
+
+[[mixins]]
+config = "assetbridge.mixins.json"
+
+[[dependencies.assetbridge]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neoforge_loader_dep}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.assetbridge]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mc_dep}"
+ordering = "NONE"
+side = "BOTH"

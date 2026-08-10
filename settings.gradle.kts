@@ -19,9 +19,11 @@ plugins {
 // and gaining a `versions/` directory. The root branch gets no versions, so no
 // node is created for it. Plugin versions live in `stonecutter.gradle.kts`.
 stonecutter.create(rootProject) {
-    branch("common") { versions("1.18.2", "1.19.2", "1.20.1") }
-    branch("fabric") { versions("1.18.2", "1.19.2", "1.20.1") }
+    branch("common") { versions("1.18.2", "1.19.2", "1.20.1", "1.21.1") }
+    branch("fabric") { versions("1.18.2", "1.19.2", "1.20.1", "1.21.1") }
+    // Forge stops at 1.20.1; 1.21.1 is NeoForge territory.
     branch("forge") { versions("1.18.2", "1.19.2", "1.20.1") }
+    branch("neoforge") { versions("1.21.1") }
     vcsVersion = "1.18.2"
 }
 

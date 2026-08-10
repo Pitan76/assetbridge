@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Holds the creative tabs the bridged content is placed in.
@@ -33,10 +35,10 @@ public class BridgedItemGroup {
 
     private static final Map<String, CreativeModeTab> namespaceTabs = new LinkedHashMap<>();
 
-    private static java.util.function.Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
+    private static Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
 
     public interface TabFactory {
-        CreativeModeTab create(String namespace, java.util.function.Supplier<ItemStack> iconSupplier);
+        CreativeModeTab create(String namespace, Supplier<ItemStack> iconSupplier);
     }
 
     @Nullable
@@ -57,7 +59,7 @@ public class BridgedItemGroup {
         tabFactory = factory;
     }
 
-    public static void setModNameProvider(java.util.function.Function<String, String> provider) {
+    public static void setModNameProvider(Function<String, String> provider) {
         modNameProvider = provider;
     }
 

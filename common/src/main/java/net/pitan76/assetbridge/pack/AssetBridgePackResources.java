@@ -22,8 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.List;import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -102,10 +101,6 @@ public class AssetBridgePackResources implements PackResources {
         }
     }
 
-    @Override
-    public String packId() {
-        return displayName();
-    }
     *///?} else {
     @Override
     public InputStream getRootResource(String fileName) throws IOException {
@@ -124,7 +119,26 @@ public class AssetBridgePackResources implements PackResources {
     public boolean hasResource(PackType type, ResourceLocation location) {
         return sourceOf(type, location) != null;
     }
+    //?}
 
+    // How the pack names itself: getName() up to 1.19, packId() in 1.20,
+    // and a PackLocationInfo record from 1.21. A separate chain, because Java block
+    // comments do not nest and the block above is already commented out per version.
+    //? if >=1.21 {
+    /*@Override
+    public net.minecraft.server.packs.PackLocationInfo location() {
+        return new net.minecraft.server.packs.PackLocationInfo(
+                packName(),
+                net.minecraft.network.chat.Component.literal(displayName()),
+                net.minecraft.server.packs.repository.PackSource.BUILT_IN,
+                java.util.Optional.empty());
+    }
+    *///?} elif >=1.20 {
+    /*@Override
+    public String packId() {
+        return displayName();
+    }
+    *///?} else {
     @Override
     public String getName() {
         return displayName();
@@ -170,7 +184,7 @@ public class AssetBridgePackResources implements PackResources {
             if (countSlashes(relative) >= maxDepth) continue;
 
             try {
-                found.add(new ResourceLocation(namespace, key.path()));
+                found.add(resourceLocation(namespace, key.path()));
             } catch (Exception e) {
                 // Ignore files with invalid characters in path
             }
@@ -232,6 +246,20 @@ public class AssetBridgePackResources implements PackResources {
     public void close() {
         // A new instance is created on every resource reload, while the archives behind the
         // bundle live as long as the game does, so there is nothing to release here.
+    }
+
+    private static ResourceLocation resourceLocation(String namespace, String path) {
+        //? if >=1.21 {
+        /*// 1.21 made the ResourceLocation constructor private.
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
+        *///?} else {
+        return new ResourceLocation(namespace, path);
+        //?}
+    }
+
+    /** The pack's registry id, distinct from the name shown to the player. */
+    private String packName() {
+        return kind == AssetPath.PackKind.SERVER ? DATA_PACK_ID : PACK_ID;
     }
 
     private static AssetPath pathOf(PackType type, ResourceLocation location) {

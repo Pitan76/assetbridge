@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AssetPipelineTest {
-    private static final java.util.function.Predicate<String> NOTHING_LOADED = namespace -> false;
+    private static final Predicate<String> NOTHING_LOADED = namespace -> false;
 
     @Test
     void discoversABlockAndItsResources() {

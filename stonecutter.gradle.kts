@@ -12,6 +12,16 @@ plugins {
 }
 stonecutter active "1.18.2" /* [SC] DO NOT EDIT */
 
+// A node is named after its Minecraft version, which decides the Java level:
+// Minecraft moved to 21 in 1.20.5.
+fun javaFor(nodeName: String): JavaVersion {
+    val parts = nodeName.split('.').mapNotNull { it.toIntOrNull() }
+    val minor = parts.getOrElse(1) { 0 }
+    val patch = parts.getOrElse(2) { 0 }
+    val atLeast1205 = minor > 20 || (minor == 20 && patch >= 5)
+    return if (atLeast1205) JavaVersion.VERSION_21 else JavaVersion.VERSION_17
+}
+
 val maven_group = project.findProperty("maven_group") as String
 val mod_version = project.findProperty("mod_version") as String
 val archives_name = project.findProperty("archives_name") as String
@@ -47,12 +57,12 @@ subprojects {
 
         configure<JavaPluginExtension> {
             withSourcesJar()
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+            sourceCompatibility = javaFor(project.name)
+            targetCompatibility = javaFor(project.name)
         }
 
         tasks.withType<JavaCompile>().configureEach {
-            options.release.set(17)
+            options.release.set(javaFor(project.name).majorVersion.toInt())
         }
     }
 }
