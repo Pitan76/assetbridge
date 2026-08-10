@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge.convert;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Repairs models whose {@code parent} points at something that is not there.
@@ -80,7 +82,7 @@ public class ModelReferenceResolver {
      */
     private static JsonObject substituteFor(JsonObject model, AssetPath path) {
         if (model.has("elements")) {
-            JsonObject standalone = model.deepCopy();
+            JsonObject standalone = Json.parse(Json.toString(model));
             standalone.remove("parent");
             return standalone;
         }
@@ -112,7 +114,8 @@ public class ModelReferenceResolver {
             String value = Json.string(byKey, key);
             if (value != null && !value.startsWith("#")) return value;
         }
-        for (String key : byKey.keySet()) {
+        for (Map.Entry<String, JsonElement> entry : byKey.entrySet()) {
+            String key = entry.getKey();
             String value = Json.string(byKey, key);
             if (value != null && !value.startsWith("#")) return value;
         }
@@ -133,7 +136,8 @@ public class ModelReferenceResolver {
             String value = Json.string(byKey, key);
             if (value != null && !value.startsWith("#") && !isItemAtlasTexture(value)) return value;
         }
-        for (String key : byKey.keySet()) {
+        for (Map.Entry<String, JsonElement> entry : byKey.entrySet()) {
+            String key = entry.getKey();
             String value = Json.string(byKey, key);
             if (value != null && !value.startsWith("#") && !isItemAtlasTexture(value)) return value;
         }

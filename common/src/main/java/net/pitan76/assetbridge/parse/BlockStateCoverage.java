@@ -63,19 +63,19 @@ public class BlockStateCoverage {
         }
         if (missing.isEmpty()) return null;
 
-        JsonObject completed = blockState.deepCopy();
+        JsonObject completed = Json.parse(Json.toString(blockState));
         if (parts != null) {
             JsonArray completedParts = completed.getAsJsonArray("multipart");
             for (Map<String, String> state : missing) {
                 JsonObject part = new JsonObject();
                 part.add("when", condition(state));
-                part.add("apply", fallback.deepCopy());
+                part.add("apply", Json.parse(Json.toString(fallback)));
                 completedParts.add(part);
             }
         } else {
             JsonObject completedVariants = completed.getAsJsonObject("variants");
             for (Map<String, String> state : missing) {
-                completedVariants.add(variantKey(state), fallback.deepCopy());
+                completedVariants.add(variantKey(state), Json.parse(Json.toString(fallback)));
             }
         }
         return completed;
@@ -123,8 +123,8 @@ public class BlockStateCoverage {
      * every state facing north whatever the rest holds. The empty key covers everything.
      */
     private static boolean matchesAnyVariant(JsonObject variants, Map<String, String> state) {
-        for (String key : variants.keySet()) {
-            if (matchesVariantKey(key, state)) return true;
+        for (Map.Entry<String, JsonElement> entry : variants.entrySet()) {
+            if (matchesVariantKey(entry.getKey(), state)) return true;
         }
         return false;
     }

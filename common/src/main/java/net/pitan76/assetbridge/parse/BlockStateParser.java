@@ -69,7 +69,7 @@ public class BlockStateParser {
         if (element == null) return null;
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
-            return array.isEmpty() ? null : modelOf(array.get(0));
+            return array.size() == 0 ? null : modelOf(array.get(0));
         }
         if (!element.isJsonObject()) return null;
         return Json.string(element.getAsJsonObject(), "model");

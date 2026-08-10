@@ -39,8 +39,8 @@ public class BlockStatePropertyParser {
         Map<String, Set<String>> collected = new LinkedHashMap<>();
 
         if (blockState.has("variants") && blockState.get("variants").isJsonObject()) {
-            for (String key : blockState.getAsJsonObject("variants").keySet()) {
-                if (!collectFromVariantKey(key, collected)) return null;
+            for (Map.Entry<String, JsonElement> entry : blockState.getAsJsonObject("variants").entrySet()) {
+                if (!collectFromVariantKey(entry.getKey(), collected)) return null;
             }
         }
         if (blockState.has("multipart") && blockState.get("multipart").isJsonArray()) {

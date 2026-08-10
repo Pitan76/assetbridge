@@ -27,10 +27,10 @@ plugins {
 // `chiseledBuild` -- whose task name never mentions a version -- silently built everything
 // *except* 26.1.2, dropping it from CI and releases. See memo/MC-26.1.2.md.
 stonecutter.create(rootProject) {
-    branch("common") { versions("1.18.2", "1.19.2", "1.20.1", "1.21.1", "26.1.2") }
-    branch("fabric") { versions("1.18.2", "1.19.2", "1.20.1", "1.21.1", "26.1.2") }
+    branch("common") { versions("1.16.5", "1.18.2", "1.19.2", "1.20.1", "1.21.1", "26.1.2") }
+    branch("fabric") { versions("1.16.5", "1.18.2", "1.19.2", "1.20.1", "1.21.1", "26.1.2") }
     // Forge stops at 1.20.1; 1.21.1 onwards is NeoForge territory.
-    branch("forge") { versions("1.18.2", "1.19.2", "1.20.1") }
+    branch("forge") { versions("1.16.5", "1.18.2", "1.19.2", "1.20.1") }
     branch("neoforge") { versions("1.21.1", "26.1.2") }
     vcsVersion = "1.18.2"
 }
