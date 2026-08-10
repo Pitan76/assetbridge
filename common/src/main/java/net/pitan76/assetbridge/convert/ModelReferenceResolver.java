@@ -89,7 +89,10 @@ public class ModelReferenceResolver {
         JsonObject substitute = new JsonObject();
         substitute.addProperty("parent", item ? "minecraft:item/generated" : "minecraft:block/cube_all");
 
-        String texture = someTextureOf(model);
+        // For block stand-ins, only use textures from the block atlas (textures/block/).
+        // Textures under item/ or items/ live in the item atlas and would be rejected by the
+        // block renderer on 26.1+ ("sprite from outside supported atlas").
+        String texture = item ? someTextureOf(model) : someBlockTextureOf(model);
         if (texture != null) {
             JsonObject textures = new JsonObject();
             textures.addProperty(item ? "layer0" : "all", texture);
@@ -114,6 +117,38 @@ public class ModelReferenceResolver {
             if (value != null && !value.startsWith("#")) return value;
         }
         return null;
+    }
+
+    /**
+     * Like {@link #someTextureOf}, but skips textures that live in the item atlas
+     * ({@code item/} or {@code items/} path segment). Used when building a block stand-in
+     * so the substitute never references a sprite outside the block atlas.
+     */
+    @Nullable
+    private static String someBlockTextureOf(JsonObject model) {
+        JsonObject byKey = Json.object(model, "textures");
+        if (byKey == null) return null;
+
+        for (String key : TEXTURE_KEYS) {
+            String value = Json.string(byKey, key);
+            if (value != null && !value.startsWith("#") && !isItemAtlasTexture(value)) return value;
+        }
+        for (String key : byKey.keySet()) {
+            String value = Json.string(byKey, key);
+            if (value != null && !value.startsWith("#") && !isItemAtlasTexture(value)) return value;
+        }
+        return null;
+    }
+
+    /**
+     * Returns {@code true} when the texture reference path falls under {@code item/} or
+     * {@code items/}, which are served from the item atlas rather than the block atlas.
+     * Accepts both {@code namespace:item/foo} and bare {@code item/foo} forms.
+     */
+    private static boolean isItemAtlasTexture(String reference) {
+        int colon = reference.indexOf(':');
+        String path = colon < 0 ? reference : reference.substring(colon + 1);
+        return path.startsWith("item/") || path.startsWith("items/");
     }
 
     @Nullable

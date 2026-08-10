@@ -1,11 +1,15 @@
 package net.pitan76.assetbridge.convert;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -17,6 +21,13 @@ import java.util.Map;
  *       and parents as {@code block/cube_all} under the old directory names.</li>
  *   <li>{@link AssetVersion#ATLASES} and later: 1.19.3+ may carry keys an older model deserialiser
  *       rejects; they are stripped rather than failing the whole model.</li>
+ *   <li>All versions: texture references with uppercase letters are lowercased, because
+ *       {@code ResourceLocation} (and 26.1's {@code TextureSlots}) reject uppercase paths.
+ *       The texture file itself was already lowercased when the archive was read
+ *       ({@code AssetPath} constructor), so the reference must match.</li>
+ *   <li>All versions: {@code x}/{@code y} rotation on a model and {@code rotation} on a face
+ *       are rounded to the nearest multiple of 90. Legacy packs occasionally contain values
+ *       like {@code 1}, which 26.1's {@code Quadrant} Codec rejects.</li>
  * </ul>
  */
 public class ModelConverter implements AssetConverter {
@@ -34,6 +45,7 @@ public class ModelConverter implements AssetConverter {
         for (String key : UNKNOWN_FUTURE_KEYS) {
             changed |= model.remove(key) != null;
         }
+        changed |= sanitizeRotations(model, path);
         return changed ? Json.toString(model).getBytes(StandardCharsets.UTF_8) : data;
     }
 
@@ -78,9 +90,19 @@ public class ModelConverter implements AssetConverter {
      * read, because from 1.19.3 the block atlas is defined as the contents of
      * {@code textures/block/} and would never stitch a sprite left behind in the plural
      * directory. See {@code AssetPath#flattened()}.
+     *
+     * <p>The path portion is also lowercased: {@code ResourceLocation} and 26.1's
+     * {@code TextureSlots} both reject uppercase characters. The referenced texture file
+     * was already stored under its lowercased name when the archive was read.
      */
     private static String renameTexture(String reference) {
-        return rename(reference, true);
+        String renamed = rename(reference, true);
+        // Lowercase the path portion only; the namespace is already required to be lowercase.
+        int colon = renamed.indexOf(':');
+        if (colon < 0) {
+            return renamed.toLowerCase(Locale.ROOT);
+        }
+        return renamed.substring(0, colon + 1) + renamed.substring(colon + 1).toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -112,5 +134,59 @@ public class ModelConverter implements AssetConverter {
         }
 
         return namespace + path;
+    }
+
+    /**
+     * Rounds any non-Quadrant rotation value to the nearest multiple of 90 degrees.
+     *
+     * <p>26.1 added strict Codec-based validation for {@code x}/{@code y} on the model root
+     * and {@code rotation} inside face definitions (both must be 0, 90, 180, or 270).
+     * Legacy packs occasionally write {@code "x": 1} or {@code "rotation": 1}, which are
+     * rejected at load time. Rounding to the nearest Quadrant is the least-surprising repair.
+     *
+     * @return {@code true} if any value was changed
+     */
+    private static boolean sanitizeRotations(JsonObject model, AssetPath path) {
+        boolean changed = false;
+
+        // Model-level x / y rotation (used in blockstate variant entries, forwarded here).
+        changed |= sanitizeIntField(model, "x", path);
+        changed |= sanitizeIntField(model, "y", path);
+
+        // Element-level face rotations.
+        if (model.has("elements") && model.get("elements").isJsonArray()) {
+            JsonArray elements = model.getAsJsonArray("elements");
+            for (JsonElement el : elements) {
+                if (!el.isJsonObject()) continue;
+                JsonObject element = el.getAsJsonObject();
+                if (!element.has("faces") || !element.get("faces").isJsonObject()) continue;
+                JsonObject faces = element.getAsJsonObject("faces");
+                for (Map.Entry<String, JsonElement> face : faces.entrySet()) {
+                    if (!face.getValue().isJsonObject()) continue;
+                    changed |= sanitizeIntField(face.getValue().getAsJsonObject(), "rotation", path);
+                }
+            }
+        }
+
+        return changed;
+    }
+
+    /**
+     * If the named integer field exists and is not already a multiple of 90, round it and
+     * return {@code true}.
+     */
+    private static boolean sanitizeIntField(JsonObject obj, String key, AssetPath path) {
+        if (!obj.has(key) || !obj.get(key).isJsonPrimitive()) return false;
+        int raw;
+        try {
+            raw = obj.get(key).getAsInt();
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        if (raw % 90 == 0) return false;
+        int rounded = (int) (Math.round(raw / 90.0) * 90);
+        AssetBridge.LOGGER.debug("Sanitized rotation {}={} \u2192 {} in {}", key, raw, rounded, path);
+        obj.addProperty(key, rounded);
+        return true;
     }
 }

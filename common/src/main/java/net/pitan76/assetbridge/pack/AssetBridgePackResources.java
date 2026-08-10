@@ -49,8 +49,22 @@ public class AssetBridgePackResources implements PackResources {
         int format = kind == AssetPath.PackKind.SERVER
                 ? RuntimePack.dataPackFormat()
                 : RuntimePack.resourcePackFormat();
+        int formatMinor = kind == AssetPath.PackKind.SERVER
+                ? RuntimePack.dataPackFormatMinor()
+                : RuntimePack.resourcePackFormatMinor();
+        //? if >=26 {
+        /*// 26.1 split pack_format into major (pack_format) and minor (pack_format_minor).
+        // PackFormat's Codec requires both fields; a missing pack_format_minor causes the
+        // metadata section to fail parsing and Pack.readMetaAndCreate to return null.
+        this.mcmeta = "{\"pack\":{\"pack_format\":" + format
+                + ",\"pack_format_minor\":" + formatMinor
+                + ",\"min_format\":" + format
+                + ",\"max_format\":" + format
+                + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
+        *///?} else {
         this.mcmeta = "{\"pack\":{\"pack_format\":" + format
                 + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
+        //?}
     }
 
     /**
@@ -242,7 +256,7 @@ public class AssetBridgePackResources implements PackResources {
         if (!root.has(section)) return null;
         return serializer.codec()
                 .parse(JsonOps.INSTANCE, GsonHelper.getAsJsonObject(root, section))
-                .result()
+                .resultOrPartial(err -> AssetBridge.LOGGER.error("Failed to parse metadata section '{}' (JSON: {}): {}", section, root, err))
                 .orElse(null);
         *///?} else {
         String section = serializer.getMetadataSectionName();

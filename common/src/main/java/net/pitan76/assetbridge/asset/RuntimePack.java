@@ -50,6 +50,33 @@ public final class RuntimePack {
         //?}
     }
 
+    /**
+     * The {@code pack_format_minor} for resource packs on Minecraft 26.1+, where the pack
+     * format was split into an independent major and minor number. Returns 0 on older versions
+     * where this field does not exist in {@code pack.mcmeta}.
+     */
+    public static int resourcePackFormatMinor() {
+        //? if >=26 {
+        /*// `resource_minor` from the version.json in the client jar.
+        return 0;
+        *///?} else {
+        return 0;
+        //?}
+    }
+
+    /**
+     * The {@code pack_format_minor} for data packs on Minecraft 26.1+.
+     * Returns 0 on older versions where this field does not exist.
+     */
+    public static int dataPackFormatMinor() {
+        //? if >=26 {
+        /*// `data_minor` from version.json.
+        return 0;
+        *///?} else {
+        return 0;
+        //?}
+    }
+
     /** The asset generation this build targets, i.e. what converters must convert *to*. */
     public static AssetVersion generation() {
         return AssetVersion.fromPackFormat(resourcePackFormat());
