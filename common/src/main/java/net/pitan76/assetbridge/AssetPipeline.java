@@ -125,13 +125,31 @@ public class AssetPipeline {
                 }
             }
             case BLOCK_MODEL, MODEL -> convertInto(assets, MODELS, path, source, version, archive);
-            case TEXTURE, TEXTURE_META, LANG -> {
+            case TEXTURE, TEXTURE_META -> {
                 // Nothing to convert, so the bytes never have to enter the heap: the archive
                 // serves them when the game asks. An earlier archive claiming the path still wins.
                 // Pre-1.13 texture directories are flattened here so the sprite ends up where
                 // the atlas looks for it; ModelConverter rewrites the references to match.
                 AssetPath target = path.flattened();
                 if (!assets.hasResource(target)) assets.putResource(target, source);
+            }
+            case LANG -> {
+                AssetPath target = path.flattened();
+                if (target.path().endsWith(".lang")) {
+                    String newPath = target.path().substring(0, target.path().length() - ".lang".length()) + ".json";
+                    AssetPath jsonTarget = new AssetPath(target.kind(), target.namespace(), newPath);
+                    if (!assets.hasResource(jsonTarget)) {
+                        byte[] raw = readBytes(source, path, archive);
+                        if (raw != null) {
+                            byte[] jsonBytes = convertLangToJson(raw);
+                            if (jsonBytes != null) {
+                                assets.putResource(jsonTarget, jsonBytes);
+                            }
+                        }
+                    }
+                } else {
+                    if (!assets.hasResource(target)) assets.putResource(target, source);
+                }
             }
             case RECIPE -> {
                 // Server-side data is a feature's business, not the core's;
@@ -353,5 +371,21 @@ public class AssetPipeline {
 
         assets.putResource(defPath, Json.toString(root).getBytes(StandardCharsets.UTF_8));
         return 1;
+    }
+
+    private static byte[] convertLangToJson(byte[] raw) {
+        String content = new String(raw, StandardCharsets.UTF_8);
+        JsonObject json = new JsonObject();
+        for (String line : content.split("\\r?\\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("//")) continue;
+            int eq = trimmed.indexOf('=');
+            if (eq > 0) {
+                String key = trimmed.substring(0, eq).trim();
+                String value = trimmed.substring(eq + 1).trim();
+                json.addProperty(key, value);
+            }
+        }
+        return Json.toString(json).getBytes(StandardCharsets.UTF_8);
     }
 }

@@ -57,23 +57,19 @@ public class AssetBridgePackResources implements PackResources {
         int formatMinor = kind == AssetPath.PackKind.SERVER
                 ? RuntimePack.dataPackFormatMinor()
                 : RuntimePack.resourcePackFormatMinor();
-        // ? if >=26 {
-        /*
-         * // 26.1 split pack_format into major (pack_format) and minor
-         * (pack_format_minor).
-         * // PackFormat's Codec requires both fields; a missing pack_format_minor
-         * causes the
-         * // metadata section to fail parsing and Pack.readMetaAndCreate to return
-         * null.
-         * this.mcmeta = "{\"pack\":{\"pack_format\":" + format
-         * + ",\"pack_format_minor\":" + formatMinor
-         * + ",\"min_format\":" + format
-         * + ",\"max_format\":" + format
-         * + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
-         */// ?} else {
+        //? if >=26 {
+        /*// 26.1 split pack_format into major (pack_format) and minor (pack_format_minor).
+        // PackFormat's Codec requires both fields; a missing pack_format_minor causes the
+        // metadata section to fail parsing and Pack.readMetaAndCreate to return null.
+        this.mcmeta = "{\"pack\":{\"pack_format\":" + format
+                + ",\"pack_format_minor\":" + formatMinor
+                + ",\"min_format\":" + format
+                + ",\"max_format\":" + format
+                + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
+        *///?} else {
         this.mcmeta = "{\"pack\":{\"pack_format\":" + format
                 + ",\"description\":\"Assets bridged from mods/assetbridge/\"}}";
-        // ?}
+        //?}
     }
 
     /**
@@ -158,34 +154,32 @@ public class AssetBridgePackResources implements PackResources {
     public boolean hasResource(PackType type, ResourceLocation location) {
         return sourceOf(type, location) != null;
     }
-    // ?}
+    //?}
 
     // How the pack names itself: getName() up to 1.19, packId() in 1.20,
     // and a PackLocationInfo record from 1.21. A separate chain, because Java block
     // comments do not nest and the block above is already commented out per
     // version.
-    // ? if >=1.21 {
-    /*
-     * @Override
-     * public net.minecraft.server.packs.PackLocationInfo location() {
-     * return new net.minecraft.server.packs.PackLocationInfo(
-     * packName(),
-     * net.minecraft.network.chat.Component.literal(displayName()),
-     * net.minecraft.server.packs.repository.PackSource.BUILT_IN,
-     * java.util.Optional.empty());
-     * }
-     */// ?} elif >=1.20 {
-    /*
-     * @Override
-     * public String packId() {
-     * return displayName();
-     * }
-     */// ?} else {
+    //? if >=1.21 {
+    /*@Override
+    public net.minecraft.server.packs.PackLocationInfo location() {
+        return new net.minecraft.server.packs.PackLocationInfo(
+                packName(),
+                net.minecraft.network.chat.Component.literal(displayName()),
+                net.minecraft.server.packs.repository.PackSource.BUILT_IN,
+                java.util.Optional.empty());
+    }
+    *///?} elif >=1.20 {
+    /*@Override
+    public String packId() {
+        return displayName();
+    }
+    *///?} else {
     @Override
     public String getName() {
         return displayName();
     }
-    // ?}
+    //?}
 
     @Nullable
     private AssetPath getAlternativePath(AssetPath original) {
@@ -240,36 +234,30 @@ public class AssetBridgePackResources implements PackResources {
         return found;
     }
 
-    // ? if >=1.20 {
-    /*
-     * // Replaced by listResources above.
-     */// ?} elif >=1.19 {
-    /*
-     * @Override
-     * public Collection<ResourceLocation> getResources(PackType type, String
-     * namespace, String path,
-     * Predicate<ResourceLocation> filter) {
-     * // 1.19 dropped the depth limit and moved the filter onto the full
-     * identifier.
-     * List<ResourceLocation> found = new ArrayList<>();
-     * for (ResourceLocation id : collectResources(type, namespace, path,
-     * Integer.MAX_VALUE)) {
-     * if (filter.test(id)) found.add(id);
-     * }
-     * return found;
-     * }
-     */// ?} else {
-    @Override
+    //? if >=1.20 {
+    // Replaced by listResources above.
+    //?} elif >=1.19 {
+    /*@Override
     public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
-            int maxDepth, Predicate<String> filter) {
+                                                     Predicate<ResourceLocation> filter) {
+        // 1.19 dropped the depth limit and moved the filter onto the full identifier.
         List<ResourceLocation> found = new ArrayList<>();
-        for (ResourceLocation id : collectResources(type, namespace, path, maxDepth)) {
-            if (filter.test(fileNameOf(id.getPath())))
-                found.add(id);
+        for (ResourceLocation id : collectResources(type, namespace, path, Integer.MAX_VALUE)) {
+            if (filter.test(id)) found.add(id);
         }
         return found;
     }
-    // ?}
+    *///?} else {
+    @Override
+    public Collection<ResourceLocation> getResources(PackType type, String namespace, String path,
+                                                     int maxDepth, Predicate<String> filter) {
+        List<ResourceLocation> found = new ArrayList<>();
+        for (ResourceLocation id : collectResources(type, namespace, path, maxDepth)) {
+            if (filter.test(fileNameOf(id.getPath()))) found.add(id);
+        }
+        return found;
+    }
+    //?}
 
     @Override
     public Set<String> getNamespaces(PackType type) {
@@ -288,25 +276,20 @@ public class AssetBridgePackResources implements PackResources {
     @Nullable
     public <T> T getMetadataSection(MetadataSectionSerializer<T> serializer) {
         JsonObject root = GsonHelper.parse(new StringReader(mcmeta));
-        // ? if >=26 {
-        /*
-         * // 26.1 turned the serializer into a record carrying a Codec, so the section
-         * name and the
-         * // deserialisation both come from different members than before.
-         * String section = serializer.name();
-         * if (!root.has(section)) return null;
-         * return serializer.codec()
-         * .parse(JsonOps.INSTANCE, GsonHelper.getAsJsonObject(root, section))
-         * .resultOrPartial(err -> AssetBridge.LOGGER.
-         * error("Failed to parse metadata section '{}' (JSON: {}): {}", section, root,
-         * err))
-         * .orElse(null);
-         */// ?} else {
+        //? if >=26 {
+        /*// 26.1 turned the serializer into a record carrying a Codec, so the section name and the
+        // deserialisation both come from different members than before.
+        String section = serializer.name();
+        if (!root.has(section)) return null;
+        return serializer.codec()
+                .parse(JsonOps.INSTANCE, GsonHelper.getAsJsonObject(root, section))
+                .resultOrPartial(err -> AssetBridge.LOGGER.error("Failed to parse metadata section '{}' (JSON: {}): {}", section, root, err))
+                .orElse(null);
+        *///?} else {
         String section = serializer.getMetadataSectionName();
-        if (!root.has(section))
-            return null;
+        if (!root.has(section)) return null;
         return serializer.fromJson(GsonHelper.getAsJsonObject(root, section));
-        // ?}
+        //?}
     }
 
     /**
@@ -325,13 +308,12 @@ public class AssetBridgePackResources implements PackResources {
     }
 
     private static ResourceLocation resourceLocation(String namespace, String path) {
-        // ? if >=1.21 {
-        /*
-         * // 1.21 made the ResourceLocation constructor private.
-         * return ResourceLocation.fromNamespaceAndPath(namespace, path);
-         */// ?} else {
+        //? if >=1.21 {
+        /*// 1.21 made the ResourceLocation constructor private.
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
+        *///?} else {
         return new ResourceLocation(namespace, path);
-        // ?}
+        //?}
     }
 
     /** The pack's registry id, distinct from the name shown to the player. */
