@@ -182,6 +182,22 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         return new AssetPath(PackKind.CLIENT, namespace, "models/item/" + name + ".json");
     }
 
+    /**
+     * The canonical path for a block model, e.g. {@code namespace:block/name} →
+     * {@code assets/namespace/models/block/name.json}.
+     *
+     * <p>The {@code modelId} may be a bare {@code block/name} (implicit {@code minecraft}
+     * namespace) or a fully-qualified {@code namespace:block/name}.
+     */
+    @Nullable
+    public static AssetPath fromModelId(String modelId) {
+        int colon = modelId.indexOf(':');
+        String namespace = colon < 0 ? "minecraft" : modelId.substring(0, colon);
+        String path = colon < 0 ? modelId : modelId.substring(colon + 1);
+        if (path.isEmpty()) return null;
+        return new AssetPath(PackKind.CLIENT, namespace, "models/" + path + ".json");
+    }
+
     @Override
     public @NotNull String toString() {
         return toFullPath();

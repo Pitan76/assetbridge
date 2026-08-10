@@ -15,6 +15,8 @@ import net.pitan76.assetbridge.convert.AtlasSources;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
 import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.ModelReferenceResolver;
+import net.pitan76.assetbridge.feature.Features;
+import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
@@ -87,6 +89,15 @@ public class AssetPipeline {
 
         // After the models are final, so a stand-in's textures are the ones declared.
         AtlasSources.declare(assets);
+
+        // Inject render_type into block model JSON for blocks that need cutout rendering.
+        // This runs last so every model is fully resolved before we patch it.
+        // On pre-26 Minecraft the field is not understood and is silently ignored, so the
+        // injection is harmless across all versions.
+        int injected = injectRenderTypes(assets);
+        if (injected > 0) {
+            AssetBridge.LOGGER.info("Injected render_type=cutout into {} block model(s) for pre-26 assets", injected);
+        }
 
         AssetBridge.LOGGER.info("Prepared {} bridged blocks, {} items and {} resources from {} archive(s)",
                 assets.blocks().size(), assets.items().size(), assets.resources().size(), archives.size());
@@ -220,5 +231,80 @@ public class AssetPipeline {
 
     private static String qualify(String reference, String namespace) {
         return reference.indexOf(':') < 0 ? namespace + ":" + reference : reference;
+    }
+
+    /**
+     * Injects {@code "render_type": "minecraft:cutout"} into the representative model JSON
+     * of every bridged block whose id matches the cutout heuristic, provided the
+     * {@link CutoutBlocksFeature} is enabled.
+     *
+     * <p>On Minecraft 26.1+ the per-block render layer API was removed; the game reads the
+     * render type from the block model JSON instead. On older versions the field is unknown
+     * and silently ignored, so patching all versions is safe.
+     *
+     * <p>Must run after all models are fully resolved so that the representative model the
+     * blockstate refers to is guaranteed to be present in {@code assets}.
+     *
+     * @return the number of models that were patched
+     */
+    private static int injectRenderTypes(BridgedAssetManager assets) {
+        if (!Features.isEnabled(CutoutBlocksFeature.ID)) return 0;
+
+        int count = 0;
+        for (BridgedBlockDefinition block : assets.blocks()) {
+            if (!isCutoutById(block.id())) continue;
+
+            AssetPath modelPath = AssetPath.fromModelId(block.modelId());
+            if (modelPath == null) continue;
+
+            byte[] existing;
+            try {
+                existing = assets.readResource(modelPath);
+            } catch (IOException e) {
+                AssetBridge.LOGGER.warn("Could not read model {} for render_type injection", modelPath, e);
+                continue;
+            }
+            if (existing == null) continue;
+
+            JsonObject model = Json.parse(new String(existing, StandardCharsets.UTF_8));
+            if (model == null) continue;
+            // Respect an explicit declaration in the original asset.
+            if (model.has("render_type")) continue;
+
+            model.addProperty("render_type", "minecraft:cutout");
+            assets.putResource(modelPath, Json.toString(model).getBytes(StandardCharsets.UTF_8));
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Mirrors the name-based heuristic in {@code BridgedBlocks.isCutout()}, but operates
+     * on a plain {@code namespace:path} string so that no Minecraft types are needed here.
+     * The pipeline runs before block instances exist, but the decision only depends on the
+     * block's id, which is already known.
+     */
+    private static boolean isCutoutById(String id) {
+        String configVal = Features.getConfigValue(CutoutBlocksFeature.ID);
+        if (configVal == null) return false;
+        String trimmed = configVal.trim();
+        if (trimmed.equalsIgnoreCase("false")) return false;
+        int colon = id.indexOf(':');
+        String path = (colon < 0 ? id : id.substring(colon + 1)).toLowerCase(java.util.Locale.ROOT);
+        if (trimmed.equalsIgnoreCase("true")) {
+            return path.contains("leaves")
+                    || path.contains("glass")
+                    || path.contains("sapling")
+                    || path.contains("crop")
+                    || path.contains("flower")
+                    || path.contains("plant")
+                    || path.contains("cutout")
+                    || path.contains("portal");
+        }
+        // Comma-separated explicit id list.
+        for (String targetId : trimmed.split(",")) {
+            if (targetId.trim().equals(id)) return true;
+        }
+        return false;
     }
 }
