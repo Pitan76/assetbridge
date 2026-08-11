@@ -153,17 +153,40 @@ val getCompatibleMcVersions: (Project) -> List<String> = { proj ->
         val end = matches.last()
         val startParts = start.split(".")
         val endParts = end.split(".")
-        if (startParts.size >= 2 && endParts.size >= 2 && startParts[0] == endParts[0] && startParts[1] == endParts[1]) {
+        if (startParts.size >= 2 && endParts.size >= 2 && startParts[0] == endParts[0]) {
             val major = startParts[0]
-            val minor = startParts[1]
-            val startPatch = startParts.getOrNull(2)?.toIntOrNull() ?: 0
-            val endPatch = endParts.getOrNull(2)?.toIntOrNull() ?: 0
             val list = mutableListOf<String>()
-            for (patch in startPatch..endPatch) {
-                if (patch == 0) {
-                    list.add("$major.$minor")
+            val isLegacy = major.toIntOrNull()?.let { it < 26 } ?: true
+            if (isLegacy) {
+                // 1.x.y style (e.g. 1.20.1 -> 1.20)
+                if (startParts[1] == endParts[1]) {
+                    val minor = startParts[1]
+                    val startPatch = startParts.getOrNull(2)?.toIntOrNull() ?: 0
+                    val endPatch = endParts.getOrNull(2)?.toIntOrNull() ?: 0
+                    for (patch in startPatch..endPatch) {
+                        if (patch == 0) {
+                            list.add("$major.$minor")
+                        } else {
+                            list.add("$major.$minor.$patch")
+                        }
+                    }
                 } else {
-                    list.add("$major.$minor.$patch")
+                    return@getCompatibleMcVersions matches
+                }
+            } else {
+                // 26.x style (e.g. 26.1 -> 26.2)
+                val startMinor = startParts[1].toIntOrNull() ?: 0
+                val endMinor = endParts[1].toIntOrNull() ?: 0
+                for (minor in startMinor..endMinor) {
+                    val startPatch = if (minor == startMinor) (startParts.getOrNull(2)?.toIntOrNull() ?: 0) else 0
+                    val endPatch = if (minor == endMinor) (endParts.getOrNull(2)?.toIntOrNull() ?: 0) else 9 // default up to .9
+                    for (patch in startPatch..endPatch) {
+                        if (patch == 0) {
+                            list.add("$major.$minor")
+                        } else {
+                            list.add("$major.$minor.$patch")
+                        }
+                    }
                 }
             }
             list
