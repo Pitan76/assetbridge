@@ -64,6 +64,22 @@ public class FeatureConfig {
             }
         }
 
+        String hardness = properties.getProperty("block_hardness");
+        if (hardness == null) {
+            complete = false;
+            valuesMap.put("block_hardness", "1.5");
+        } else {
+            valuesMap.put("block_hardness", hardness.trim());
+        }
+
+        String resistance = properties.getProperty("block_resistance");
+        if (resistance == null) {
+            complete = false;
+            valuesMap.put("block_resistance", "6.0");
+        } else {
+            valuesMap.put("block_resistance", resistance.trim());
+        }
+
         Features.setConfigValues(valuesMap);
 
         if (!complete) write(path, features, valuesMap);
@@ -86,6 +102,12 @@ public class FeatureConfig {
                     .append(KEY_PREFIX).append(feature.id()).append('=')
                     .append(valuesMap.getOrDefault(feature.id(), String.valueOf(feature.enabledByDefault()))).append('\n');
         }
+
+        text.append('\n')
+                .append("# Default hardness (destroy time) for bridged blocks.\n")
+                .append("block_hardness=").append(valuesMap.getOrDefault("block_hardness", "1.5")).append('\n')
+                .append("\n# Default explosion resistance for bridged blocks.\n")
+                .append("block_resistance=").append(valuesMap.getOrDefault("block_resistance", "6.0")).append('\n');
 
         try {
             Files.createDirectories(path.getParent());

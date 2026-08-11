@@ -62,7 +62,22 @@ public class BridgedBlock extends Block {
         properties = Properties.of(net.minecraft.world.level.material.Material.STONE);
         //?}
 
-        properties = properties.strength(1.5F, 6.0F);
+        float hardness = 1.5F;
+        float resistance = 6.0F;
+        try {
+            String hardnessVal = net.pitan76.assetbridge.feature.Features.getConfigValue("block_hardness");
+            if (hardnessVal != null) {
+                hardness = Float.parseFloat(hardnessVal);
+            }
+            String resistanceVal = net.pitan76.assetbridge.feature.Features.getConfigValue("block_resistance");
+            if (resistanceVal != null) {
+                resistance = Float.parseFloat(resistanceVal);
+            }
+        } catch (NumberFormatException e) {
+            // Use defaults if parsing fails
+        }
+
+        properties = properties.strength(hardness, resistance);
         if (shouldDisableOcclusion(id)) {
             properties = properties.noOcclusion();
         }
@@ -80,6 +95,14 @@ public class BridgedBlock extends Block {
                 || path.contains("gate")
                 || path.contains("button")
                 || path.contains("pressure_plate")
+                || path.contains("chest")
+                || path.contains("hopper")
+                || path.contains("anvil")
+                || path.contains("cauldron")
+                || path.contains("spawner")
+                || path.contains("lantern")
+                || path.contains("torch")
+                || path.contains("campfire")
                 || BridgedBlocks.isCutout(id);
     }
 
