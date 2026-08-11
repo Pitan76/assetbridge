@@ -101,13 +101,41 @@ class RecipeConverterTest {
 
     @Test
     void convertsRecipeTags() {
-        String json = "{\"type\":\"minecraft:crafting_shaped\",\"key\":{\"#\":{\"tag\":\"c:raw_fishes\"}},\"pattern\":[\"#\"],\"result\":{\"item\":\"examplemod:foo\"}}";
-        byte[] converted = convert(json, AssetVersion.MODERN);
-        assertNotNull(converted);
-        String result = new String(converted, StandardCharsets.UTF_8);
-        JsonObject parsed = net.pitan76.assetbridge.util.Json.parse(result);
-        String convertedTag = parsed.getAsJsonObject("key").getAsJsonObject("#").get("tag").getAsString();
-        assertEquals("forge:raw_fishes", convertedTag);
+        if (RecipeConverter.isFabric()) {
+            // Fabric環境用の変換テスト (forge -> c)
+            // forge:ingots/iron -> c:iron_ingots
+            String json1 = "{\"type\":\"minecraft:crafting_shaped\",\"key\":{\"#\":{\"tag\":\"forge:ingots/iron\"}},\"pattern\":[\"#\"],\"result\":{\"item\":\"examplemod:foo\"}}";
+            byte[] converted1 = convert(json1, AssetVersion.MODERN);
+            assertNotNull(converted1);
+            String result1 = new String(converted1, StandardCharsets.UTF_8);
+            JsonObject parsed1 = net.pitan76.assetbridge.util.Json.parse(result1);
+            assertEquals("c:iron_ingots", parsed1.getAsJsonObject("key").getAsJsonObject("#").get("tag").getAsString());
+
+            // forge:slices/raw_fishes -> c:raw_fishes_slices
+            String json2 = "{\"type\":\"minecraft:crafting_shaped\",\"key\":{\"#\":{\"tag\":\"forge:slices/raw_fishes\"}},\"pattern\":[\"#\"],\"result\":{\"item\":\"examplemod:foo\"}}";
+            byte[] converted2 = convert(json2, AssetVersion.MODERN);
+            assertNotNull(converted2);
+            String result2 = new String(converted2, StandardCharsets.UTF_8);
+            JsonObject parsed2 = net.pitan76.assetbridge.util.Json.parse(result2);
+            assertEquals("c:raw_fishes_slices", parsed2.getAsJsonObject("key").getAsJsonObject("#").get("tag").getAsString());
+        } else {
+            // Forge環境用の変換テスト (c -> forge)
+            // c:iron_ingots -> forge:ingots/iron
+            String json1 = "{\"type\":\"minecraft:crafting_shaped\",\"key\":{\"#\":{\"tag\":\"c:iron_ingots\"}},\"pattern\":[\"#\"],\"result\":{\"item\":\"examplemod:foo\"}}";
+            byte[] converted1 = convert(json1, AssetVersion.MODERN);
+            assertNotNull(converted1);
+            String result1 = new String(converted1, StandardCharsets.UTF_8);
+            JsonObject parsed1 = net.pitan76.assetbridge.util.Json.parse(result1);
+            assertEquals("forge:ingots/iron", parsed1.getAsJsonObject("key").getAsJsonObject("#").get("tag").getAsString());
+
+            // c:raw_fishes_slices -> forge:slices/raw_fishes
+            String json2 = "{\"type\":\"minecraft:crafting_shaped\",\"key\":{\"#\":{\"tag\":\"c:raw_fishes_slices\"}},\"pattern\":[\"#\"],\"result\":{\"item\":\"examplemod:foo\"}}";
+            byte[] converted2 = convert(json2, AssetVersion.MODERN);
+            assertNotNull(converted2);
+            String result2 = new String(converted2, StandardCharsets.UTF_8);
+            JsonObject parsed2 = net.pitan76.assetbridge.util.Json.parse(result2);
+            assertEquals("forge:slices/raw_fishes", parsed2.getAsJsonObject("key").getAsJsonObject("#").get("tag").getAsString());
+        }
     }
 
     private static byte[] convert(String recipe, AssetVersion from) {

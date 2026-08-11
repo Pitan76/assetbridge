@@ -96,7 +96,7 @@ public class RecipeConverter implements AssetConverter {
         return SUPPORTED_TYPES.contains(type) ? data : null;
     }
 
-    private static boolean isFabric() {
+    public static boolean isFabric() {
         try {
             Class.forName("net.fabricmc.loader.api.FabricLoader");
             return true;
