@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      publish_targets:
+        description: |
+          アップロードするターゲットをカンマ区切りで指定 (例: fabric:1.21.1,forge:1.16.5,neoforge:26.1.2)
+          空欄にすると publishMods を全実行します
+        required: false
+        default: ""
 
 jobs:
   build:
@@ -30,13 +38,32 @@ jobs:
         run: ./gradlew chiseledBuild
 
       - name: Publish to CurseForge and Modrinth
-        run: ./gradlew publishMods --continue
+        run: |
+          TARGETS="${{ github.event.inputs.publish_targets }}"
+          if [ -z "$TARGETS" ]; then
+            # タグpushや入力が空の場合は全バージョンをpublish
+            ./gradlew publishMods --continue
+          else
+            # カンマ区切りで指定されたターゲットだけ実行
+            # 例: "fabric:1.21.1,forge:1.16.5" → ":fabric:1.21.1:publishMods :forge:1.16.5:publishMods"
+            TASKS=""
+            IFS=',' read -ra ENTRIES <<< "$TARGETS"
+            for ENTRY in "${ENTRIES[@]}"; do
+              LOADER=$(echo "$ENTRY" | cut -d: -f1 | xargs)
+              VERSION=$(echo "$ENTRY" | cut -d: -f2 | xargs)
+              TASKS="$TASKS :$LOADER:$VERSION:publishMods"
+            done
+            echo "実行するタスク:$TASKS"
+            ./gradlew $TASKS --continue
+          fi
         continue-on-error: true
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
       - name: Create Release
+        # タグpushのときだけGitHub Releaseを作成する
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
