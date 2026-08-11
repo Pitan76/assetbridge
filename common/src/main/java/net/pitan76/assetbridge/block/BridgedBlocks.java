@@ -63,28 +63,6 @@ public class BridgedBlocks {
     }
 
     public static boolean isCutout(ResourceLocation id) {
-        String configVal = net.pitan76.assetbridge.feature.Features.getConfigValue("cutout_blocks");
-        if (configVal == null) return false;
-        String trimmed = configVal.trim();
-        if (trimmed.equalsIgnoreCase("false")) return false;
-        if (trimmed.equalsIgnoreCase("true")) {
-            String path = id.getPath().toLowerCase();
-            return path.contains("leaves")
-                    || path.contains("glass")
-                    || path.contains("sapling")
-                    || path.contains("crop")
-                    || path.contains("flower")
-                    || path.contains("plant")
-                    || path.contains("cutout")
-                    || path.contains("portal");
-        }
-        String[] ids = trimmed.split(",");
-        String idStr = id.toString();
-        for (String targetId : ids) {
-            if (targetId.trim().equals(idStr)) {
-                return true;
-            }
-        }
-        return false;
+        return BlockConfig.isCutout(id);
     }
 }

@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.feature;
 
 import net.pitan76.assetbridge.AssetBridge;
+import net.pitan76.assetbridge.block.BlockConfig;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -64,60 +65,32 @@ public class FeatureConfig {
             }
         }
 
-        String hardness = properties.getProperty("block_hardness");
-        if (hardness == null) {
-            complete = false;
-            valuesMap.put("block_hardness", "1.5");
-        } else {
-            valuesMap.put("block_hardness", hardness.trim());
-        }
-
-        String resistance = properties.getProperty("block_resistance");
-        if (resistance == null) {
-            complete = false;
-            valuesMap.put("block_resistance", "6.0");
-        } else {
-            valuesMap.put("block_resistance", resistance.trim());
-        }
-
-        String noOcclusionBlocks = properties.getProperty("no_occlusion_blocks");
-        if (noOcclusionBlocks == null) {
-            complete = false;
-            valuesMap.put("no_occlusion_blocks", "true");
-        } else {
-            valuesMap.put("no_occlusion_blocks", noOcclusionBlocks.trim());
-        }
+        BlockConfig.read(properties);
 
         Features.setConfigValues(valuesMap);
 
-        if (!complete) write(path, features, valuesMap);
+        if (!complete) write(path, features, properties);
         return enabled;
     }
 
     private static boolean isCustomValidValue(String featureId, String value) {
-        if (featureId.equals("cutout_blocks") || featureId.equals("no_occlusion_blocks")) {
+        if (featureId.equals("cutout_blocks")) {
             return value.contains(":") || value.contains(",");
         }
         return false;
     }
 
-    private static void write(Path path, List<Feature> features, java.util.Map<String, String> valuesMap) {
+    private static void write(Path path, List<Feature> features, Properties properties) {
         StringBuilder text = new StringBuilder("# ").append(AssetBridge.MOD_NAME)
                 .append(" features. Set a line to false to switch that part off.\n");
         for (Feature feature : features) {
             text.append('\n')
                     .append("# ").append(feature.description()).append('\n')
                     .append(KEY_PREFIX).append(feature.id()).append('=')
-                    .append(valuesMap.getOrDefault(feature.id(), String.valueOf(feature.enabledByDefault()))).append('\n');
+                    .append(properties.getProperty(KEY_PREFIX + feature.id(), String.valueOf(feature.enabledByDefault()))).append('\n');
         }
 
-        text.append('\n')
-                .append("# Default hardness (destroy time) for bridged blocks.\n")
-                .append("block_hardness=").append(valuesMap.getOrDefault("block_hardness", "1.5")).append('\n')
-                .append("\n# Default explosion resistance for bridged blocks.\n")
-                .append("block_resistance=").append(valuesMap.getOrDefault("block_resistance", "6.0")).append('\n')
-                .append("\n# List of blocks that should disable occlusion (render culling). Can be true (use default keyword rules), false (disable all), or comma-separated block IDs.\n")
-                .append("no_occlusion_blocks=").append(valuesMap.getOrDefault("no_occlusion_blocks", "true")).append('\n');
+        BlockConfig.appendConfig(text, properties);
 
         try {
             Files.createDirectories(path.getParent());
