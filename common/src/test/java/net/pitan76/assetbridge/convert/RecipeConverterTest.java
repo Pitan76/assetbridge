@@ -96,8 +96,10 @@ class RecipeConverterTest {
     void dropsFutureVanillaItems() {
         if (is1_18OrBelow()) {
             assertNull(convert("{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"minecraft:mangrove_planks\"}],\"result\":{\"item\":\"examplemod:foo\"}}", AssetVersion.MODERN));
+            assertNull(convert("{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"minecraft:reinforced_deepslate\"}],\"result\":{\"item\":\"examplemod:foo\"}}", AssetVersion.MODERN));
         } else {
             assertNotNull(convert("{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"minecraft:mangrove_planks\"}],\"result\":{\"item\":\"examplemod:foo\"}}", AssetVersion.MODERN));
+            assertNotNull(convert("{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"minecraft:reinforced_deepslate\"}],\"result\":{\"item\":\"examplemod:foo\"}}", AssetVersion.MODERN));
         }
     }
 
@@ -160,6 +162,27 @@ class RecipeConverterTest {
             String result = new String(converted, StandardCharsets.UTF_8);
             JsonObject parsed = net.pitan76.assetbridge.util.Json.parse(result);
             assertEquals("examplemod:foo", parsed.getAsJsonObject("result").get("item").getAsString());
+        }
+    @Test
+    void flattensLegacyCookingRecipeResult() {
+        boolean isLegacyCooking = !net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.ATLASES);
+
+        String json = "{\"type\":\"minecraft:blasting\",\"cookingtime\":200,\"experience\":0.0,\"ingredient\":{\"item\":\"minecraft:enchanted_book\"},\"result\":{\"id\":\"astralenchant:enchantment_shard\",\"count\":1}}";
+        byte[] converted = convert(json, AssetVersion.MODERN);
+        assertNotNull(converted);
+        String result = new String(converted, StandardCharsets.UTF_8);
+        JsonObject parsed = net.pitan76.assetbridge.util.Json.parse(result);
+
+        if (isLegacyCooking) {
+            assertEquals("astralenchant:enchantment_shard", parsed.get("result").getAsString());
+        } else {
+            boolean isModern = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+            JsonObject resObj = parsed.getAsJsonObject("result");
+            if (isModern) {
+                assertEquals("astralenchant:enchantment_shard", resObj.get("id").getAsString());
+            } else {
+                assertEquals("astralenchant:enchantment_shard", resObj.get("item").getAsString());
+            }
         }
     }
 

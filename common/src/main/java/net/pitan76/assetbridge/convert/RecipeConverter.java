@@ -80,6 +80,38 @@ public class RecipeConverter implements AssetConverter {
             }
         }
 
+        // 製錬系レシピ結果のオブジェクトから文字列への平坦化 (1.19.2以前向け)
+        if (json.has("result") && json.has("type")) {
+            JsonElement typeEl = json.get("type");
+            if (typeEl != null && typeEl.isJsonPrimitive()) {
+                String rType = qualify(typeEl.getAsString());
+                Set<String> cookingTypes = Set.of(
+                        "minecraft:smelting",
+                        "minecraft:blasting",
+                        "minecraft:smoking",
+                        "minecraft:campfire_cooking"
+                );
+                if (cookingTypes.contains(rType)) {
+                    boolean isLegacyCookingResult = !net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.ATLASES);
+                    if (isLegacyCookingResult) {
+                        JsonElement resultEl = json.get("result");
+                        if (resultEl.isJsonObject()) {
+                            JsonObject resultObj = resultEl.getAsJsonObject();
+                            String item = null;
+                            if (resultObj.has("item")) {
+                                item = resultObj.get("item").getAsString();
+                            } else if (resultObj.has("id")) {
+                                item = resultObj.get("id").getAsString();
+                            }
+                            if (item != null) {
+                                json.addProperty("result", item);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // プラットフォームに応じたタグの変換
         convertTags(json, isFabric());
         data = Json.toString(json).getBytes(StandardCharsets.UTF_8);
@@ -180,7 +212,8 @@ public class RecipeConverter implements AssetConverter {
         if (jsonStr.contains("minecraft:mangrove") ||
             jsonStr.contains("minecraft:mud") ||
             jsonStr.contains("minecraft:echo_shard") ||
-            jsonStr.contains("minecraft:recovery_compass")) {
+            jsonStr.contains("minecraft:recovery_compass") ||
+            jsonStr.contains("minecraft:reinforced_deepslate")) {
             return true;
         }
         //?}
