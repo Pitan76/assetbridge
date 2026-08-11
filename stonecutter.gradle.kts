@@ -73,7 +73,8 @@ fun javaFor(nodeName: String): JavaVersion {
     // 26.x dropped the leading `1.`, so a major of 26 or more is the new scheme.
     if (major >= 26) return JavaVersion.VERSION_25
     if (minor > 20 || (minor == 20 && patch >= 5)) return JavaVersion.VERSION_21
-//    if (minor <= 16) return JavaVersion.VERSION_1_8
+    // 1.12.x and below need Java 8.
+    if (minor <= 12) return JavaVersion.VERSION_1_8
     if (minor <= 16) return JavaVersion.VERSION_16
     return JavaVersion.VERSION_17
 }
@@ -90,6 +91,8 @@ allprojects {
 subprojects {
     repositories {
         mavenCentral()
+        // Yarn mappings and intermediary for 1.12.2 (Legacy Fabric).
+        maven("https://maven.legacyfabric.net/")
     }
  
     pluginManager.withPlugin("java") {

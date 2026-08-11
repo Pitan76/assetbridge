@@ -12,6 +12,7 @@ plugins {
 // Loom therefore cannot go in the `plugins {}` block above (that block takes no conditionals),
 // which costs us the `loom { }` type-safe accessor. `the<LoomGradleExtensionAPI>()` replaces it.
 val unobfuscated = project.name.substringBefore('.').toInt() >= 26
+val isLegacy = project.name == "1.12.2"
 apply(plugin = if (unobfuscated) "dev.architectury.loom-no-remap" else "dev.architectury.loom")
 
 val loomApi = the<LoomGradleExtensionAPI>()
@@ -31,11 +32,25 @@ if (unobfuscated) {
     }
 }
 
+if (isLegacy) {
+    // Legacy Fabric uses its own intermediary (not Fabric's). Without this URL
+    // Loom downloads the wrong intermediary and mapping resolution fails.
+    the<LoomGradleExtensionAPI>().intermediaryUrl.set(
+        "https://maven.legacyfabric.net/net/legacyfabric/intermediary/%1\$s/intermediary-%1\$s-v2.jar"
+    )
+}
+
 dependencies {
     "minecraft"("net.minecraft:minecraft:$minecraft_version")
     // No mappings exist for 26.1+, and loom-no-remap does not ask for any.
+    // 1.12.2 predates Mojang mappings (which start at 1.14.4); use Legacy Fabric Yarn instead.
     if (!unobfuscated) {
-        "mappings"(loomApi.officialMojangMappings())
+        if (isLegacy) {
+            val yarn_mappings = project.findProperty("yarn_mappings") as String
+            "mappings"("net.legacyfabric:yarn:$yarn_mappings:v2")
+        } else {
+            "mappings"(loomApi.officialMojangMappings())
+        }
     }
 
     // loom-no-remap drops the `mod` prefix on the dependency configurations: there is no
