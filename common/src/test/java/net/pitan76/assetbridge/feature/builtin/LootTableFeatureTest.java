@@ -30,7 +30,12 @@ class LootTableFeatureTest {
 
         apply(assets, ALL_ON);
 
-        JsonObject table = read(assets, AssetPath.blockLootTable("examplemod", "foo"));
+        AssetPath path = AssetPath.blockLootTable("examplemod", "foo");
+        boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+        if (isModernLootDir) {
+            path = new AssetPath(path.kind(), path.namespace(), "loot_table/blocks/foo.json");
+        }
+        JsonObject table = read(assets, path);
         assertEquals("minecraft:block", table.get("type").getAsString());
         JsonObject pool = table.getAsJsonArray("pools").get(0).getAsJsonObject();
         assertEquals("examplemod:foo", pool.getAsJsonArray("entries").get(0)
@@ -41,6 +46,10 @@ class LootTableFeatureTest {
     void keepsATableTheArchiveShipped() throws IOException {
         BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
         AssetPath path = AssetPath.blockLootTable("examplemod", "foo");
+        boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+        if (isModernLootDir) {
+            path = new AssetPath(path.kind(), path.namespace(), "loot_table/blocks/foo.json");
+        }
         assets.putResource(path, "{\"shipped\":true}".getBytes(StandardCharsets.UTF_8));
 
         apply(assets, ALL_ON);

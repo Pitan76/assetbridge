@@ -38,7 +38,10 @@ class RecipeFeatureTest {
 
         boolean isModern = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
         String expected = isModern ? "{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"minecraft:stone\"}],\"result\":{\"id\":\"examplemod:foo\"}}" : SHAPELESS;
-        assertEquals(expected, new String(assets.readResource(FOO), StandardCharsets.UTF_8));
+        
+        boolean isModernRecipeDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.ITEM_DEFINITIONS);
+        AssetPath targetPath = isModernRecipeDir ? new AssetPath(AssetPath.PackKind.SERVER, "examplemod", "recipe/foo.json") : FOO;
+        assertEquals(expected, new String(assets.readResource(targetPath), StandardCharsets.UTF_8));
     }
 
     @Test
