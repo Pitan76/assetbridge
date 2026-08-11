@@ -171,7 +171,7 @@ val getCompatibleMcVersions: (Project) -> List<String> = { proj ->
                         }
                     }
                 } else {
-                    return@getCompatibleMcVersions matches
+                    list.addAll(matches)
                 }
             } else {
                 // 26.x style (e.g. 26.1 -> 26.2)
