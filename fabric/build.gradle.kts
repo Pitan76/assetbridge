@@ -103,7 +103,12 @@ dependencies {
     // remapping step for them to feed.
     val modImplementation = if (unobfuscated) "implementation" else "modImplementation"
     modImplementation("net.fabricmc:fabric-loader:$fabric_loader_version")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric_api_version")
+
+    if (project.name == "1.12.2") {
+        modImplementation("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version")
+    } else {
+        modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric_api_version")
+    }
 
     if (unobfuscated) {
         compileOnly("org.spongepowered:mixin:0.8.5")
@@ -119,7 +124,7 @@ tasks.processResources {
     // Dependency ranges come from the node's gradle.properties, so adding a version
     // means adding a property rather than editing the manifest.
     val mcDep = project.findProperty("mc_dep") as String
-    val fabricApiId = if (project.name == "1.16.5") "fabric" else "fabric-api"
+    val fabricApiId = if (project.name == "1.16.5" || project.name == "1.12.2") "fabric" else "fabric-api"
 
     inputs.property("version", project.version)
     inputs.property("mc_dep", mcDep)
@@ -189,7 +194,12 @@ publishMods {
             minecraftVersions.addAll(mcVersions)
             client.set(true)
             server.set(true)
-            requires("fabric-api")
+
+            if (project.name == "1.12.2") {
+                requires("legacy-fabric-api")
+            } else {
+                requires("fabric-api")
+            }
         }
     }
 
@@ -200,7 +210,12 @@ publishMods {
             projectId.set(modrinthId)
             accessToken.set(modrinthToken)
             minecraftVersions.addAll(mcVersions)
-            requires("fabric-api")
+
+            if (project.name == "1.12.2") {
+                requires("legacy-fabric-api")
+            } else {
+                requires("fabric-api")
+            }
         }
     }
 }
