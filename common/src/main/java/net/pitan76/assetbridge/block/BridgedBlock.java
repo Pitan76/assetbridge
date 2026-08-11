@@ -85,25 +85,43 @@ public class BridgedBlock extends Block {
     }
 
     private static boolean shouldDisableOcclusion(ResourceLocation id) {
-        String path = id.getPath().toLowerCase();
-        return path.contains("stairs")
-                || path.contains("slab")
-                || path.contains("wall")
-                || path.contains("fence")
-                || path.contains("pane")
-                || path.contains("door")
-                || path.contains("gate")
-                || path.contains("button")
-                || path.contains("pressure_plate")
-                || path.contains("chest")
-                || path.contains("hopper")
-                || path.contains("anvil")
-                || path.contains("cauldron")
-                || path.contains("spawner")
-                || path.contains("lantern")
-                || path.contains("torch")
-                || path.contains("campfire")
-                || BridgedBlocks.isCutout(id);
+        String configVal = net.pitan76.assetbridge.feature.Features.getConfigValue("no_occlusion_blocks");
+        if (configVal == null) return false;
+
+        String trimmed = configVal.trim();
+        if (trimmed.equalsIgnoreCase("false")) return false;
+
+        if (trimmed.equalsIgnoreCase("true")) {
+            String path = id.getPath().toLowerCase();
+            return path.contains("stairs")
+                    || path.contains("slab")
+                    || path.contains("wall")
+                    || path.contains("fence")
+                    || path.contains("pane")
+                    || path.contains("door")
+                    || path.contains("gate")
+                    || path.contains("button")
+                    || path.contains("pressure_plate")
+                    || path.contains("chest")
+                    || path.contains("hopper")
+                    || path.contains("anvil")
+                    || path.contains("cauldron")
+                    || path.contains("spawner")
+                    || path.contains("lantern")
+                    || path.contains("torch")
+                    || path.contains("campfire")
+                    || BridgedBlocks.isCutout(id);
+        }
+
+        // Commas separated list of block IDs
+        String[] ids = trimmed.split(",");
+        String idStr = id.toString();
+        for (String targetId : ids) {
+            if (targetId.trim().equals(idStr)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static BridgedBlock create(ResourceLocation id, BridgedStateDefinition states) {

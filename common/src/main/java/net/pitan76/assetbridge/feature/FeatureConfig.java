@@ -80,6 +80,14 @@ public class FeatureConfig {
             valuesMap.put("block_resistance", resistance.trim());
         }
 
+        String noOcclusionBlocks = properties.getProperty("no_occlusion_blocks");
+        if (noOcclusionBlocks == null) {
+            complete = false;
+            valuesMap.put("no_occlusion_blocks", "true");
+        } else {
+            valuesMap.put("no_occlusion_blocks", noOcclusionBlocks.trim());
+        }
+
         Features.setConfigValues(valuesMap);
 
         if (!complete) write(path, features, valuesMap);
@@ -87,7 +95,7 @@ public class FeatureConfig {
     }
 
     private static boolean isCustomValidValue(String featureId, String value) {
-        if (featureId.equals("cutout_blocks")) {
+        if (featureId.equals("cutout_blocks") || featureId.equals("no_occlusion_blocks")) {
             return value.contains(":") || value.contains(",");
         }
         return false;
@@ -107,7 +115,9 @@ public class FeatureConfig {
                 .append("# Default hardness (destroy time) for bridged blocks.\n")
                 .append("block_hardness=").append(valuesMap.getOrDefault("block_hardness", "1.5")).append('\n')
                 .append("\n# Default explosion resistance for bridged blocks.\n")
-                .append("block_resistance=").append(valuesMap.getOrDefault("block_resistance", "6.0")).append('\n');
+                .append("block_resistance=").append(valuesMap.getOrDefault("block_resistance", "6.0")).append('\n')
+                .append("\n# List of blocks that should disable occlusion (render culling). Can be true (use default keyword rules), false (disable all), or comma-separated block IDs.\n")
+                .append("no_occlusion_blocks=").append(valuesMap.getOrDefault("no_occlusion_blocks", "true")).append('\n');
 
         try {
             Files.createDirectories(path.getParent());
