@@ -138,6 +138,29 @@ class RecipeConverterTest {
         }
     }
 
+    @Test
+    void convertsRecipeResultIdAndItem() {
+        boolean isModern = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+
+        if (isModern) {
+            // 1.20.5+ 環境: item -> id への変換を検証
+            String json = "{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[],\"result\":{\"item\":\"examplemod:foo\",\"count\":4}}";
+            byte[] converted = convert(json, AssetVersion.MODERN);
+            assertNotNull(converted);
+            String result = new String(converted, StandardCharsets.UTF_8);
+            JsonObject parsed = net.pitan76.assetbridge.util.Json.parse(result);
+            assertEquals("examplemod:foo", parsed.getAsJsonObject("result").get("id").getAsString());
+        } else {
+            // 1.20.1- 環境: id -> item への変換を検証
+            String json = "{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[],\"result\":{\"id\":\"examplemod:foo\",\"count\":4}}";
+            byte[] converted = convert(json, AssetVersion.MODERN);
+            assertNotNull(converted);
+            String result = new String(converted, StandardCharsets.UTF_8);
+            JsonObject parsed = net.pitan76.assetbridge.util.Json.parse(result);
+            assertEquals("examplemod:foo", parsed.getAsJsonObject("result").get("item").getAsString());
+        }
+    }
+
     private static byte[] convert(String recipe, AssetVersion from) {
         return CONVERTER.convert(PATH, recipe.getBytes(StandardCharsets.UTF_8), from);
     }

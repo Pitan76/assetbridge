@@ -60,6 +60,24 @@ public class RecipeConverter implements AssetConverter {
 
         if (containsFutureVanillaItems(json)) return null;
 
+        // レシピ結果 (result) の 1.20.5+ 形式 ("id") と古い形式 ("item") の相互変換
+        if (json.has("result")) {
+            JsonElement resultEl = json.get("result");
+            if (resultEl.isJsonObject()) {
+                JsonObject resultObj = resultEl.getAsJsonObject();
+                boolean isModern = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+                if (isModern) {
+                    if (resultObj.has("item") && !resultObj.has("id")) {
+                        resultObj.add("id", resultObj.get("item"));
+                    }
+                } else {
+                    if (resultObj.has("id") && !resultObj.has("item")) {
+                        resultObj.add("item", resultObj.get("id"));
+                    }
+                }
+            }
+        }
+
         // プラットフォームに応じたタグの変換
         convertTags(json, isFabric());
         data = Json.toString(json).getBytes(StandardCharsets.UTF_8);
