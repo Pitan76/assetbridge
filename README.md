@@ -73,6 +73,28 @@ block_resistance.examplemod:example_block=30.0
 no_occlusion_blocks=true
 ```
 
+## 対応アセット形式
+Asset Bridgeは取り込むMODのJARに含まれる `pack.mcmeta` の `pack_format` 値や、MODメタデータ（`fabric.mod.json` / `mods.toml`）のMinecraftバージョン記述から、アセットの世代を自動判別します。
+
+| 世代 | 対応Minecraftバージョン | リソースpack_format | データpack_format | 主な特徴 |
+|------|------------------------|--------------------|--------------------|----------|
+| LEGACY | 1.6 – 1.12 | 1 – 3 | — | `blocks/`・`items/` ディレクトリ、旧テクスチャ参照方式 |
+| FLATTENED | 1.13 – 1.14 | 4 | — | フラットニング後、`block/`・`item/` に変更 |
+| MODERN | 1.15 – 1.19.2 | 5 – 11 | 7 – 9 | 現在の基本構造。アトラス定義なし |
+| ATLASES | 1.19.3 – 1.20.4 | 12 – 31 | 10 – 25 | `assets/*/atlases/` が追加された |
+| COMPONENTS | 1.20.5 – 1.21.3 | 32 – 45 | 26 – 47 | アイテムスタックコンポーネント形式 |
+| ITEM_DEFINITIONS | 1.21.4 / 26.x 以降 | 46 – (84+) | 48 – (101+) | `assets/*/items/` へのアイテム定義分離 |
+
+### 変換処理の内容
+- **blockstates JSON**: `normal` variantの空文字への変換、モデルパスの修正（例: `cube_all` → `block/cube_all`）
+- **block/item モデル JSON**: `blocks/`, `items/` → `block/`, `item/` へのディレクトリ名変換（LEGACY世代）、将来世代の未知キーの除去、テクスチャ参照の小文字化
+- **Atlas定義** (`atlases/*.json`): ランタイムパックに含める
+- **アイテム定義** (`items/*.json`、ITEM_DEFINITIONS以降): ランタイムパックに含める
+- **レシピ / ルートテーブル**: feature有効時にデータパックとして含める
+
+> [!NOTE]
+> `pack_format` が存在しない、読み取れないアーカイブは MODERN 世代として処理されます。
+
 ## 技術的な話
 本プロジェクトは、複数のMCバージョンおよびプラットフォーム（Fabric、Forge、NeoForge）向けのMODをビルドする構成をとっています。
 
@@ -185,6 +207,28 @@ block_resistance.examplemod:example_block=30.0
 # true = auto-detect by keyword (stairs, slab, chest, etc.), false = disable all, or comma-separated block IDs
 no_occlusion_blocks=true
 ```
+
+## Supported Asset Formats
+Asset Bridge automatically detects the asset generation of the imported mod's JAR from the `pack_format` value in `pack.mcmeta` or the Minecraft version declared in the mod metadata (`fabric.mod.json` / `mods.toml`).
+
+| Generation | Minecraft Versions | Resource pack_format | Data pack_format | Notes |
+|------------|-------------------|---------------------|-----------------|-------|
+| LEGACY | 1.6 – 1.12 | 1 – 3 | — | Old `blocks/`/`items/` directories, legacy texture references |
+| FLATTENED | 1.13 – 1.14 | 4 | — | Post-flattening; renamed to `block/`/`item/` |
+| MODERN | 1.15 – 1.19.2 | 5 – 11 | 7 – 9 | Current baseline structure, no atlas definitions |
+| ATLASES | 1.19.3 – 1.20.4 | 12 – 31 | 10 – 25 | Added `assets/*/atlases/` definitions |
+| COMPONENTS | 1.20.5 – 1.21.3 | 32 – 45 | 26 – 47 | Item stack component format |
+| ITEM_DEFINITIONS | 1.21.4 / 26.x+ | 46 – (84+) | 48 – (101+) | Item definitions split into `assets/*/items/` |
+
+### What Gets Converted
+- **blockstates JSON**: `normal` variant key renamed to empty string; model paths qualified (e.g. `cube_all` → `block/cube_all`)
+- **block/item model JSON**: `blocks/`/`items/` → `block/`/`item/` (LEGACY), unknown future keys stripped, texture references lowercased
+- **Atlas definitions** (`atlases/*.json`): passed through to the runtime pack
+- **Item definitions** (`items/*.json`, ITEM_DEFINITIONS+): passed through to the runtime pack
+- **Recipes / loot tables**: served as a data pack when the respective feature is enabled
+
+> [!NOTE]
+> Archives with no readable `pack.mcmeta` are treated as the MODERN generation.
 
 ## Technical Details
 This project is structured to build mods for multiple Minecraft versions and platforms (Fabric, Forge).
