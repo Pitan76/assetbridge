@@ -57,6 +57,20 @@ feature.data_pack=true
 # cutoutを適用する
 #feature.cutout_blocks=true
 feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
+
+# ブリッジブロック全体のデフォルトの硬さ（破壊時間）
+block_hardness=1.5
+
+# ブリッジブロック全体のデフォルトの爆発耐性
+block_resistance=6.0
+
+# 特定のブロックだけ個別に強度を変更する場合
+block_hardness.examplemod:heavy_stone=5.0
+block_resistance.examplemod:example_block=30.0
+
+# カリング（ブロックの隣接面が透けてしまう現象）を無効化する設定
+# true (階段やチェストなどの非フルキューブ形状を自動判定し無効化), false (一律有効), またはカンマ区切りのブロックID
+no_occlusion_blocks=true
 ```
 
 ## 技術的な話
@@ -156,6 +170,20 @@ feature.data_pack=true
 # Enable cutout
 #feature.cutout_blocks=true
 feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
+
+# Default hardness (destroy time) for all bridged blocks
+block_hardness=1.5
+
+# Default explosion resistance for all bridged blocks
+block_resistance=6.0
+
+# Per-block hardness and resistance overrides
+block_hardness.examplemod:heavy_stone=5.0
+block_resistance.examplemod:example_block=30.0
+
+# Disable occlusion culling (prevents faces from disappearing behind non-full-cube blocks)
+# true = auto-detect by keyword (stairs, slab, chest, etc.), false = disable all, or comma-separated block IDs
+no_occlusion_blocks=true
 ```
 
 ## Technical Details
