@@ -69,10 +69,12 @@ public class RecipeConverter implements AssetConverter {
                 if (isModern) {
                     if (resultObj.has("item") && !resultObj.has("id")) {
                         resultObj.add("id", resultObj.get("item"));
+                        resultObj.remove("item");
                     }
                 } else {
                     if (resultObj.has("id") && !resultObj.has("item")) {
                         resultObj.add("item", resultObj.get("id"));
+                        resultObj.remove("id");
                     }
                 }
             }

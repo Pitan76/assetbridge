@@ -36,7 +36,9 @@ class RecipeFeatureTest {
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 
-        assertEquals(SHAPELESS, new String(assets.readResource(FOO), StandardCharsets.UTF_8));
+        boolean isModern = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+        String expected = isModern ? "{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"minecraft:stone\"}],\"result\":{\"id\":\"examplemod:foo\"}}" : SHAPELESS;
+        assertEquals(expected, new String(assets.readResource(FOO), StandardCharsets.UTF_8));
     }
 
     @Test

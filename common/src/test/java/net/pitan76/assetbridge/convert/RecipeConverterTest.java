@@ -25,7 +25,9 @@ class RecipeConverterTest {
         byte[] converted = convert(recipe, AssetVersion.MODERN);
 
         assertNotNull(converted);
-        assertEquals(recipe, new String(converted, StandardCharsets.UTF_8));
+        boolean isModern = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+        String expected = isModern ? "{\"type\":\"minecraft:crafting_shapeless\",\"ingredients\":[{\"item\":\"examplemod:foo\"}],\"result\":{\"id\":\"examplemod:bar\"}}" : recipe;
+        assertEquals(expected, new String(converted, StandardCharsets.UTF_8));
     }
 
     @Test
