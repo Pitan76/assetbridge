@@ -42,10 +42,26 @@ public class LootTableFeature implements Feature {
         int generated = 0;
         for (BridgedBlockDefinition block : context.assets().blocks()) {
             AssetPath path = AssetPath.blockLootTable(block.namespace(), block.path());
-            // An archive that shipped its own table keeps it.
-            if (context.assets().hasResource(path)) continue;
 
-            context.assets().putResource(path,
+            // ターゲット環境のバージョンに合わせて、ルートテーブルの保存ディレクトリ名をマッピング (loot_tables/ <-> loot_table/)
+            boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+            AssetPath targetPath = path;
+            if (isModernLootDir) {
+                if (path.path().startsWith("loot_tables/")) {
+                    String newPath = "loot_table/" + path.path().substring("loot_tables/".length());
+                    targetPath = new AssetPath(path.kind(), path.namespace(), newPath);
+                }
+            } else {
+                if (path.path().startsWith("loot_table/")) {
+                    String newPath = "loot_tables/" + path.path().substring("loot_table/".length());
+                    targetPath = new AssetPath(path.kind(), path.namespace(), newPath);
+                }
+            }
+
+            // An archive that shipped its own table keeps it.
+            if (context.assets().hasResource(targetPath)) continue;
+
+            context.assets().putResource(targetPath,
                     Json.toString(LootTables.dropSelf(block.id())).getBytes(StandardCharsets.UTF_8));
             generated++;
         }

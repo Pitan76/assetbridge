@@ -153,7 +153,15 @@ public class AssetPipeline {
                 }
             }
             case TAG -> {
-                String subPath = path.path().substring("tags/items/".length(), path.path().length() - ".json".length());
+                boolean isBlockTag = path.path().startsWith("tags/blocks/") || path.path().startsWith("tags/block/");
+                String prefix;
+                if (isBlockTag) {
+                    prefix = path.path().startsWith("tags/blocks/") ? "tags/blocks/" : "tags/block/";
+                } else {
+                    prefix = path.path().startsWith("tags/items/") ? "tags/items/" : "tags/item/";
+                }
+
+                String subPath = path.path().substring(prefix.length(), path.path().length() - ".json".length());
                 String originalTag = path.namespace() + ":" + subPath;
 
                 boolean toFabric = net.pitan76.assetbridge.convert.RecipeConverter.isFabric();
@@ -162,7 +170,16 @@ public class AssetPipeline {
                 int colon = mappedTag.indexOf(':');
                 String newNamespace = mappedTag.substring(0, colon);
                 String newSubPath = mappedTag.substring(colon + 1);
-                AssetPath target = new AssetPath(AssetPath.PackKind.SERVER, newNamespace, "tags/items/" + newSubPath + ".json");
+
+                // ターゲット環境のバージョンに合わせて、タグの保存ディレクトリ名をマッピング
+                boolean isModernTagDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+                String targetPrefix;
+                if (isBlockTag) {
+                    targetPrefix = isModernTagDir ? "tags/block/" : "tags/blocks/";
+                } else {
+                    targetPrefix = isModernTagDir ? "tags/item/" : "tags/items/";
+                }
+                AssetPath target = new AssetPath(AssetPath.PackKind.SERVER, newNamespace, targetPrefix + newSubPath + ".json");
 
                 if (!assets.hasResource(target)) {
                     byte[] raw = readBytes(source, path, archive);
@@ -173,7 +190,20 @@ public class AssetPipeline {
                 }
             }
             case LOOT_TABLE -> {
-                AssetPath target = path.flattened();
+                boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+                AssetPath target = path;
+                if (isModernLootDir) {
+                    if (path.path().startsWith("loot_tables/")) {
+                        String newPath = "loot_table/" + path.path().substring("loot_tables/".length());
+                        target = new AssetPath(path.kind(), path.namespace(), newPath);
+                    }
+                } else {
+                    if (path.path().startsWith("loot_table/")) {
+                        String newPath = "loot_tables/" + path.path().substring("loot_table/".length());
+                        target = new AssetPath(path.kind(), path.namespace(), newPath);
+                    }
+                }
+
                 if (!assets.hasResource(target)) {
                     byte[] raw = readBytes(source, path, archive);
                     if (raw != null) {

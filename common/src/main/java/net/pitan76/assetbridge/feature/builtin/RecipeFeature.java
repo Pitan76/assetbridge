@@ -55,9 +55,25 @@ public class RecipeFeature implements Feature {
             for (Map.Entry<AssetPath, AssetSource> entry : archive.entries().entrySet()) {
                 AssetPath path = entry.getKey();
                 if (path.category() != AssetPath.Category.RECIPE) continue;
-                if (context.isNamespaceUsed().test(path.namespace())) continue;
+
+                // ターゲット環境のバージョンに合わせて、レシピの保存ディレクトリ名をマッピング (recipes/ <-> recipe/)
+                boolean isModernRecipeDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.ITEM_DEFINITIONS);
+                AssetPath targetPath = path;
+                if (isModernRecipeDir) {
+                    if (path.path().startsWith("recipes/")) {
+                        String newPath = "recipe/" + path.path().substring("recipes/".length());
+                        targetPath = new AssetPath(path.kind(), path.namespace(), newPath);
+                    }
+                } else {
+                    if (path.path().startsWith("recipe/")) {
+                        String newPath = "recipes/" + path.path().substring("recipe/".length());
+                        targetPath = new AssetPath(path.kind(), path.namespace(), newPath);
+                    }
+                }
+
+                if (context.isNamespaceUsed().test(targetPath.namespace())) continue;
                 // An archive read earlier claimed this recipe already.
-                if (context.assets().hasResource(path)) continue;
+                if (context.assets().hasResource(targetPath)) continue;
 
                 byte[] data;
                 try {
@@ -72,7 +88,7 @@ public class RecipeFeature implements Feature {
                     skipped++;
                     continue;
                 }
-                context.assets().putResource(path, converted);
+                context.assets().putResource(targetPath, converted);
                 bridged++;
             }
         }
