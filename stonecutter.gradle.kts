@@ -142,3 +142,36 @@ tasks.register("chiseledBuild") {
 stonecutter tasks {
     order("build")
 }
+
+val getCompatibleMcVersions: (Project) -> List<String> = { proj ->
+    val mcVersion = proj.name
+    val mcDep = proj.findProperty("mc_dep")?.toString() ?: mcVersion
+    val regex = Regex("""\d+\.\d+(?:\.\d+)?""")
+    val matches = regex.findAll(mcDep).map { it.value }.toList()
+    if (matches.isNotEmpty()) {
+        val start = matches.first()
+        val end = matches.last()
+        val startParts = start.split(".")
+        val endParts = end.split(".")
+        if (startParts.size >= 2 && endParts.size >= 2 && startParts[0] == endParts[0] && startParts[1] == endParts[1]) {
+            val major = startParts[0]
+            val minor = startParts[1]
+            val startPatch = startParts.getOrNull(2)?.toIntOrNull() ?: 0
+            val endPatch = endParts.getOrNull(2)?.toIntOrNull() ?: 0
+            val list = mutableListOf<String>()
+            for (patch in startPatch..endPatch) {
+                if (patch == 0) {
+                    list.add("$major.$minor")
+                } else {
+                    list.add("$major.$minor.$patch")
+                }
+            }
+            list
+        } else {
+            matches
+        }
+    } else {
+        listOf(mcVersion)
+    }
+}
+extra.set("getCompatibleMcVersions", getCompatibleMcVersions)

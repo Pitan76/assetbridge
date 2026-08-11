@@ -169,6 +169,11 @@ val publishedJar: TaskProvider<out AbstractArchiveTask> =
 
 publishMods {
     val mcVersion = project.name
+
+    @Suppress("UNCHECKED_CAST")
+    val getCompatibleMcVersions = rootProject.extra.get("getCompatibleMcVersions") as (Project) -> List<String>
+    val mcVersions = getCompatibleMcVersions(project)
+    
     file.set(publishedJar.flatMap { it.archiveFile })
     displayName.set(publishedJar.flatMap { it.archiveFile.map { f -> f.asFile.name } })
     changelog.set("Release of version ${project.version} for Minecraft $mcVersion (Fabric)")
@@ -181,7 +186,7 @@ publishMods {
         curseforge {
             projectId.set(curseforgeId)
             accessToken.set(curseforgeToken)
-            minecraftVersions.add(mcVersion)
+            minecraftVersions.addAll(mcVersions)
             client.set(true)
             server.set(true)
             requires("fabric-api")
@@ -194,7 +199,7 @@ publishMods {
         modrinth {
             projectId.set(modrinthId)
             accessToken.set(modrinthToken)
-            minecraftVersions.add(mcVersion)
+            minecraftVersions.addAll(mcVersions)
             requires("fabric-api")
         }
     }

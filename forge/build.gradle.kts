@@ -84,6 +84,11 @@ tasks.remapJar {
 
 publishMods {
     val mcVersion = project.name
+
+    @Suppress("UNCHECKED_CAST")
+    val getCompatibleMcVersions = rootProject.extra.get("getCompatibleMcVersions") as (Project) -> List<String>
+    val mcVersions = getCompatibleMcVersions(project)
+    
     file.set(tasks.remapJar.flatMap { it.archiveFile })
     displayName.set(tasks.remapJar.flatMap { it.archiveFile.map { it.asFile.name } })
     changelog.set("Release of version ${project.version} for Minecraft $mcVersion (Forge)")
@@ -96,7 +101,7 @@ publishMods {
         curseforge {
             projectId.set(curseforgeId)
             accessToken.set(curseforgeToken)
-            minecraftVersions.add(mcVersion)
+            minecraftVersions.addAll(mcVersions)
             client.set(true)
             server.set(true)
         }
@@ -108,7 +113,7 @@ publishMods {
         modrinth {
             projectId.set(modrinthId)
             accessToken.set(modrinthToken)
-            minecraftVersions.add(mcVersion)
+            minecraftVersions.addAll(mcVersions)
         }
     }
 }
