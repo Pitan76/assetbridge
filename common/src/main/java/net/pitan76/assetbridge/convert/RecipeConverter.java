@@ -126,7 +126,7 @@ public class RecipeConverter implements AssetConverter {
         }
     }
 
-    private static String mapTagName(String tag, boolean toFabric) {
+    public static String mapTagName(String tag, boolean toFabric) {
         if (toFabric) {
             if (tag.startsWith("forge:")) {
                 String path = tag.substring(6);

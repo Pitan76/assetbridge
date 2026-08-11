@@ -152,6 +152,35 @@ public class AssetPipeline {
                     }
                 }
             }
+            case TAG -> {
+                String subPath = path.path().substring("tags/items/".length(), path.path().length() - ".json".length());
+                String originalTag = path.namespace() + ":" + subPath;
+
+                boolean toFabric = net.pitan76.assetbridge.convert.RecipeConverter.isFabric();
+                String mappedTag = net.pitan76.assetbridge.convert.RecipeConverter.mapTagName(originalTag, toFabric);
+
+                int colon = mappedTag.indexOf(':');
+                String newNamespace = mappedTag.substring(0, colon);
+                String newSubPath = mappedTag.substring(colon + 1);
+                AssetPath target = new AssetPath(AssetPath.PackKind.SERVER, newNamespace, "tags/items/" + newSubPath + ".json");
+
+                if (!assets.hasResource(target)) {
+                    byte[] raw = readBytes(source, path, archive);
+                    if (raw != null) {
+                        byte[] converted = convertTagJson(raw, toFabric);
+                        assets.putResource(target, converted);
+                    }
+                }
+            }
+            case LOOT_TABLE -> {
+                AssetPath target = path.flattened();
+                if (!assets.hasResource(target)) {
+                    byte[] raw = readBytes(source, path, archive);
+                    if (raw != null) {
+                        assets.putResource(target, raw);
+                    }
+                }
+            }
             case RECIPE -> {
                 // Server-side data is a feature's business, not the core's;
                 // RecipeFeature reads these straight from the archive.
@@ -387,5 +416,33 @@ public class AssetPipeline {
             }
         }
         return Json.toString(json).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static byte[] convertTagJson(byte[] raw, boolean toFabric) {
+        try {
+            String text = new String(raw, StandardCharsets.UTF_8);
+            JsonObject json = Json.parse(text);
+            if (json == null || !json.has("values")) return raw;
+            JsonElement valuesEl = json.get("values");
+            if (valuesEl.isJsonArray()) {
+                com.google.gson.JsonArray values = valuesEl.getAsJsonArray();
+                com.google.gson.JsonArray newValues = new com.google.gson.JsonArray();
+                for (JsonElement el : values) {
+                    if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
+                        String val = el.getAsString();
+                        boolean isTagRef = val.startsWith("#");
+                        String cleanVal = isTagRef ? val.substring(1) : val;
+                        String mapped = net.pitan76.assetbridge.convert.RecipeConverter.mapTagName(cleanVal, toFabric);
+                        newValues.add(isTagRef ? "#" + mapped : mapped);
+                    } else {
+                        newValues.add(el);
+                    }
+                }
+                json.add("values", newValues);
+            }
+            return Json.toString(json).getBytes(StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return raw;
+        }
     }
 }

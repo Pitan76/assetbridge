@@ -57,6 +57,10 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         ITEM_DEFINITION,
         /** A data pack recipe. Only ever found under {@link PackKind#SERVER}. */
         RECIPE,
+        /** A data pack item tag. Only ever found under {@link PackKind#SERVER}. */
+        TAG,
+        /** A data pack loot table. Only ever found under {@link PackKind#SERVER}. */
+        LOOT_TABLE,
         BLOCK_MODEL,
         ITEM_MODEL,
         MODEL,
@@ -91,7 +95,10 @@ public record AssetPath(PackKind kind, String namespace, String path) {
     public Category category() {
         // The two roots share no directory layout, so a data path is never a client one.
         if (kind == PackKind.SERVER) {
-            return path.startsWith("recipes/") && path.endsWith(".json") ? Category.RECIPE : Category.OTHER;
+            if (path.startsWith("recipes/") && path.endsWith(".json")) return Category.RECIPE;
+            if (path.startsWith("tags/items/") && path.endsWith(".json")) return Category.TAG;
+            if (path.startsWith("loot_tables/") && path.endsWith(".json")) return Category.LOOT_TABLE;
+            return Category.OTHER;
         }
         if (path.startsWith("blockstates/")) return Category.BLOCKSTATE;
         if (path.startsWith("items/")) return Category.ITEM_DEFINITION;
