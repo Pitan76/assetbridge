@@ -163,6 +163,8 @@ class RecipeConverterTest {
             JsonObject parsed = net.pitan76.assetbridge.util.Json.parse(result);
             assertEquals("examplemod:foo", parsed.getAsJsonObject("result").get("item").getAsString());
         }
+    }
+
     @Test
     void flattensLegacyCookingRecipeResult() {
         boolean isLegacyCooking = !net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.ATLASES);
