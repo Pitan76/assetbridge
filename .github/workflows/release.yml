@@ -30,7 +30,7 @@ jobs:
         run: ./gradlew chiseledBuild
 
       - name: Publish to CurseForge and Modrinth
-        run: ./gradlew publishMods
+        run: ./gradlew publishMods --continue
         continue-on-error: true
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
