@@ -47,23 +47,40 @@ public class BridgedBlock extends Block {
         registerDefaultState(defaultStateOf(states));
     }
 
-    /**
-     * The properties differ enough between versions that building them inline in the
-     * {@code super(...)} call would put three preprocessor branches inside the constructor.
-     */
     private static Properties propertiesFor(ResourceLocation id) {
+        Properties properties;
         //? if >=26 {
         /*// 26.1 derives the loot table and the translation key from the block's own id, and throws
         // if it was never set, so the id has to be on the properties before construction.
-        return Properties.of().strength(1.5F, 6.0F)
+        properties = Properties.of()
                 .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BLOCK, id));
         *///?} elif >=1.20 {
         /*// 1.20 removed Material; a block's sounds and map colour now come from the properties
         // themselves, and the defaults match what Material.STONE gave us.
-        return Properties.of().strength(1.5F, 6.0F);
+        properties = Properties.of();
         *///?} else {
-        return Properties.of(net.minecraft.world.level.material.Material.STONE).strength(1.5F, 6.0F);
+        properties = Properties.of(net.minecraft.world.level.material.Material.STONE);
         //?}
+
+        properties = properties.strength(1.5F, 6.0F);
+        if (shouldDisableOcclusion(id)) {
+            properties = properties.noOcclusion();
+        }
+        return properties;
+    }
+
+    private static boolean shouldDisableOcclusion(ResourceLocation id) {
+        String path = id.getPath().toLowerCase();
+        return path.contains("stairs")
+                || path.contains("slab")
+                || path.contains("wall")
+                || path.contains("fence")
+                || path.contains("pane")
+                || path.contains("door")
+                || path.contains("gate")
+                || path.contains("button")
+                || path.contains("pressure_plate")
+                || BridgedBlocks.isCutout(id);
     }
 
     public static BridgedBlock create(ResourceLocation id, BridgedStateDefinition states) {
