@@ -104,7 +104,8 @@ public class BridgedProperty {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof BridgedProperty other)) return false;
+        if (!(obj instanceof BridgedProperty)) return false;
+        BridgedProperty other = (BridgedProperty) obj;
         return name.equals(other.name) && values.equals(other.values) && kind == other.kind;
     }
 

@@ -254,7 +254,8 @@ public class AssetPath {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof AssetPath other)) return false;
+        if (!(obj instanceof AssetPath)) return false;
+        AssetPath other = (AssetPath) obj;
         return kind == other.kind && namespace.equals(other.namespace) && path.equals(other.path);
     }
 

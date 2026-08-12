@@ -43,7 +43,8 @@ public class BridgedItemDefinition {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof BridgedItemDefinition other)) return false;
+        if (!(obj instanceof BridgedItemDefinition)) return false;
+        BridgedItemDefinition other = (BridgedItemDefinition) obj;
         return namespace.equals(other.namespace) && path.equals(other.path);
     }
 

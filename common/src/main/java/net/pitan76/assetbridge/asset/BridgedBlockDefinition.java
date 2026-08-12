@@ -58,7 +58,8 @@ public class BridgedBlockDefinition {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof BridgedBlockDefinition other)) return false;
+        if (!(obj instanceof BridgedBlockDefinition)) return false;
+        BridgedBlockDefinition other = (BridgedBlockDefinition) obj;
         return namespace.equals(other.namespace)
                 && path.equals(other.path)
                 && modelId.equals(other.modelId)

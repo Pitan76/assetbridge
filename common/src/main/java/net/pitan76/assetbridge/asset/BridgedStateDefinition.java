@@ -31,7 +31,8 @@ public class BridgedStateDefinition {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof BridgedStateDefinition other)) return false;
+        if (!(obj instanceof BridgedStateDefinition)) return false;
+        BridgedStateDefinition other = (BridgedStateDefinition) obj;
         return properties.equals(other.properties);
     }
 

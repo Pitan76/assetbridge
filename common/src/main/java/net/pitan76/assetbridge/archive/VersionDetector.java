@@ -59,7 +59,8 @@ public class VersionDetector {
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
-            if (!(obj instanceof Detection other)) return false;
+            if (!(obj instanceof Detection)) return false;
+            Detection other = (Detection) obj;
             return version == other.version && source.equals(other.source);
         }
 
