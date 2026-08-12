@@ -5,10 +5,7 @@ import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,8 +70,8 @@ public class ModMetadata {
     }
 
     private static void put(Map<String, String> names, @Nullable String namespace, @Nullable String displayName) {
-        if (namespace == null || namespace.isBlank()) return;
-        if (displayName == null || displayName.isBlank()) return;
-        names.putIfAbsent(namespace.toLowerCase(java.util.Locale.ROOT), displayName.trim());
+        if (namespace == null || namespace.trim().isEmpty()) return;
+        if (displayName == null || displayName.trim().isEmpty()) return;
+        names.putIfAbsent(namespace.toLowerCase(Locale.ROOT), displayName.trim());
     }
 }
