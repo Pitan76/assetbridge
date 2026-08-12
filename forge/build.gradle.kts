@@ -7,7 +7,6 @@ plugins {
 
 val forge_version = project.findProperty("forge_version") as String
 val minecraft_version = project.findProperty("minecraft_version") as String
-val isLegacy = project.name == "1.12.2"
 
 loom {
     forge {
@@ -37,34 +36,23 @@ configurations.create("shadowBundle") {
     isCanBeConsumed = false
 }
 
-// Under Stonecutter the artifact-producing project is the common *node*
-// (`:common:1.18.2`), not the branch container (`:common`).
 val commonProject: Project = project(":common:${stonecutter.current.project}")
 
-// Architectury creates the `transformProduction*` configurations while the common
-// node is evaluated, so it must be configured before this script resolves them.
 evaluationDependsOn(commonProject.path)
 
-if (isLegacy) {
-    repositories {
-        maven("https://maven.legacyfabric.net/")
-    }
-    // Legacy Fabric uses its own intermediary (not Fabric's).
-    loom.intermediaryUrl.set(
-        "https://maven.legacyfabric.net/net/legacyfabric/intermediary/%1\$s/intermediary-%1\$s-v2.jar"
-    )
+repositories {
+    maven("https://maven.legacyfabric.net/")
 }
+// Legacy Fabric uses its own intermediary (not Fabric's).
+loom.intermediaryUrl.set(
+    "https://maven.legacyfabric.net/net/legacyfabric/intermediary/%1\$s/intermediary-%1\$s-v2.jar"
+)
 
 dependencies {
     "minecraft"("net.minecraft:minecraft:$minecraft_version")
-    // 1.12.2 predates Mojang mappings (which start at 1.14.4); use Legacy Fabric Yarn instead.
-    if (isLegacy) {
-        val yarn_mappings = project.findProperty("yarn_mappings") as String
-        "mappings"("net.legacyfabric:yarn:$yarn_mappings:v2")
-    } else {
-        "mappings"(loom.officialMojangMappings())
-    }
-
+    
+    val yarn_mappings = project.findProperty("yarn_mappings") as String
+    "mappings"("net.legacyfabric:yarn:$yarn_mappings:v2")
     "forge"("net.minecraftforge:forge:$forge_version")
 
     "common"(project(commonProject.path, "namedElements")) { isTransitive = false }
