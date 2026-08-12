@@ -147,8 +147,8 @@ public class BridgedItemGroup {
         archiveModNames = Map.copyOf(modNames);
 
         com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();
-        langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge Blocks");
-        langJson.addProperty("itemGroup.assetbridge.items", "Asset Bridge Items");
+        langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge: Blocks");
+        langJson.addProperty("itemGroup.assetbridge.items", "Asset Bridge: Items");
 
         if (!Features.isEnabled(SplitTabByNamespaceFeature.ID) || tabFactory == null) {
             registerLang(langJson);
