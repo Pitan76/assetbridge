@@ -1,6 +1,8 @@
 package net.pitan76.assetbridge.block;
 
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -127,17 +129,17 @@ public class BridgedItemGroup {
 
     //? if <1.19.3 {
     /** Falls back to a vanilla tab if a platform could not provide one. */
-    public static CreativeModeTab blocks() {
-        return blocksTab != null ? blocksTab : CreativeModeTab.TAB_BUILDING_BLOCKS;
+    public static CreativeTabs blocks() {
+        return blocksTab != null ? blocksTab : CreativeTabs.BUILDING_BLOCKS;
     }
 
-    public static CreativeModeTab items() {
-        return itemsTab != null ? itemsTab : CreativeModeTab.TAB_MISC;
+    public static CreativeTabs items() {
+        return itemsTab != null ? itemsTab : CreativeTabs.MISC;
     }
 
     /** The tab an item declares at construction time. Gone from 1.19.3 onwards. */
-    public static CreativeModeTab getTab(String namespace, boolean isBlock) {
-        CreativeModeTab tab = namespaceTab(namespace);
+    public static CreativeTabs getTab(String namespace, boolean isBlock) {
+        CreativeTabs tab = namespaceTab(namespace);
         if (tab != null) return tab;
         return isBlock ? blocks() : items();
     }
@@ -155,7 +157,7 @@ public class BridgedItemGroup {
             return;
         }
         for (String namespace : namespaces) {
-            CreativeModeTab tab = tabFactory.create(namespace, () -> namespaceIcon(namespace));
+            CreativeTabs tab = tabFactory.create(namespace, () -> namespaceIcon(namespace));
             if (tab != null) {
                 namespaceTabs.put(namespace, tab);
                 langJson.addProperty("itemGroup.assetbridge." + namespace, "Asset Bridge: " + modName(namespace));
@@ -220,6 +222,6 @@ public class BridgedItemGroup {
 
     /** Shown when a tab has no bridged content of its own to represent it. */
     private static ItemStack fallbackIcon() {
-        return new ItemStack(Items.BRICKS);
+        return new ItemStack(Blocks.BRICK_BLOCK);
     }
 }
