@@ -53,34 +53,47 @@ public class AssetBridgeFabric implements ModInitializer {
         AssetBridgeRepositorySource.DATA.writeTo(gameDir.resolve("data"));
 
         // Mod initialisation runs before the registries freeze, so direct registration is fine.
+        //
+        // BridgedBlocks/BridgedItems key their maps by net.minecraft.util.ResourceLocation --
+        // common was compiled against the MCP mapping (shared with Forge), and that class does
+        // not exist at all under Legacy Fabric's Legacy Yarn mapping (the same game class is
+        // named net.minecraft.util.Identifier there), with no remap step bridging the two for
+        // this plain, non-mod library dependency (see the class Javadoc above). Reading the maps
+        // through raw types erases the key's declared type to Object, so this can still read the
+        // ids out -- via their "namespace:path" string form -- without the compiler ever needing
+        // to resolve the ResourceLocation class itself.
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> rawBlocks = (Map<Object, Object>) (Map<?, ?>) BridgedBlocks.blocks();
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> rawBlockItems = (Map<Object, Object>) (Map<?, ?>) BridgedBlocks.items();
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> rawItems = (Map<Object, Object>) (Map<?, ?>) BridgedItems.items();
+
         int registeredBlocks = 0;
-        for (Map.Entry<Identifier, Block> entry : BridgedBlocks.blocks().entrySet()) {
+        for (Map.Entry<Object, Object> entry : rawBlocks.entrySet()) {
             // Mod init order is not controllable, so a mod loaded after us can still claim the
             // same id. That is the desired outcome anyway: the real mod should win.
-            if (Block.REGISTRY.containsKey(entry.getKey())) {
-                AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", entry.getKey());
+            Identifier id = new Identifier(entry.getKey().toString());
+            if (Block.REGISTRY.containsKey(id)) {
+                AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", id);
                 continue;
             }
-            Block.REGISTRY.put(entry.getKey(), entry.getValue());
-            Item.REGISTRY.put(entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
+            Block block = (Block) entry.getValue();
+            Block.REGISTRY.put(id, block);
+            Item.REGISTRY.put(id, (Item) rawBlockItems.get(entry.getKey()));
             registeredBlocks++;
         }
 
         int registeredItems = 0;
-        for (Map.Entry<Identifier, Item> entry : BridgedItems.items().entrySet()) {
-            if (Item.REGISTRY.containsKey(entry.getKey())) {
-                AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
+        for (Map.Entry<Object, Object> entry : rawItems.entrySet()) {
+            Identifier id = new Identifier(entry.getKey().toString());
+            if (Item.REGISTRY.containsKey(id)) {
+                AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", id);
                 continue;
             }
-            Item.REGISTRY.put(entry.getKey(), entry.getValue());
+            Item.REGISTRY.put(id, (Item) entry.getValue());
             registeredItems++;
         }
         AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registeredBlocks, registeredItems);
     }
-
-    // ---------------------------------------------------------------------------
-    // Version-specific glue. 1.12.2 predates the flattened registry types entirely:
-    // Block/Item still key their registries by Identifier through a plain MutableRegistry
-    // (put/containsKey, no Registry.register helper).
-    // ---------------------------------------------------------------------------
 }
