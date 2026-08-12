@@ -14,6 +14,7 @@ import net.pitan76.assetbridge.block.BridgedItemGroup;
 import net.pitan76.assetbridge.block.BridgedItems;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
+import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -114,11 +115,11 @@ public class AssetBridgeFabric implements ModInitializer {
         return tab;
     }
     *///?} else {
-    private static net.minecraft.core.Registry<Block> blockRegistry() {
+    private static Registry<Block> blockRegistry() {
         return Registry.BLOCK;
     }
 
-    private static net.minecraft.core.Registry<Item> itemRegistry() {
+    private static Registry<Item> itemRegistry() {
         return Registry.ITEM;
     }
 
@@ -142,7 +143,7 @@ public class AssetBridgeFabric implements ModInitializer {
     }
     *///?} else {
     private static ResourceLocation modId(String path) {
-        return new ResourceLocation(AssetBridge.MOD_ID, path);
+        return IdUtil.of(AssetBridge.MOD_ID, path);
     }
     //?}
 }

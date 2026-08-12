@@ -68,11 +68,10 @@ public class ModelReferenceResolver {
     private static boolean resolves(BridgedAssetManager assets, String parent) {
         int colon = parent.indexOf(':');
         String namespace = colon < 0 ? "minecraft" : parent.substring(0, colon);
-        String name = colon < 0 ? parent : parent.substring(colon + 1);
+        String path = colon < 0 ? parent : parent.substring(colon + 1);
         if (namespace.equals("minecraft")) return true;
 
-        return assets.hasResource(new AssetPath(AssetPath.PackKind.CLIENT, namespace,
-                "models/" + name + ".json"));
+        return assets.hasResource(AssetPath.model(namespace, path));
     }
 
     /**

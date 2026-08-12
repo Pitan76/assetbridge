@@ -14,6 +14,7 @@ import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
 import net.pitan76.assetbridge.asset.RuntimePack;
+import net.pitan76.assetbridge.util.IdUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -196,8 +197,8 @@ public class AssetBridgePackResources implements PackResources {
 
     @Nullable
     private AssetPath getAlternativePath(AssetPath original) {
-        if (original.kind() != AssetPath.PackKind.CLIENT)
-            return null;
+        if (original.kind() != AssetPath.PackKind.CLIENT) return null;
+
         String path = original.path();
         if (path.startsWith("textures/block/")) {
             return new AssetPath(original.kind(), original.namespace(),
@@ -220,26 +221,21 @@ public class AssetBridgePackResources implements PackResources {
      * @param maxDepth directory levels below {@code path} to descend; pass
      *                 {@link Integer#MAX_VALUE} on versions that dropped the limit
      */
-    private List<ResourceLocation> collectResources(PackType type, String namespace, String path,
-            int maxDepth) {
-        if (!serves(type))
-            return List.of();
+    private List<ResourceLocation> collectResources(PackType type, String namespace, String path, int maxDepth) {
+        if (!serves(type)) return List.of();
 
         String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();
 
         for (AssetPath key : assets.resources().keySet()) {
-            if (key.kind() != kind || !key.namespace().equals(namespace))
-                continue;
-            if (!key.path().startsWith(prefix))
-                continue;
+            if (key.kind() != kind || !key.namespace().equals(namespace)) continue;
+            if (!key.path().startsWith(prefix)) continue;
 
             String relative = key.path().substring(prefix.length());
-            if (countSlashes(relative) >= maxDepth)
-                continue;
+            if (countSlashes(relative) >= maxDepth) continue;
 
             try {
-                found.add(resourceLocation(namespace, key.path()));
+                found.add(IdUtil.of(namespace, key.path()));
             } catch (Exception e) {
                 // Ignore files with invalid characters in path
             }
@@ -274,8 +270,7 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public @NotNull Set<String> getNamespaces(PackType type) {
-        if (!serves(type))
-            return Set.of();
+        if (!serves(type)) return Set.of();
 
         Set<String> namespaces = new LinkedHashSet<>();
         for (AssetPath key : assets.resources().keySet()) {
@@ -318,15 +313,6 @@ public class AssetBridgePackResources implements PackResources {
         // A new instance is created on every resource reload, while the archives behind
         // the
         // bundle live as long as the game does, so there is nothing to release here.
-    }
-
-    private static ResourceLocation resourceLocation(String namespace, String path) {
-        //? if >=1.21 {
-        /*// 1.21 made the ResourceLocation constructor private.
-        return ResourceLocation.fromNamespaceAndPath(namespace, path);
-        *///?} else {
-        return new ResourceLocation(namespace, path);
-        //?}
     }
 
     /** The pack's registry id, distinct from the name shown to the player. */

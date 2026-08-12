@@ -1,11 +1,11 @@
 package net.pitan76.assetbridge.asset;
+
+import net.minecraft.resources.ResourceLocation;
+import net.pitan76.assetbridge.util.IdUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Everything Asset Bridge extracted from the external archives, already converted to
@@ -66,7 +66,6 @@ public class BridgedAssetManager {
     }
 
     /** Reads a resource in full. Convenience for callers that cannot stream, e.g. tests. */
-    @Nullable
     public byte[] readResource(AssetPath path) throws IOException {
         AssetSource source = resources.get(path);
         return source == null ? null : source.readAll();
@@ -81,13 +80,13 @@ public class BridgedAssetManager {
     }
 
     public java.util.Set<String> namespaces() {
-        java.util.Set<String> ns = new java.util.LinkedHashSet<>();
+        java.util.Set<String> ns = new LinkedHashSet<>();
         for (BridgedBlockDefinition block : blocks) {
-            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(block.id());
+            ResourceLocation id = IdUtil.tryParse(block.id());
             if (id != null) ns.add(id.getNamespace());
         }
         for (BridgedItemDefinition item : items) {
-            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(item.id());
+            ResourceLocation id = IdUtil.tryParse(item.id());
             if (id != null) ns.add(id.getNamespace());
         }
         return ns;

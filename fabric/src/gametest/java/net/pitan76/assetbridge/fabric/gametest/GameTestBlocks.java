@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Block;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.block.BridgedBlock;
+import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.List;
 import java.util.Objects;
@@ -53,7 +54,7 @@ public class GameTestBlocks implements ModInitializer {
     }
 
     private static ResourceLocation id(String name) {
-        return new ResourceLocation(NAMESPACE, name);
+        return IdUtil.of(NAMESPACE, name);
     }
 
     private static BridgedProperty property(String name, List<String> values) {

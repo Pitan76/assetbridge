@@ -65,9 +65,8 @@ public class BlockConfig {
 
     public static float getResistance(ResourceLocation id) {
         String val = customResistance.get(id.toString());
-        if (val == null) {
-            val = defaultResistance;
-        }
+        if (val == null) val = defaultResistance;
+
         try {
             return Float.parseFloat(val);
         } catch (NumberFormatException e) {
@@ -91,17 +90,13 @@ public class BlockConfig {
         String[] ids = cutoutBlocks.split(",");
         String idStr = id.toString();
         for (String targetId : ids) {
-            if (targetId.trim().equals(idStr)) {
-                return true;
-            }
+            if (targetId.trim().equals(idStr)) return true;
         }
         return false;
     }
 
     public static boolean shouldDisableOcclusion(ResourceLocation id) {
-        if (noOcclusionBlocks.equalsIgnoreCase("false")) {
-            return false;
-        }
+        if (noOcclusionBlocks.equalsIgnoreCase("false")) return false;
 
         if (noOcclusionBlocks.equalsIgnoreCase("true")) {
             String path = id.getPath().toLowerCase();
@@ -129,10 +124,9 @@ public class BlockConfig {
         String[] ids = noOcclusionBlocks.split(",");
         String idStr = id.toString();
         for (String targetId : ids) {
-            if (targetId.trim().equals(idStr)) {
-                return true;
-            }
+            if (targetId.trim().equals(idStr)) return true;
         }
+
         return false;
     }
 }

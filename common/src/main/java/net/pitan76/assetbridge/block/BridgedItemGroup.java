@@ -14,12 +14,7 @@ import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -92,7 +87,7 @@ public class BridgedItemGroup {
 
     /** The namespaces that were given their own tab, in registration order. */
     public static Set<String> tabbedNamespaces() {
-        return java.util.Collections.unmodifiableSet(namespaceTabs.keySet());
+        return Collections.unmodifiableSet(namespaceTabs.keySet());
     }
 
     // ---------------------------------------------------------------------------
@@ -150,7 +145,7 @@ public class BridgedItemGroup {
     public static void initTabs(Set<String> namespaces, Map<String, String> modNames) {
         archiveModNames = Map.copyOf(modNames);
 
-        com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();
+        JsonObject langJson = new JsonObject();
         langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge: Blocks");
         langJson.addProperty("itemGroup.assetbridge.items", "Asset Bridge: Items");
 
@@ -170,10 +165,12 @@ public class BridgedItemGroup {
 
     private static void registerLang(JsonObject langJson) {
         byte[] data = Json.toString(langJson).getBytes(StandardCharsets.UTF_8);
-        AssetBridge.assets().putResource(
-                new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/en_us.json"), data);
-        AssetBridge.assets().putResource(
-                new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/ja_jp.json"), data);
+        registerLang("en_us", data);
+        registerLang("ja_jp", data);
+    }
+
+    private static void registerLang(String locale, byte[] data) {
+        AssetBridge.assets().putResource(AssetPath.lang("assetbridge", locale), data);
     }
 
     public static String capitalize(String str) {
@@ -185,6 +182,7 @@ public class BridgedItemGroup {
             if (!sb.isEmpty()) sb.append(" ");
             sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
         }
+
         return sb.toString();
     }
 
@@ -204,6 +202,7 @@ public class BridgedItemGroup {
     public static ItemStack namespaceIcon(String namespace) {
         Item item = firstIn(BridgedBlocks.items(), namespace);
         if (item == null) item = firstIn(BridgedItems.items(), namespace);
+
         return item != null ? new ItemStack(item) : fallbackIcon();
     }
 

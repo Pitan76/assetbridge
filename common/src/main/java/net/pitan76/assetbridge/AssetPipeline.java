@@ -2,15 +2,9 @@ package net.pitan76.assetbridge;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.resources.ResourceLocation;
 import net.pitan76.assetbridge.archive.AssetArchive;
-import net.pitan76.assetbridge.asset.BridgedAssetManager;
-import net.pitan76.assetbridge.asset.AssetPath;
-import net.pitan76.assetbridge.asset.AssetSource;
-import net.pitan76.assetbridge.asset.AssetVersion;
-import net.pitan76.assetbridge.asset.RuntimePack;
-import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
-import net.pitan76.assetbridge.asset.BridgedStateDefinition;
-import net.pitan76.assetbridge.asset.ItemCandidates;
+import net.pitan76.assetbridge.asset.*;
 import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.AtlasSources;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
@@ -22,6 +16,7 @@ import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
 import net.pitan76.assetbridge.util.Json;
+import net.pitan76.assetbridge.util.IdUtil;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -401,10 +396,10 @@ public class AssetPipeline {
         if (!RuntimePack.generation().isAtLeast(AssetVersion.ITEM_DEFINITIONS)) return;
 
         int generated = 0;
-        for (net.pitan76.assetbridge.asset.BridgedItemDefinition item : assets.items()) {
+        for (BridgedItemDefinition item : assets.items()) {
             generated += generateSingleItemDefinition(assets, item.id());
         }
-        for (net.pitan76.assetbridge.asset.BridgedBlockDefinition block : assets.blocks()) {
+        for (BridgedBlockDefinition block : assets.blocks()) {
             generated += generateSingleItemDefinition(assets, block.id());
         }
         if (generated > 0) {
@@ -413,7 +408,7 @@ public class AssetPipeline {
     }
 
     private static int generateSingleItemDefinition(BridgedAssetManager assets, String itemId) {
-        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(itemId);
+        ResourceLocation id = IdUtil.tryParse(itemId);
         if (id == null) return 0;
 
         String namespace = id.getNamespace();

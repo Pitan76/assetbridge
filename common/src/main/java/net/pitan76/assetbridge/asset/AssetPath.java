@@ -114,10 +114,7 @@ public record AssetPath(PackKind kind, String namespace, String path) {
 
     /** True for the resources the MVP extracts from external archives. */
     public boolean isBridgeable() {
-        return switch (category()) {
-            case OTHER -> false;
-            default -> true;
-        };
+        return category() != Category.OTHER;
     }
 
     /**
@@ -181,16 +178,32 @@ public record AssetPath(PackKind kind, String namespace, String path) {
     }
 
     /** Where a block's drops are read from, e.g. {@code data/ns/loot_tables/blocks/foo.json}. */
+    public static AssetPath lootTable(String namespace, String name) {
+        return new AssetPath(PackKind.SERVER, namespace, "loot_tables/" + name + ".json");
+    }
+
     public static AssetPath blockLootTable(String namespace, String name) {
-        return new AssetPath(PackKind.SERVER, namespace, "loot_tables/blocks/" + name + ".json");
+        return lootTable(namespace, "blocks/" + name);
+    }
+
+    public static AssetPath model(String namespace, String path) {
+        return new AssetPath(PackKind.CLIENT, namespace, "models/" + path + ".json");
     }
 
     public static AssetPath itemModel(String namespace, String name) {
-        return new AssetPath(PackKind.CLIENT, namespace, "models/item/" + name + ".json");
+        return model(namespace, "item/" + name);
+    }
+
+    public static AssetPath blockModel(String namespace, String name) {
+        return model(namespace, "block/" + name);
     }
 
     public static AssetPath itemDefinition(String namespace, String name) {
         return new AssetPath(PackKind.CLIENT, namespace, "items/" + name + ".json");
+    }
+
+    public static AssetPath lang(String namespace, String locale) {
+        return new AssetPath(PackKind.CLIENT, namespace, "lang/" + locale + ".json");
     }
 
     /**

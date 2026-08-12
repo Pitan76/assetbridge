@@ -5,6 +5,7 @@ import net.minecraft.world.item.Item;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedItemDefinition;
+import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -26,7 +27,7 @@ public class BridgedItems {
         Map<ResourceLocation, Item> created = new LinkedHashMap<>();
 
         for (BridgedItemDefinition asset : assets.items()) {
-            ResourceLocation id = ResourceLocation.tryParse(asset.id());
+            ResourceLocation id = IdUtil.tryParse(asset.id());
             if (id == null) {
                 AssetBridge.LOGGER.warn("Skipping item with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
