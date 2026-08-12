@@ -119,7 +119,7 @@ tasks.processResources {
     // Dependency ranges come from the node's gradle.properties, so adding a version
     // means adding a property rather than editing the manifest.
     val mcDep = project.findProperty("mc_dep") as String
-    val fabricApiId = if (project.name == "1.16.5") "fabric" else "fabric-api"
+    val fabricApiId = project.findProperty("fabric_api_id") as String
 
     inputs.property("version", project.version)
     inputs.property("mc_dep", mcDep)
