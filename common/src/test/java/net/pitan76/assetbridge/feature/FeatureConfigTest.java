@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +21,7 @@ class FeatureConfigTest {
 
     @Test
     void usesTheDefaultsAndWritesThemOutWhenThereIsNoConfig() throws IOException {
-        assertEquals(Set.of("on"), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
+        assertEquals(new HashSet<>(Arrays.asList("on")), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
 
         String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=true"), written);
@@ -36,7 +34,7 @@ class FeatureConfigTest {
     void honoursWhatThePlayerWrote() {
         write("feature.on=false\nfeature.off=true\n");
 
-        assertEquals(Set.of("off"), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
+        assertEquals(new HashSet<>(Arrays.asList("off")), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
     }
 
     @Test
@@ -44,7 +42,7 @@ class FeatureConfigTest {
         write("feature.on=false\n");
 
         // A feature added in a later version keeps its default instead of counting as off.
-        assertEquals(Set.of("off"), FeatureConfig.read(gameDir, Arrays.asList(ON, feature("off", true))));
+        assertEquals(new HashSet<>(Arrays.asList("off")), FeatureConfig.read(gameDir, Arrays.asList(ON, feature("off", true))));
 
         String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=false"), written);
@@ -55,14 +53,15 @@ class FeatureConfigTest {
     void treatsAnUnreadableValueAsOff() {
         write("feature.on=yes please\n");
 
-        assertEquals(Set.of(), FeatureConfig.read(gameDir, Arrays.asList(ON)));
+        assertEquals(new HashSet<>(), FeatureConfig.read(gameDir, Arrays.asList(ON)));
     }
 
     private void write(String contents) {
         try {
             Path file = FeatureConfig.file(gameDir);
             Files.createDirectories(file.getParent());
-            Files.writeString(file, contents, StandardCharsets.UTF_8);
+//            Files.writeString(file, contents, StandardCharsets.UTF_8);
+            Files.write(file, Collections.singleton(contents), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new AssertionError(e);
         }

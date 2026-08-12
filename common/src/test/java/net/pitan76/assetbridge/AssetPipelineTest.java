@@ -89,7 +89,7 @@ class AssetPipelineTest {
 
         // Serving the original would make the model loader fail on the unknown property.
         JsonObject served = json(assets, AssetPath.blockState("examplemod", "foo"));
-        assertEquals(Set.of(""), keysOf(served.getAsJsonObject("variants")));
+        assertEquals(new HashSet<>(Arrays.asList("")), keysOf(served.getAsJsonObject("variants")));
         assertEquals("examplemod:block/foo",
                 served.getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString());
         assertTrue(assets.blocks().get(0).states().isEmpty());
@@ -104,7 +104,7 @@ class AssetPipelineTest {
         JsonObject served = json(assets, AssetPath.blockState("oldmod", "foo"));
         JsonObject variants = served.getAsJsonObject("variants");
 
-        assertEquals(Set.of(""), keysOf(variants));
+        assertEquals(new HashSet<>(Arrays.asList("")), keysOf(variants));
         assertEquals("block/cube_all", variants.getAsJsonObject("").get("model").getAsString());
         assertTrue(assets.blocks().get(0).states().isEmpty());
     }
