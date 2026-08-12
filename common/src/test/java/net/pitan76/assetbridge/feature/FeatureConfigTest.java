@@ -47,7 +47,10 @@ class FeatureConfigTest {
         // A feature added in a later version keeps its default instead of counting as off.
         assertEquals(new HashSet<>(Arrays.asList("off")), FeatureConfig.read(gameDir, Arrays.asList(ON, feature("off", true))));
 
-        String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
+        byte[] bytes = Files.readAllBytes(FeatureConfig.file(gameDir));
+        String written = new String(bytes, StandardCharsets.UTF_8);
+
+//        String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=false"), written);
         assertTrue(written.contains("feature.off=true"), written);
     }
