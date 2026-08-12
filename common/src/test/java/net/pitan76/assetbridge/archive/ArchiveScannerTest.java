@@ -116,8 +116,11 @@ class ArchiveScannerTest {
 
     @Test
     void survivesAFileThatIsNotAnArchive() throws IOException {
-        Files.writeString(bridgeDir().resolve("broken.jar"), "definitely not a zip",
-                StandardCharsets.UTF_8);
+        Files.write(bridgeDir().resolve("broken.jar"),
+                Collections.singleton("definitely not a zip"), StandardCharsets.UTF_8);
+
+//        Files.writeString(bridgeDir().resolve("broken.jar"), "definitely not a zip",
+//                StandardCharsets.UTF_8);
         writeArchive("good.jar", Collections.singletonMap("assets/examplemod/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("good.jar"), scan().stream()
