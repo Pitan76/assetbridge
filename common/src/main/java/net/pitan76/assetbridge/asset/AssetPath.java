@@ -88,6 +88,10 @@ public record AssetPath(PackKind kind, String namespace, String path) {
         return path.isEmpty() ? null : new AssetPath(kind, namespace, path);
     }
 
+    public AssetPath withPath(String newPath) {
+        return new AssetPath(kind, namespace, newPath);
+    }
+
     public String toFullPath() {
         return kind.directory() + "/" + namespace + "/" + path;
     }

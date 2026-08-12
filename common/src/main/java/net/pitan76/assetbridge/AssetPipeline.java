@@ -131,11 +131,11 @@ public class AssetPipeline {
                 AssetPath target = path.flattened();
                 if (target.path().endsWith(".lang")) {
                     String newPath = target.path().substring(0, target.path().length() - ".lang".length()) + ".json";
-                    AssetPath jsonTarget = new AssetPath(target.kind(), target.namespace(), newPath);
+                    AssetPath jsonTarget = target.withPath(newPath);
                     if (!assets.hasResource(jsonTarget)) {
                         byte[] raw = readBytes(source, path, archive);
                         if (raw != null) {
-                            byte[] jsonBytes = convertLangToJson(raw);
+                            byte[] jsonBytes = convertLangToJson(raw, jsonTarget.namespace());
                             AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
                             assets.putResource(jsonTarget, jsonBytes);
                         }
@@ -427,7 +427,51 @@ public class AssetPipeline {
         return 1;
     }
 
-    private static byte[] convertLangToJson(byte[] raw) {
+    private static String convertLangKey(String key, String modid) {
+        /*
+        #ja_JP
+        tile.example.name=Example Block -> block.<modid>.example=Example Block
+        tile.exam.0.name=Example 0 Block -> block.<modid>.exam=Example 0 Block
+        tile.exam.1.name=Example 1 Block // TODO: meta値に対応していないため、とりあえず保留
+        item.example.name=Example Item
+        item.exam.0.name=Example 0 Item
+        item.exam.1.name=Example 1 Item
+         */
+
+        if (key.startsWith("tile.")) {
+            key = key.substring("tile.".length());
+            int dotIndex = key.indexOf('.');
+            if (dotIndex != -1) {
+                String blockName = key.substring(0, dotIndex);
+                String suffix = key.substring(dotIndex + 1);
+                if (suffix.equals("name")) {
+                    key = "block." + modid + "." + blockName;
+                } else if (suffix.equals("0.name")) {
+                    // TODO: meta値に対応していないため、とりあえず0の場合はそのまま変換する
+                    key = "block." + modid + "." + blockName;
+                } else {
+                    // TODO: meta値に対応していないため、とりあえず保留
+                    key = "block." + modid + "." + blockName + suffix;
+                }
+            }
+        } else if (key.startsWith("item.")) {
+            key = key.substring("item.".length());
+            int dotIndex = key.indexOf('.');
+            if (dotIndex != -1) {
+                String itemName = key.substring(0, dotIndex);
+                String suffix = key.substring(dotIndex + 1);
+                if (suffix.equals("name")) {
+                    key = "item." + modid + "." + itemName;
+                } else {
+                    key = "item." + modid + "." + itemName + suffix;
+                }
+            }
+        }
+
+        return key;
+    }
+
+    private static byte[] convertLangToJson(byte[] raw, String modid) {
         String content = new String(raw, StandardCharsets.UTF_8);
         JsonObject json = new JsonObject();
         for (String line : content.split("\\r?\\n")) {
@@ -437,7 +481,10 @@ public class AssetPipeline {
             if (eq > 0) {
                 String key = trimmed.substring(0, eq).trim();
                 String value = trimmed.substring(eq + 1).trim();
-                json.addProperty(key, value);
+
+                String convertedKey = convertLangKey(key, modid);
+
+                json.addProperty(convertedKey, value);
             }
         }
         return Json.toString(json).getBytes(StandardCharsets.UTF_8);
