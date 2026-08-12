@@ -1,15 +1,19 @@
 package net.pitan76.assetbridge.block;
 
+import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.asset.AssetPath;
+import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -164,11 +168,11 @@ public class BridgedItemGroup {
         registerLang(langJson);
     }
 
-    private static void registerLang(com.google.gson.JsonObject langJson) {
-        byte[] data = net.pitan76.assetbridge.util.Json.toString(langJson).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        net.pitan76.assetbridge.AssetBridge.assets().putResource(
+    private static void registerLang(JsonObject langJson) {
+        byte[] data = Json.toString(langJson).getBytes(StandardCharsets.UTF_8);
+        AssetBridge.assets().putResource(
                 new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/en_us.json"), data);
-        net.pitan76.assetbridge.AssetBridge.assets().putResource(
+        AssetBridge.assets().putResource(
                 new AssetPath(AssetPath.PackKind.CLIENT, "assetbridge", "lang/ja_jp.json"), data);
     }
 
