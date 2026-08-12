@@ -12,8 +12,7 @@ class ModMetadataTest {
     @Test
     void readsFabricName() {
         Map<String, String> names = ModMetadata.displayNames(Map.of(
-                "fabric.mod.json", """
-                        {"id": "rubycraft", "name": "Ruby Craft"}"""));
+                "fabric.mod.json", "\n                        {\"id\": \"rubycraft\", \"name\": \"Ruby Craft\"}"));
 
         assertEquals("Ruby Craft", names.get("rubycraft"));
     }
@@ -21,17 +20,7 @@ class ModMetadataTest {
     @Test
     void readsEveryModsTomlBlock() {
         Map<String, String> names = ModMetadata.displayNames(Map.of(
-                "META-INF/mods.toml", """
-                        modLoader="javafml"
-                        [[mods]]
-                        modId="buildcraftcore"
-                        displayName="BuildCraft Core"
-                        [[mods]]
-                        modId="buildcraftfactory"
-                        displayName="BuildCraft Factory"
-                        [[dependencies.buildcraftcore]]
-                        modId="minecraft"
-                        """));
+                "META-INF/mods.toml", "\n                        modLoader=\"javafml\"\n                        [[mods]]\n                        modId=\"buildcraftcore\"\n                        displayName=\"BuildCraft Core\"\n                        [[mods]]\n                        modId=\"buildcraftfactory\"\n                        displayName=\"BuildCraft Factory\"\n                        [[dependencies.buildcraftcore]]\n                        modId=\"minecraft\"\n                        "));
 
         assertEquals("BuildCraft Core", names.get("buildcraftcore"));
         assertEquals("BuildCraft Factory", names.get("buildcraftfactory"));
@@ -42,13 +31,8 @@ class ModMetadataTest {
     @Test
     void ignoresBlankAndMissingNames() {
         Map<String, String> names = ModMetadata.displayNames(Map.of(
-                "fabric.mod.json", """
-                        {"id": "nameless"}""",
-                "META-INF/mods.toml", """
-                        [[mods]]
-                        modId="blank"
-                        displayName="  "
-                        """));
+                "fabric.mod.json", "\n                        {\"id\": \"nameless\"}",
+                "META-INF/mods.toml", "\n                        [[mods]]\n                        modId=\"blank\"\n                        displayName=\"  \"\n                        "));
 
         assertTrue(names.isEmpty());
     }
