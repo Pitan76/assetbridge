@@ -21,6 +21,7 @@ import java.util.function.Predicate;
 public class AssetBridge {
     public static final String MOD_NAME = "Asset Bridge";
     public static final String MOD_ID = "assetbridge";
+    public static final String MOD_VERSION = "0.1.1";
 
     //? if <=1.17 {
     /*public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
