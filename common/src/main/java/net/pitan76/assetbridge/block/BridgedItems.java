@@ -1,10 +1,11 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedItemDefinition;
+import net.pitan76.assetbridge.util.ResourceLocations;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -26,23 +27,15 @@ public class BridgedItems {
         Map<ResourceLocation, Item> created = new LinkedHashMap<>();
 
         for (BridgedItemDefinition asset : assets.items()) {
-            ResourceLocation id = ResourceLocation.tryParse(asset.id());
+            ResourceLocation id = ResourceLocations.tryParse(asset.id());
             if (id == null) {
                 AssetBridge.LOGGER.warn("Skipping item with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
             }
-            //? if >=26 {
-            /*// 26.1 derives the translation key from the item's own id and throws if it was never
-            // set, so it has to be on the properties before construction.
-            created.put(id, new Item(new Item.Properties()
-                    .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ITEM, id))
-                    .overrideDescription("item." + id.getNamespace() + "." + id.getPath())));
-            *///?} elif >=1.19.3 {
-            /*// 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
-            created.put(id, new Item(new Item.Properties()));
-            *///?} else {
-            created.put(id, new Item(new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), false))));
-            //?}
+            Item item = new Item();
+            item.setTranslationKey(id.toString());
+            item.setCreativeTab(BridgedItemGroup.getTab(id.getNamespace(), false));
+            created.put(id, item);
         }
 
         items = Collections.unmodifiableMap(created);

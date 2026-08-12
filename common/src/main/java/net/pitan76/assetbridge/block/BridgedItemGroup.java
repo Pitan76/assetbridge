@@ -1,7 +1,6 @@
 package net.pitan76.assetbridge.block;
 
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -24,6 +23,14 @@ import java.util.function.Supplier;
 /**
  * Holds the creative tabs the bridged content is placed in.
  * Can be split by block/item type, or split by namespace (mod).
+ *
+ * <p>1.12.2's {@code CreativeTabs} assigns each tab a fixed slot out of a small, effectively
+ * static array (its constructor takes an explicit {@code int} index), unlike later versions'
+ * open-ended tab registry. Building one from common code -- which is compiled against plain
+ * vanilla, with no Forge/Fabric patches -- is a platform concern (each loader has its own way
+ * of finding the next free index), so this class still only holds and looks up tabs; it never
+ * constructs one itself. Until a platform supplies tabs via {@link #setTabFactory} or
+ * {@link #setBlocksTab}/{@link #setItemsTab}, everything falls back to vanilla's own tabs.
  */
 public class BridgedItemGroup {
     /** Tab ids, used for the translation keys and, on Fabric, the tabs' resource locations. */
@@ -90,17 +97,14 @@ public class BridgedItemGroup {
 
     /** The namespaces that were given their own tab, in registration order. */
     public static Set<String> tabbedNamespaces() {
-        return java.util.Collections.unmodifiableSet(namespaceTabs.keySet());
+        return Collections.unmodifiableSet(namespaceTabs.keySet());
     }
 
     // ---------------------------------------------------------------------------
-    // Which items belong in which tab.
-    //
-    // Up to 1.19.2 an item declared its own tab through Item.Properties#tab, so this
-    // was answered at construction time. 1.19.3 inverted it: a tab collects its
-    // contents from an event, so the answer has to be available afterwards instead.
-    // Both models are served from the queries below, which stay version-independent;
-    // the loaders decide when to ask.
+    // Which items belong in which tab. 1.12.2 always declares a tab at construction time
+    // (there is no later-version "tab pulls its contents from an event" model), so only
+    // getTab() below is actually used; the two queries are kept anyway so this class' shape
+    // matches every other supported version's.
     // ---------------------------------------------------------------------------
 
     /** Everything that belongs in the shared blocks or items tab. */
@@ -127,7 +131,6 @@ public class BridgedItemGroup {
         return isBlock ? BridgedBlocks.items() : BridgedItems.items();
     }
 
-    //? if <1.19.3 {
     /** Falls back to a vanilla tab if a platform could not provide one. */
     public static CreativeTabs blocks() {
         return blocksTab != null ? blocksTab : CreativeTabs.BUILDING_BLOCKS;
@@ -137,13 +140,12 @@ public class BridgedItemGroup {
         return itemsTab != null ? itemsTab : CreativeTabs.MISC;
     }
 
-    /** The tab an item declares at construction time. Gone from 1.19.3 onwards. */
+    /** The tab an item/block declares at construction time. */
     public static CreativeTabs getTab(String namespace, boolean isBlock) {
         CreativeTabs tab = namespaceTab(namespace);
         if (tab != null) return tab;
         return isBlock ? blocks() : items();
     }
-    //?}
 
     public static void initTabs(Set<String> namespaces, Map<String, String> modNames) {
         archiveModNames = Collections.unmodifiableMap(new LinkedHashMap<>(modNames));
@@ -222,6 +224,6 @@ public class BridgedItemGroup {
 
     /** Shown when a tab has no bridged content of its own to represent it. */
     private static ItemStack fallbackIcon() {
-        return new ItemStack(Blocks.BRICK_BLOCK);
+        return new ItemStack(Items.BRICK);
     }
 }
