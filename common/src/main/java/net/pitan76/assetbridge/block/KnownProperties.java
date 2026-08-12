@@ -5,6 +5,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -29,7 +30,7 @@ public class KnownProperties {
     /** @return the vanilla property to use, or {@code null} to fall back to a StringProperty */
     @Nullable
     public static Property<?> match(BridgedProperty property) {
-        Set<String> values = Set.copyOf(property.values());
+        Set<String> values = new HashSet<>(property.values());
         if (values.size() != property.values().size()) return null;
 
         switch (property.name()) {

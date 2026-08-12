@@ -97,7 +97,7 @@ public class BridgedProperty {
             min = Math.min(min, parsed);
             max = Math.max(max, parsed);
         }
-        return max - min + 1 == Set.copyOf(values).size();
+        return max - min + 1 == new HashSet<>(values).size();
     }
 
     @Override
