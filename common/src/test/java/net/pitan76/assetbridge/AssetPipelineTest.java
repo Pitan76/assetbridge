@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,13 +30,16 @@ class AssetPipelineTest {
 
     @Test
     void discoversABlockAndItsResources() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
-                "assets/examplemod/models/block/foo.json",
-                "{\"parent\": \"block/cube_all\", \"textures\": {\"all\": \"examplemod:block/foo\"}}",
-                "assets/examplemod/textures/block/foo.png", "png bytes"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        
+        resources.put("assets/examplemod/models/block/foo.json",
+                "{\"parent\": \"block/cube_all\", \"textures\": {\"all\": \"examplemod:block/foo\"}}");
+        
+        resources.put("assets/examplemod/textures/block/foo.png", "png bytes");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
         assertEquals(1, assets.blocks().size());
         BridgedBlockDefinition block = assets.blocks().get(0);
@@ -47,7 +51,7 @@ class AssetPipelineTest {
 
     @Test
     void qualifiesModelReferencesWithTheirNamespace() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Collections.singletonMap(
                 "assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"\": {\"model\": \"block/foo\"}}}"
         )));
@@ -57,7 +61,7 @@ class AssetPipelineTest {
 
     @Test
     void passesTheBlockStateThroughAndRecoversItsProperties() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Collections.singletonMap(
                 "assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"facing=north\": {\"model\": \"examplemod:block/north\", \"y\": 90},"
                         + " \"facing=south\": {\"model\": \"examplemod:block/south\"}}}"
@@ -67,20 +71,21 @@ class AssetPipelineTest {
         JsonObject variants = served.getAsJsonObject("variants");
 
         // Every variant survives, rotations included, so the block renders like the original.
-        assertEquals(Set.of("facing=north", "facing=south"), keysOf(variants));
+        assertEquals(new HashSet<>(Arrays.asList("facing=north", "facing=south")), keysOf(variants));
         assertEquals(90, variants.getAsJsonObject("facing=north").get("y").getAsInt());
 
         BridgedStateDefinition states = assets.blocks().get(0).states();
-        assertEquals(Arrays.asList("facing"), states.properties().stream().map(BridgedProperty::name).toList());
+        assertEquals(Arrays.asList("facing"), states.properties().stream().map(BridgedProperty::name).collect(Collectors.toList()));
         assertEquals(Arrays.asList("north", "south"), states.properties().get(0).values());
     }
 
     @Test
     void fallsBackToASingleVariantWhenAPropertyCannotBeRegistered() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"facing=north-east\": {\"model\": \"examplemod:block/foo\"}}}"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"facing=north-east\": {\"model\": \"examplemod:block/foo\"}}}");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
         // Serving the original would make the model loader fail on the unknown property.
         JsonObject served = json(assets, AssetPath.blockState("examplemod", "foo"));
@@ -92,7 +97,7 @@ class AssetPipelineTest {
 
     @Test
     void rewritesLegacyBlockStatesSoTheyCanBePassedThrough() {
-        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, Collections.singletonMap(
                 "assets/oldmod/blockstates/foo.json", "{\"variants\": {\"normal\": {\"model\": \"cube_all\"}}}"
         )));
 
@@ -106,34 +111,37 @@ class AssetPipelineTest {
 
     @Test
     void generatesAnItemModelOnlyWhenTheArchiveHasNone() {
-        BridgedAssetManager generated = build(TestArchives.archive("a.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
-                "assets/examplemod/models/block/foo.json", "{}"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources.put("assets/examplemod/models/block/foo.json", "{}");
+        
+        BridgedAssetManager generated = build(TestArchives.archive("a.jar", AssetVersion.MODERN, resources));
         assertEquals("examplemod:block/foo",
                 json(generated, AssetPath.itemModel("examplemod", "foo")).get("parent").getAsString());
 
-        BridgedAssetManager shipped = build(TestArchives.archive("b.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
-                "assets/examplemod/models/block/foo.json", "{}",
-                "assets/examplemod/models/block/custom_item.json", "{}",
-                "assets/examplemod/models/item/foo.json", "{\"parent\": \"examplemod:block/custom_item\"}"
-        )));
+        Map<String, String> resources2 = new HashMap<>();
+        resources2.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources2.put("assets/examplemod/models/block/foo.json", "{}");
+        resources2.put("assets/examplemod/models/block/custom_item.json", "{}");
+        resources2.put("assets/examplemod/models/item/foo.json", "{\"parent\": \"examplemod:block/custom_item\"}");
+        
+        BridgedAssetManager shipped = build(TestArchives.archive("b.jar", AssetVersion.MODERN, resources2));
         assertEquals("examplemod:block/custom_item",
                 json(shipped, AssetPath.itemModel("examplemod", "foo")).get("parent").getAsString());
     }
 
     @Test
     void appliesTheConversionForTheArchivesOwnVersion() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/oldmod/blockstates/foo.json",
+                "{\"variants\": {\"normal\": {\"model\": \"oldmod:blocks/foo\"}}}");
+        resources.put("assets/oldmod/models/block/foo.json",
+                "{\"parent\": \"blocks/cube_all\", \"textures\": {\"all\": \"oldmod:blocks/foo\"}}");
+        
         // Pre-flattening assets, so 'blocks/' has to become 'block/'.
-        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, Map.of(
-                "assets/oldmod/blockstates/foo.json",
-                "{\"variants\": {\"normal\": {\"model\": \"oldmod:blocks/foo\"}}}",
-                "assets/oldmod/models/block/foo.json",
-                "{\"parent\": \"blocks/cube_all\", \"textures\": {\"all\": \"oldmod:blocks/foo\"}}"
-        )));
+        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, resources));
 
         JsonObject model = json(assets, new AssetPath(AssetPath.PackKind.CLIENT, "oldmod", "models/block/foo.json"));
         assertEquals("block/cube_all", model.get("parent").getAsString());
@@ -142,18 +150,19 @@ class AssetPipelineTest {
 
     @Test
     void servesLegacySpritesFromTheFlattenedDirectory() throws Exception {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/oldmod/blockstates/foo.json",
+                "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}");
+        resources.put("assets/oldmod/models/block/foo.json",
+                "{\"parent\": \"block/cube_all\", \"textures\": {\"all\": \"oldmod:blocks/foo\"}}");
+        resources.put("assets/oldmod/textures/blocks/foo.png", "png bytes");
+        resources.put("assets/oldmod/textures/blocks/foo.png.mcmeta", "{}");
+        resources.put("assets/oldmod/textures/items/wand.png", "png bytes");
+        
         // From 1.19.3 the block atlas is defined as the contents of textures/block/, so a
         // sprite left in the plural directory is never stitched and the model renders as
         // missing. Both the file and the reference to it have to move.
-        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, Map.of(
-                "assets/oldmod/blockstates/foo.json",
-                "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}",
-                "assets/oldmod/models/block/foo.json",
-                "{\"parent\": \"block/cube_all\", \"textures\": {\"all\": \"oldmod:blocks/foo\"}}",
-                "assets/oldmod/textures/blocks/foo.png", "png bytes",
-                "assets/oldmod/textures/blocks/foo.png.mcmeta", "{}",
-                "assets/oldmod/textures/items/wand.png", "png bytes"
-        )));
+        BridgedAssetManager assets = build(TestArchives.archive("old-mod.jar", AssetVersion.LEGACY, resources));
 
         assertNotNull(assets.readResource(
                 new AssetPath(AssetPath.PackKind.CLIENT, "oldmod", "textures/block/foo.png")));
@@ -168,17 +177,22 @@ class AssetPipelineTest {
 
     @Test
     void fixesLegacyShapedContentRegardlessOfTheDeclaredVersion() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/oldmod/blockstates/foo.json",
+                "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}");
+        resources.put("assets/oldmod/models/block/foo.json",
+                "{\"parent\": \"blocks/cube_all\", \"textures\": {\"all\": \"oldmod:blocks/foo\"}}");
+        
+        Map<String, String> resources2 = new HashMap<>();
+        resources2.put("assets/newmod/blockstates/bar.json",
+                "{\"variants\": {\"\": {\"model\": \"newmod:block/bar\"}}}");
+        resources2.put("assets/newmod/models/block/bar.json", "{\"parent\": \"blocks/cube_all\"}");
+        
         // A mod that declares a current version can still ship a pre-flattening model, and
         // 'blocks/' simply does not resolve here, so the fix keys off the content.
         BridgedAssetManager assets = build(
-                TestArchives.archive("old.jar", AssetVersion.LEGACY, Map.of(
-                        "assets/oldmod/blockstates/foo.json",
-                        "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}",
-                        "assets/oldmod/models/block/foo.json", "{\"parent\": \"blocks/cube_all\"}")),
-                TestArchives.archive("new.jar", AssetVersion.MODERN, Map.of(
-                        "assets/newmod/blockstates/bar.json",
-                        "{\"variants\": {\"\": {\"model\": \"newmod:block/bar\"}}}",
-                        "assets/newmod/models/block/bar.json", "{\"parent\": \"blocks/cube_all\"}")));
+                TestArchives.archive("old.jar", AssetVersion.LEGACY, resources),
+                TestArchives.archive("new.jar", AssetVersion.MODERN, resources2));
 
         for (String namespace : Arrays.asList("oldmod", "newmod")) {
             String model = namespace.equals("oldmod") ? "foo" : "bar";
@@ -191,39 +205,40 @@ class AssetPipelineTest {
     @Test
     void recordsEachArchivesOwnVersion() {
         BridgedAssetManager assets = build(
-                TestArchives.archive("old.jar", AssetVersion.LEGACY, Map.of(
+                TestArchives.archive("old.jar", AssetVersion.LEGACY, Collections.singletonMap(
                         "assets/oldmod/blockstates/foo.json",
                         "{\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}")),
-                TestArchives.archive("new.jar", AssetVersion.ATLASES, Map.of(
+                TestArchives.archive("new.jar", AssetVersion.ATLASES, Collections.singletonMap(
                         "assets/newmod/blockstates/bar.json",
                         "{\"variants\": {\"\": {\"model\": \"newmod:block/bar\"}}}")));
 
         assertEquals(Arrays.asList(AssetVersion.LEGACY, AssetVersion.ATLASES),
-                assets.blocks().stream().map(BridgedBlockDefinition::version).toList());
+                assets.blocks().stream().map(BridgedBlockDefinition::version).collect(Collectors.toList()));
     }
 
     @Test
     void skipsNamespacesThatALoadedModAlreadyOwns() {
-        BridgedAssetManager assets = AssetPipeline.build(Arrays.asList(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
-                "assets/examplemod/models/block/foo.json", "{\"parent\": \"block/cube_all\"}",
-                "assets/othermod/blockstates/bar.json",
-                "{\"variants\": {\"\": {\"model\": \"othermod:block/bar\"}}}"
-        ))), "examplemod"::equals);
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources.put("assets/examplemod/models/block/foo.json", "{\"parent\": \"block/cube_all\"}");
+        resources.put("assets/othermod/blockstates/bar.json",
+                "{\"variants\": {\"\": {\"model\": \"othermod:block/bar\"}}}");
+        
+        BridgedAssetManager assets = AssetPipeline.build(Arrays.asList(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources)), "examplemod"::equals);
 
         // Neither the block nor its resources may reach the assets, or the real mod's
         // appearance would be overridden by ours.
-        assertEquals(Arrays.asList("othermod:bar"), assets.blocks().stream().map(BridgedBlockDefinition::id).toList());
+        assertEquals(Arrays.asList("othermod:bar"), assets.blocks().stream().map(BridgedBlockDefinition::id).collect(Collectors.toList()));
         assertTrue(assets.resources().keySet().stream().noneMatch(path -> path.namespace().equals("examplemod")));
     }
 
     @Test
     void keepsTheFirstArchiveOnDuplicateBlockIds() {
         BridgedAssetManager assets = build(
-                TestArchives.archive("first.jar", AssetVersion.MODERN, Map.of("assets/examplemod/blockstates/foo.json",
+                TestArchives.archive("first.jar", AssetVersion.MODERN, Collections.singletonMap("assets/examplemod/blockstates/foo.json",
                         "{\"variants\": {\"\": {\"model\": \"examplemod:block/first\"}}}")),
-                TestArchives.archive("second.jar", AssetVersion.MODERN, Map.of("assets/examplemod/blockstates/foo.json",
+                TestArchives.archive("second.jar", AssetVersion.MODERN, Collections.singletonMap("assets/examplemod/blockstates/foo.json",
                         "{\"variants\": {\"\": {\"model\": \"examplemod:block/second\"}}}")));
 
         assertEquals(1, assets.blocks().size());
@@ -232,52 +247,55 @@ class AssetPipelineTest {
 
     @Test
     void skipsBlockStatesItCannotUse() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/broken.json", "{ not json",
-                "assets/examplemod/blockstates/modelless.json", "{\"variants\": {}}",
-                "assets/examplemod/blockstates/fine.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/fine\"}}}"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/broken.json", "{ not json");
+        resources.put("assets/examplemod/blockstates/modelless.json", "{\"variants\": {}}");
+        resources.put("assets/examplemod/blockstates/fine.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/fine\"}}}");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
-        assertEquals(Arrays.asList("examplemod:fine"), assets.blocks().stream().map(BridgedBlockDefinition::id).toList());
+        assertEquals(Arrays.asList("examplemod:fine"), assets.blocks().stream().map(BridgedBlockDefinition::id).collect(Collectors.toList()));
     }
 
     @Test
     void registersItemModelsThatNoBlockClaims() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/models/item/wand.json",
-                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/wand\"}}",
-                "assets/examplemod/textures/item/wand.png", "png bytes"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/models/item/wand.json",
+                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/wand\"}}");
+        resources.put("assets/examplemod/textures/item/wand.png", "png bytes");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
-        assertEquals(Arrays.asList("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
+        assertEquals(Arrays.asList("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toList()));
         assertEquals("example-mod.jar", assets.items().get(0).sourceArchive());
     }
 
     @Test
     void doesNotRegisterAStandaloneItemForABridgedBlock() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/blockstates/foo.json",
-                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
-                "assets/examplemod/models/item/foo.json", "{\"parent\": \"examplemod:block/foo\"}",
-                "assets/examplemod/models/item/wand.json", "{\"parent\": \"item/generated\"}"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources.put("assets/examplemod/models/block/foo.json", "{\"parent\": \"block/cube_all\"}");
+        resources.put("assets/examplemod/models/item/foo.json", "{\"parent\": \"examplemod:block/foo\"}");
+        resources.put("assets/examplemod/models/item/wand.json", "{\"parent\": \"item/generated\"}");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
         // 'foo' is already covered by the block's own BlockItem.
-        assertEquals(Arrays.asList("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
+        assertEquals(Arrays.asList("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toList()));
     }
 
     @Test
     void prefersItemDefinitionsOverGuessingFromItemModels() {
-        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Map.of(
-                // 1.21.4+ ships an authoritative list of items; the item models next to it
-                // include shared fragments and block items that are not separate items.
-                "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}",
-                "assets/newmod/models/item/wand.json", "{\"parent\": \"item/generated\"}",
-                "assets/newmod/models/item/leftover.json", "{\"parent\": \"item/generated\"}"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}");
+        resources.put("assets/newmod/models/item/wand.json", "{\"parent\": \"item/generated\"}");
+        resources.put("assets/newmod/models/item/leftover.json", "{\"parent\": \"item/generated\"}");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, resources));
 
-        assertEquals(Arrays.asList("newmod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
+        assertEquals(Arrays.asList("newmod:wand"), assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toList()));
     }
 
     //? if >=26 {
@@ -292,7 +310,7 @@ class AssetPipelineTest {
     *///?} else {
     @Test
     void doesNotServeItemDefinitionsThisVersionCannotRead() {
-        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("new-mod.jar", AssetVersion.ATLASES, Collections.singletonMap(
                 "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}"
         )));
 
@@ -302,18 +320,19 @@ class AssetPipelineTest {
 
     @Test
     void stillUsesItemModelsForNamespacesWithoutDefinitions() {
-        BridgedAssetManager assets = build(TestArchives.archive("mixed.jar", AssetVersion.ATLASES, Map.of(
-                "assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}",
-                "assets/oldmod/models/item/gem.json", "{\"parent\": \"item/generated\"}"
-        )));
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/newmod/items/wand.json", "{\"model\": {\"type\": \"minecraft:model\"}}");
+        resources.put("assets/oldmod/models/item/gem.json", "{\"parent\": \"item/generated\"}");
+        
+        BridgedAssetManager assets = build(TestArchives.archive("mixed.jar", AssetVersion.ATLASES, resources));
 
         assertEquals(Arrays.asList("newmod:wand", "oldmod:gem"),
-                assets.items().stream().map(BridgedItemDefinition::id).sorted().toList());
+                assets.items().stream().map(BridgedItemDefinition::id).sorted().collect(Collectors.toList()));
     }
 
     @Test
     void ignoresNestedItemModelFragments() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Collections.singletonMap(
                 "assets/examplemod/models/item/parts/handle.json", "{\"parent\": \"item/generated\"}"
         )));
 
@@ -323,9 +342,9 @@ class AssetPipelineTest {
     @Test
     void keepsTheFirstArchiveOnDuplicateItemIds() {
         BridgedAssetManager assets = build(
-                TestArchives.archive("first.jar", AssetVersion.MODERN, Map.of("assets/examplemod/models/item/wand.json",
+                TestArchives.archive("first.jar", AssetVersion.MODERN, Collections.singletonMap("assets/examplemod/models/item/wand.json",
                         "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/first\"}}")),
-                TestArchives.archive("second.jar", AssetVersion.MODERN, Map.of("assets/examplemod/models/item/wand.json",
+                TestArchives.archive("second.jar", AssetVersion.MODERN, Collections.singletonMap("assets/examplemod/models/item/wand.json",
                         "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:item/second\"}}")));
 
         assertEquals(1, assets.items().size());
@@ -342,7 +361,7 @@ class AssetPipelineTest {
 
     @Test
     void doesNotCarryOriginalBlockStatesIntoTheBundle() {
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Collections.singletonMap(
                 "assets/examplemod/blockstates/broken.json", "{ not json"
         )));
 
@@ -354,7 +373,7 @@ class AssetPipelineTest {
     void replacesAGeneratedItemModelWhoseBlockModelNeverArrived() {
         // The blockstate names a model the archive does not contain, so the item model
         // generated from it would inherit from nothing.
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Collections.singletonMap(
                 "assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}"
         )));
@@ -368,10 +387,12 @@ class AssetPipelineTest {
         // A .mcmeta is what makes a texture animate. Nothing in it is version specific, so
         // it must reach the pack exactly as the archive wrote it.
         String mcmeta = "{\"animation\": {\"frametime\": 2, \"frames\": [0, 1, 2, 1]}}";
-        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
-                "assets/examplemod/textures/block/foo.png", "png bytes",
-                "assets/examplemod/textures/block/foo.png.mcmeta", mcmeta
-        )));
+
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/textures/block/foo.png", "png bytes");
+        resources.put("assets/examplemod/textures/block/foo.png.mcmeta", mcmeta);
+        
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
         AssetPath path = new AssetPath(AssetPath.PackKind.CLIENT, "examplemod",
                 "textures/block/foo.png.mcmeta");
