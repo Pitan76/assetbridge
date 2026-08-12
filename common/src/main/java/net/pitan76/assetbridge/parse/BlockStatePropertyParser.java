@@ -62,7 +62,7 @@ public class BlockStatePropertyParser {
         if (key.isEmpty()) return true;
 
         for (String pair : key.split(",")) {
-            if (pair.isBlank()) continue;
+            if (pair.trim().isEmpty()) continue;
             int equals = pair.indexOf('=');
             // A key without '=' is not a property assignment. Pre-1.13 packs used "normal"
             // here, which the converter rewrites; anything else we cannot interpret.

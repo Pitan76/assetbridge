@@ -129,7 +129,7 @@ public class BlockStateCoverage {
         if (key.isEmpty()) return true;
 
         for (String pair : key.split(",")) {
-            if (pair.isBlank()) continue;
+            if (pair.trim().isEmpty()) continue;
             int equals = pair.indexOf('=');
             if (equals < 0) return false;
             String name = pair.substring(0, equals).trim();
