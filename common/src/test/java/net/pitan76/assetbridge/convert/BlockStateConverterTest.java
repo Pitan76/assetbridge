@@ -9,6 +9,8 @@ import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +28,7 @@ class BlockStateConverterTest {
     void rewritesThePre113NormalVariantKey() {
         JsonObject result = convert("\n                {\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}", AssetVersion.LEGACY);
 
-        assertEquals(Set.of(""), keysOf(result.getAsJsonObject("variants")));
+        assertEquals(new HashSet<>(Arrays.asList("")), keysOf(result.getAsJsonObject("variants")));
     }
 
     @Test
@@ -34,7 +36,7 @@ class BlockStateConverterTest {
         JsonObject result = convert("\n                {\"variants\": {\"normal\": {\"model\": \"oldmod:block/a\"}, \"facing=north\": {\"model\": \"oldmod:block/b\"}}}",
                 AssetVersion.LEGACY);
 
-        assertEquals(Set.of("", "facing=north"), keysOf(result.getAsJsonObject("variants")));
+        assertEquals(new HashSet<>(Arrays.asList("", "facing=north")), keysOf(result.getAsJsonObject("variants")));
     }
 
     @Test
