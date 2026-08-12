@@ -136,17 +136,28 @@ public class AssetBridgeForge {
     // Version-specific glue. Types are fully qualified so the imports stay shared.
     // ---------------------------------------------------------------------------
 
+    private void registerWithContainer(ResourceLocation id, Runnable registerAction) {
+        ModContainer original = Loader.instance().activeModContainer();
+        ModContainer target = Loader.instance().getIndexedModList().get(id.getNamespace());
+        Loader.instance().setActiveModContainer(target);
+        try {
+            registerAction.run();
+        } finally {
+            Loader.instance().setActiveModContainer(original);
+        }
+    }
+
     @SubscribeEvent
     public void registerBlocks(RegistryEvent.Register<Block> event) {
         registerBlocksInto(
                 id -> event.getRegistry().containsKey(id),
-                (id, block) -> event.getRegistry().register(block.setRegistryName(id)));
+                (id, block) -> registerWithContainer(id, () -> event.getRegistry().register(block.setRegistryName(id))));
     }
 
     @SubscribeEvent
     public void registerItems(RegistryEvent.Register<Item> event) {
         registerItemsInto(
                 id -> event.getRegistry().containsKey(id),
-                (id, item) -> event.getRegistry().register(item.setRegistryName(id)));
+                (id, item) -> registerWithContainer(id, () -> event.getRegistry().register(item.setRegistryName(id))));
     }
 }
