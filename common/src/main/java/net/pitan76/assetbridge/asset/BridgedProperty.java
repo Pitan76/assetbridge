@@ -67,15 +67,15 @@ public class BridgedProperty {
     }
 
     public int min() {
-        return values.stream().mapToInt(Integer::parseInt).min().orElseThrow();
+        return values.stream().mapToInt(Integer::parseInt).min().orElseThrow(NoSuchElementException::new);
     }
 
     public int max() {
-        return values.stream().mapToInt(Integer::parseInt).max().orElseThrow();
+        return values.stream().mapToInt(Integer::parseInt).max().orElseThrow(NoSuchElementException::new);
     }
 
     private static Kind kindOf(List<String> values) {
-        if (values.size() == 2 && Set.copyOf(values).equals(BOOLEANS)) return Kind.BOOLEAN;
+        if (values.size() == 2 && new HashSet<>(values).equals(BOOLEANS)) return Kind.BOOLEAN;
         return isContiguousRange(values) ? Kind.INTEGER : Kind.STRING;
     }
 
