@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -47,7 +48,7 @@ public class ArchiveScanner {
         Path cacheDir = NestedArchives.cacheDirectory(gameDir);
         List<AssetArchive> archives = new ArrayList<>();
         try (Stream<Path> files = Files.list(dir)) {
-            for (Path file : files.sorted(BY_FILE_NAME).toList()) {
+            for (Path file : files.sorted(BY_FILE_NAME).collect(Collectors.toList())) {
                 if (!Files.isRegularFile(file) || !NestedArchives.isArchive(file.getFileName().toString())) {
                     continue;
                 }
