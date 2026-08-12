@@ -30,7 +30,7 @@ public class AssetArchive implements Closeable {
 
     public AssetArchive(String fileName, AssetVersion version, String versionSource,
                         Map<AssetPath, AssetSource> entries) {
-        this(fileName, version, versionSource, entries, Map.of(), null);
+        this(fileName, version, versionSource, entries, Collections.emptyMap(), null);
     }
 
     public AssetArchive(String fileName, AssetVersion version, String versionSource,

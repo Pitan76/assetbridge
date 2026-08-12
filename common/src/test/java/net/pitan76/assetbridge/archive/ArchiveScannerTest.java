@@ -201,7 +201,7 @@ class ArchiveScannerTest {
 
     @Test
     void readsTheNestedAssetsLazilyFromTheCachedCopy() throws IOException {
-        writeNested("example-mod.jar", Map.of(),
+        writeNested("example-mod.jar", Collections.emptyMap(),
                 Map.of("inner.zip", Map.of("assets/innermod/textures/block/foo.png", "png bytes")));
 
         AssetArchive archive = single();
