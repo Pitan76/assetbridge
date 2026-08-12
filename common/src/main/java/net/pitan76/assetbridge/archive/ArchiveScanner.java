@@ -108,7 +108,7 @@ public class ArchiveScanner {
         VersionDetector.Structure structure = new VersionDetector.Structure();
         ZipFile zip = new ZipFile(file.toFile());
         try {
-            var it = zip.entries();
+            Enumeration<? extends ZipEntry> it = zip.entries();
             while (it.hasMoreElements()) {
                 ZipEntry entry = it.nextElement();
                 if (entry.isDirectory()) continue;

@@ -42,7 +42,7 @@ public class NestedArchives {
 
         try (ZipFile zip = new ZipFile(parent.toFile())) {
             List<ZipEntry> nested = new ArrayList<>();
-            var it = zip.entries();
+            Enumeration<? extends ZipEntry> it = zip.entries();
             while (it.hasMoreElements()) {
                 ZipEntry entry = it.nextElement();
                 if (!entry.isDirectory() && isArchive(entry.getName())) nested.add(entry);
