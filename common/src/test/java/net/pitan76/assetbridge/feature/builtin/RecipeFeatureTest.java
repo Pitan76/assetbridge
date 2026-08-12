@@ -11,10 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +30,7 @@ class RecipeFeatureTest {
 
     @Test
     void bridgesAVanillaRecipe() throws IOException {
-        BridgedAssetManager assets = apply(ALL_ON, NOTHING_LOADED, Map.of(
+        BridgedAssetManager assets = apply(ALL_ON, NOTHING_LOADED, Collections.singletonMap(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 
@@ -47,7 +44,7 @@ class RecipeFeatureTest {
 
     @Test
     void leavesAModdedRecipeTypeBehind() {
-        BridgedAssetManager assets = apply(ALL_ON, NOTHING_LOADED, Map.of(
+        BridgedAssetManager assets = apply(ALL_ON, NOTHING_LOADED, Collections.singletonMap(
                 "data/examplemod/recipes/foo.json", "{\"type\":\"create:mixing\"}"
         ));
 
@@ -56,7 +53,7 @@ class RecipeFeatureTest {
 
     @Test
     void skipsANamespaceARealModOwns() {
-        BridgedAssetManager assets = apply(ALL_ON, namespace -> namespace.equals("examplemod"), Map.of(
+        BridgedAssetManager assets = apply(ALL_ON, namespace -> namespace.equals("examplemod"), Collections.singletonMap(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 
@@ -65,7 +62,7 @@ class RecipeFeatureTest {
 
     @Test
     void bridgesNothingWithoutTheDataPack() {
-        BridgedAssetManager assets = apply(Set.of(RecipeFeature.ID), NOTHING_LOADED, Map.of(
+        BridgedAssetManager assets = apply(Set.of(RecipeFeature.ID), NOTHING_LOADED, Collections.singletonMap(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 

@@ -23,7 +23,10 @@ class FeatureConfigTest {
     void usesTheDefaultsAndWritesThemOutWhenThereIsNoConfig() throws IOException {
         assertEquals(new HashSet<>(Arrays.asList("on")), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
 
-        String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
+        byte[] bytes = Files.readAllBytes(FeatureConfig.file(gameDir));
+        String written = new String(bytes, StandardCharsets.UTF_8);
+
+//        String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=true"), written);
         assertTrue(written.contains("feature.off=false"), written);
         // The description is what tells a player what they are switching off.

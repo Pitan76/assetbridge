@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,11 +35,10 @@ class VersionDetectorTest {
 
     @Test
     void theDirectoryLayoutBeatsEveryDeclaredVersion() {
-        // pack.mcmeta is hand-written and often stale; assets/*/items/ cannot lie.
-        Detection detection = detect("mymod.jar", structure("assets/mymod/items/wand.json"), Map.of(
-                "pack.mcmeta", "{\"pack\": {\"pack_format\": 8}}",
-                "META-INF/mods.toml", "modId=\"minecraft\"\nversionRange=\"[1.18.2]\""
-        ));
+        Map<String, String> map = new HashMap<>();
+        map.put("pack.mcmeta", "{\"pack\": {\"pack_format\": 8}}");
+        map.put("META-INF/mods.toml", "modId=\"minecraft\"\nversionRange=\"[1.18.2]\"");
+        Detection detection = detect("mymod.jar", structure("assets/mymod/items/wand.json"), map);
 
         assertEquals(AssetVersion.ITEM_DEFINITIONS, detection.version());
         assertEquals("assets/*/items/ (1.21.4+)", detection.source());
@@ -58,11 +59,10 @@ class VersionDetectorTest {
 
     @Test
     void loaderMetadataBeatsPackMcmeta() {
-        // The loader enforces its dependency range, so it has to be accurate.
-        Detection detection = detect("mymod.jar", new Structure(), Map.of(
-                "pack.mcmeta", "{\"pack\": {\"pack_format\": 3}}",
-                "META-INF/mods.toml", "modId=\"minecraft\"\nversionRange=\"[1.21.1]\""
-        ));
+        Map<String, String> map = new HashMap<>();
+        map.put("pack.mcmeta", "{\"pack\": {\"pack_format\": 3}}");
+        map.put("META-INF/mods.toml", "modId=\"minecraft\"\nversionRange=\"[1.21.1]\"");
+        Detection detection = detect("mymod.jar", new Structure(), map);
 
         assertEquals(AssetVersion.COMPONENTS, detection.version());
         assertEquals("META-INF/mods.toml", detection.source());
@@ -70,7 +70,7 @@ class VersionDetectorTest {
 
     @Test
     void readsTheMinecraftDependencyFromNeoForgeMetadata() {
-        Detection detection = detect("mymod.jar", new Structure(), Map.of(
+        Detection detection = detect("mymod.jar", new Structure(), Collections.singletonMap(
                 "META-INF/neoforge.mods.toml", "\n                        [[dependencies.\"astralenchant\"]]\n                        modId=\"neoforge\"\n                        versionRange=\"[21.1.235,)\"\n\n                        [[dependencies.\"astralenchant\"]]\n                        modId=\"minecraft\"\n                        versionRange=\"[1.21.1]\"\n                        "));
 
         // The neoforge dependency's 21.1.235 must not be mistaken for a Minecraft version.
@@ -80,7 +80,7 @@ class VersionDetectorTest {
 
     @Test
     void readsTheMinecraftDependencyFromForgeMetadata() {
-        Detection detection = detect("mymod.jar", new Structure(), Map.of(
+        Detection detection = detect("mymod.jar", new Structure(), Collections.singletonMap(
                 "META-INF/mods.toml", "\n                        [[dependencies.mymod]]\n                        modId = \"minecraft\"\n                        mandatory = true\n                        versionRange = \"[1.16.5,1.17)\"\n                        "));
 
         assertEquals(AssetVersion.MODERN, detection.version());
@@ -88,7 +88,7 @@ class VersionDetectorTest {
 
     @Test
     void readsTheMinecraftDependencyFromFabricMetadata() {
-        Detection detection = detect("mymod.jar", new Structure(), Map.of(
+        Detection detection = detect("mymod.jar", new Structure(), Collections.singletonMap(
                 "fabric.mod.json", "{\"depends\": {\"minecraft\": \">=1.20.1 <1.21\", \"java\": \">=17\"}}"));
 
         assertEquals(AssetVersion.ATLASES, detection.version());
@@ -97,7 +97,7 @@ class VersionDetectorTest {
 
     @Test
     void acceptsAnArrayOfFabricVersionPredicates() {
-        Detection detection = detect("mymod.jar", new Structure(), Map.of(
+        Detection detection = detect("mymod.jar", new Structure(), Collections.singletonMap(
                 "fabric.mod.json", "{\"depends\": {\"minecraft\": [\"1.12.2\", \"1.13\"]}}"));
 
         assertEquals(AssetVersion.LEGACY, detection.version());
@@ -106,7 +106,7 @@ class VersionDetectorTest {
     @Test
     void usesPackMcmetaForPlainResourcePacks() {
         // A ZIP with no loader metadata is a resource pack, where pack_format is all there is.
-        Detection detection = detect("my-pack.zip", new Structure(), Map.of(
+        Detection detection = detect("my-pack.zip", new Structure(), Collections.singletonMap(
                 "pack.mcmeta", "{\"pack\": {\"pack_format\": 4}}"));
 
         assertEquals(AssetVersion.FLATTENED, detection.version());
@@ -135,11 +135,12 @@ class VersionDetectorTest {
 
     @Test
     void survivesBrokenMetadata() {
-        assertEquals(AssetVersion.MODERN, detect("assets.zip", new Structure(), Map.of(
-                "pack.mcmeta", "{ not json",
-                "fabric.mod.json", "also not json",
-                "META-INF/mods.toml", "modId=\"minecraft\""
-        )).version());
+        Map<String, String> map = new HashMap<>();
+        map.put("pack.mcmeta", "{ not json");
+        map.put("fabric.mod.json", "also not json");
+        map.put("META-INF/mods.toml", "modId=\"minecraft\"");
+
+        assertEquals(AssetVersion.MODERN, detect("assets.zip", new Structure(), map).version());
     }
 
     private static Structure structure(String... entryNames) {
@@ -151,7 +152,7 @@ class VersionDetectorTest {
     }
 
     private static Detection detect(String fileName, Structure structure) {
-        return detect(fileName, structure, Map.of());
+        return detect(fileName, structure, new HashMap<>());
     }
 
     private static Detection detect(String fileName, Structure structure, Map<String, String> metadata) {
