@@ -3,6 +3,7 @@ package net.pitan76.assetbridge.archive;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetSource;
+import net.pitan76.assetbridge.util.IOUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,7 +139,7 @@ public class ArchiveScanner {
 
     private static String readText(ZipFile zip, ZipEntry entry) throws IOException {
         try (InputStream in = zip.getInputStream(entry)) {
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            return new String(IOUtil.readAllBytes(in), StandardCharsets.UTF_8);
         }
     }
 }
