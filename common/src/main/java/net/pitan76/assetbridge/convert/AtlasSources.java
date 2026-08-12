@@ -73,10 +73,14 @@ public class AtlasSources {
     }
 
     private static boolean isModel(AssetPath path) {
-        return switch (path.category()) {
-            case BLOCK_MODEL, ITEM_MODEL, MODEL -> true;
-            default -> false;
-        };
+        switch (path.category()) {
+            case BLOCK_MODEL:
+            case ITEM_MODEL:
+            case MODEL:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static void collectDirectories(BridgedAssetManager assets, AssetPath path, Set<String> into) {

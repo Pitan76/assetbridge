@@ -106,113 +106,127 @@ public class AssetPipeline {
     private static void read(BridgedAssetManager assets, AssetArchive archive, AssetPath path, AssetSource source,
                              Set<String> seenBlocks, ItemCandidates itemCandidates) {
         AssetVersion version = archive.version();
+
         switch (path.category()) {
-            case BLOCKSTATE -> readBlockState(assets, archive, version, path, source, seenBlocks);
-            case ITEM_DEFINITION ->
-                    // The file itself means nothing to this Minecraft version, so it is not
-                    // served; only its name is used, as the mod's own list of items.
-                    itemCandidates.addDefinition(path.namespace(), path.itemDefinitionName(),
-                            archive.fileName(), version);
-            case ITEM_MODEL -> {
+            case BLOCKSTATE:
+                readBlockState(assets, archive, version, path, source, seenBlocks);
+                break;
+            case ITEM_DEFINITION:
+                // The file itself means nothing to this Minecraft version, so it is not
+                // served; only its name is used, as the mod's own list of items.
+                itemCandidates.addDefinition(path.namespace(), path.itemDefinitionName(),
+                        archive.fileName(), version);
+                break;
+            case ITEM_MODEL:
                 if (convertInto(assets, MODELS, path, source, version, archive)) {
                     itemCandidates.addModel(path.namespace(), path.itemModelName(), archive.fileName(), version);
                 }
-            }
-            case BLOCK_MODEL, MODEL -> convertInto(assets, MODELS, path, source, version, archive);
-            case TEXTURE, TEXTURE_META -> {
+                break;
+            case BLOCK_MODEL:
+            case MODEL:
+                convertInto(assets, MODELS, path, source, version, archive);
+                break;
+            case TEXTURE:
+            case TEXTURE_META:
                 // Nothing to convert, so the bytes never have to enter the heap: the archive
                 // serves them when the game asks. An earlier archive claiming the path still wins.
                 // Pre-1.13 texture directories are flattened here so the sprite ends up where
                 // the atlas looks for it; ModelConverter rewrites the references to match.
-                AssetPath target = path.flattened();
-                if (!assets.hasResource(target)) assets.putResource(target, source);
-            }
-            case LANG -> {
-                AssetPath target = path.flattened();
-                if (target.path().endsWith(".lang")) {
-                    String newPath = target.path().substring(0, target.path().length() - ".lang".length()) + ".json";
-                    AssetPath jsonTarget = target.withPath(newPath);
-                    if (!assets.hasResource(jsonTarget)) {
-                        byte[] raw = readBytes(source, path, archive);
-                        if (raw != null) {
-                            byte[] jsonBytes = convertLangToJson(raw, jsonTarget.namespace());
-                            AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
-                            assets.putResource(jsonTarget, jsonBytes);
+                {
+                    AssetPath target = path.flattened();
+                    if (!assets.hasResource(target)) assets.putResource(target, source);
+                }
+                break;
+            case LANG:
+                {
+                    AssetPath target = path.flattened();
+                    if (target.path().endsWith(".lang")) {
+                        String newPath = target.path().substring(0, target.path().length() - ".lang".length()) + ".json";
+                        AssetPath jsonTarget = target.withPath(newPath);
+                        if (!assets.hasResource(jsonTarget)) {
+                            byte[] raw = readBytes(source, path, archive);
+                            if (raw != null) {
+                                byte[] jsonBytes = convertLangToJson(raw, jsonTarget.namespace());
+                                AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
+                                assets.putResource(jsonTarget, jsonBytes);
+                            }
+                        }
+                    } else {
+                        if (!assets.hasResource(target)) {
+                            AssetBridge.LOGGER.info("Registered existing json lang: namespace={}, path={}", target.namespace(), target.path());
+                            assets.putResource(target, source);
                         }
                     }
-                } else {
+                }
+                break;
+            case TAG:
+                {
+                    boolean isBlockTag = path.path().startsWith("tags/blocks/") || path.path().startsWith("tags/block/");
+                    String prefix;
+                    if (isBlockTag) {
+                        prefix = path.path().startsWith("tags/blocks/") ? "tags/blocks/" : "tags/block/";
+                    } else {
+                        prefix = path.path().startsWith("tags/items/") ? "tags/items/" : "tags/item/";
+                    }
+
+                    String subPath = path.path().substring(prefix.length(), path.path().length() - ".json".length());
+                    String originalTag = path.namespace() + ":" + subPath;
+
+                    boolean toFabric = net.pitan76.assetbridge.convert.RecipeConverter.isFabric();
+                    String mappedTag = net.pitan76.assetbridge.convert.RecipeConverter.mapTagName(originalTag, toFabric);
+
+                    int colon = mappedTag.indexOf(':');
+                    String newNamespace = mappedTag.substring(0, colon);
+                    String newSubPath = mappedTag.substring(colon + 1);
+
+                    // ターゲット環境のバージョンに合わせて、タグの保存ディレクトリ名をマッピング
+                    boolean isModernTagDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+                    String targetPrefix;
+                    if (isBlockTag) {
+                        targetPrefix = isModernTagDir ? "tags/block/" : "tags/blocks/";
+                    } else {
+                        targetPrefix = isModernTagDir ? "tags/item/" : "tags/items/";
+                    }
+                    AssetPath target = new AssetPath(AssetPath.PackKind.SERVER, newNamespace, targetPrefix + newSubPath + ".json");
+
                     if (!assets.hasResource(target)) {
-                        AssetBridge.LOGGER.info("Registered existing json lang: namespace={}, path={}", target.namespace(), target.path());
-                        assets.putResource(target, source);
+                        byte[] raw = readBytes(source, path, archive);
+                        if (raw != null) {
+                            byte[] converted = convertTagJson(raw, toFabric);
+                            assets.putResource(target, converted);
+                        }
                     }
                 }
-            }
-            case TAG -> {
-                boolean isBlockTag = path.path().startsWith("tags/blocks/") || path.path().startsWith("tags/block/");
-                String prefix;
-                if (isBlockTag) {
-                    prefix = path.path().startsWith("tags/blocks/") ? "tags/blocks/" : "tags/block/";
-                } else {
-                    prefix = path.path().startsWith("tags/items/") ? "tags/items/" : "tags/item/";
-                }
+                break;
+            case LOOT_TABLE:
+                {
+                    boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
+                    AssetPath target = path;
+                    if (isModernLootDir) {
+                        if (path.path().startsWith("loot_tables/")) {
+                            String newPath = "loot_table/" + path.path().substring("loot_tables/".length());
+                            target = new AssetPath(path.kind(), path.namespace(), newPath);
+                        }
+                    } else {
+                        if (path.path().startsWith("loot_table/")) {
+                            String newPath = "loot_tables/" + path.path().substring("loot_table/".length());
+                            target = new AssetPath(path.kind(), path.namespace(), newPath);
+                        }
+                    }
 
-                String subPath = path.path().substring(prefix.length(), path.path().length() - ".json".length());
-                String originalTag = path.namespace() + ":" + subPath;
-
-                boolean toFabric = net.pitan76.assetbridge.convert.RecipeConverter.isFabric();
-                String mappedTag = net.pitan76.assetbridge.convert.RecipeConverter.mapTagName(originalTag, toFabric);
-
-                int colon = mappedTag.indexOf(':');
-                String newNamespace = mappedTag.substring(0, colon);
-                String newSubPath = mappedTag.substring(colon + 1);
-
-                // ターゲット環境のバージョンに合わせて、タグの保存ディレクトリ名をマッピング
-                boolean isModernTagDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
-                String targetPrefix;
-                if (isBlockTag) {
-                    targetPrefix = isModernTagDir ? "tags/block/" : "tags/blocks/";
-                } else {
-                    targetPrefix = isModernTagDir ? "tags/item/" : "tags/items/";
-                }
-                AssetPath target = new AssetPath(AssetPath.PackKind.SERVER, newNamespace, targetPrefix + newSubPath + ".json");
-
-                if (!assets.hasResource(target)) {
-                    byte[] raw = readBytes(source, path, archive);
-                    if (raw != null) {
-                        byte[] converted = convertTagJson(raw, toFabric);
-                        assets.putResource(target, converted);
+                    if (!assets.hasResource(target)) {
+                        byte[] raw = readBytes(source, path, archive);
+                        if (raw != null) assets.putResource(target, raw);
                     }
                 }
-            }
-            case LOOT_TABLE -> {
-                boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
-                AssetPath target = path;
-                if (isModernLootDir) {
-                    if (path.path().startsWith("loot_tables/")) {
-                        String newPath = "loot_table/" + path.path().substring("loot_tables/".length());
-                        target = new AssetPath(path.kind(), path.namespace(), newPath);
-                    }
-                } else {
-                    if (path.path().startsWith("loot_table/")) {
-                        String newPath = "loot_tables/" + path.path().substring("loot_table/".length());
-                        target = new AssetPath(path.kind(), path.namespace(), newPath);
-                    }
-                }
-
-                if (!assets.hasResource(target)) {
-                    byte[] raw = readBytes(source, path, archive);
-                    if (raw != null) {
-                        assets.putResource(target, raw);
-                    }
-                }
-            }
-            case RECIPE -> {
+                break;
+            case RECIPE:
                 // Server-side data is a feature's business, not the core's;
                 // RecipeFeature reads these straight from the archive.
-            }
-            case OTHER -> {
+            case OTHER:
                 // Filtered out at scan time; nothing to do.
-            }
+            default:
+                break;
         }
     }
 

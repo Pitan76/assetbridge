@@ -32,18 +32,17 @@ public class KnownProperties {
         Set<String> values = Set.copyOf(property.values());
         if (values.size() != property.values().size()) return null;
 
-        return switch (property.name()) {
-            case "facing" -> {
-                if (values.equals(HORIZONTAL)) yield BlockStateProperties.HORIZONTAL_FACING;
-                if (values.equals(ALL_DIRECTIONS)) yield BlockStateProperties.FACING;
-                yield null;
-            }
-            case "axis" -> {
-                if (values.equals(ALL_AXES)) yield BlockStateProperties.AXIS;
-                if (values.equals(HORIZONTAL_AXES)) yield BlockStateProperties.HORIZONTAL_AXIS;
-                yield null;
-            }
-            default -> null;
-        };
+        switch (property.name()) {
+            case "facing":
+                if (values.equals(HORIZONTAL)) return BlockStateProperties.HORIZONTAL_FACING;
+                if (values.equals(ALL_DIRECTIONS)) return BlockStateProperties.FACING;
+                return null;
+            case "axis":
+                if (values.equals(ALL_AXES)) return BlockStateProperties.AXIS;
+                if (values.equals(HORIZONTAL_AXES)) return BlockStateProperties.HORIZONTAL_AXIS;
+                return null;
+            default:
+                return null;
+        }
     }
 }
