@@ -266,7 +266,7 @@ public class AssetBridgePackResources implements PackResources {
 
     @Override
     public @NotNull Set<String> getNamespaces(PackType type) {
-        if (!serves(type)) return Set.of();
+        if (!serves(type)) return new HashSet<>();
 
         Set<String> namespaces = new LinkedHashSet<>();
         for (AssetPath key : assets.resources().keySet()) {

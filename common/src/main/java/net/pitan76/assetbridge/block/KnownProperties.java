@@ -5,6 +5,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,10 +20,10 @@ import java.util.Set;
  * looks familiar would get vanilla's values rather than the ones the blockstate file uses.
  */
 public class KnownProperties {
-    private static final Set<String> HORIZONTAL = Set.of("north", "south", "west", "east");
-    private static final Set<String> ALL_DIRECTIONS = Set.of("north", "south", "west", "east", "up", "down");
-    private static final Set<String> ALL_AXES = Set.of("x", "y", "z");
-    private static final Set<String> HORIZONTAL_AXES = Set.of("x", "z");
+    private static final Set<String> HORIZONTAL = new HashSet<>(Arrays.asList("north", "south", "west", "east"));
+    private static final Set<String> ALL_DIRECTIONS = new HashSet<>(Arrays.asList("north", "south", "west", "east", "up", "down"));
+    private static final Set<String> ALL_AXES = new HashSet<>(Arrays.asList("x", "y", "z"));
+    private static final Set<String> HORIZONTAL_AXES = new HashSet<>(Arrays.asList("x", "z"));
 
     private KnownProperties() {
     }

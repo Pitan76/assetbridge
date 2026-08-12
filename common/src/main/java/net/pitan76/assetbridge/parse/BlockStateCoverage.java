@@ -8,11 +8,7 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Fills in the states an external blockstate file forgot to describe.
@@ -34,7 +30,7 @@ public class BlockStateCoverage {
     private static final int MAX_COMBINATIONS = 4096;
 
     /** Multipart condition keys that combine other conditions rather than naming a property. */
-    private static final Set<String> COMBINATORS = Set.of("OR", "AND");
+    private static final Set<String> COMBINATORS = new HashSet<>(Arrays.asList("OR", "AND"));
 
     private BlockStateCoverage() {
     }

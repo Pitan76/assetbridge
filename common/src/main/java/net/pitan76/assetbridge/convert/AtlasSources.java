@@ -10,9 +10,7 @@ import net.pitan76.assetbridge.util.Json;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Declares the texture directories the bridged models use, so their sprites reach the block
@@ -35,7 +33,7 @@ public class AtlasSources {
             new AssetPath(AssetPath.PackKind.CLIENT, "minecraft", "atlases/blocks.json");
 
     /** Directories vanilla's own definition already covers. */
-    private static final Set<String> COVERED = Set.of("block", "item");
+    private static final Set<String> COVERED = new HashSet<>(Arrays.asList("block", "item"));
 
     private AtlasSources() {
     }

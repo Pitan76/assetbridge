@@ -13,10 +13,7 @@ import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -38,7 +35,7 @@ public class Features {
             new DataPackFeature()
     ));
 
-    private static Set<String> enabled = Set.of();
+    private static Set<String> enabled = new HashSet<>();
     private static java.util.Map<String, String> configValues = java.util.Collections.emptyMap();
     private static boolean applied;
 

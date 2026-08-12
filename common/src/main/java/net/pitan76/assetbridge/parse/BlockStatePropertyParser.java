@@ -7,12 +7,7 @@ import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Recovers the property set of a block from its blockstate file.
@@ -24,7 +19,7 @@ import java.util.Set;
  */
 public class BlockStatePropertyParser {
     /** Multipart condition keys that combine other conditions rather than naming a property. */
-    private static final Set<String> COMBINATORS = Set.of("OR", "AND");
+    private static final Set<String> COMBINATORS = new HashSet<>(Arrays.asList("OR", "AND"));
 
     private BlockStatePropertyParser() {
     }
