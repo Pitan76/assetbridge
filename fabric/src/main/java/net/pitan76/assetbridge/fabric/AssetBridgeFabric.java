@@ -4,7 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.block.Block;
@@ -83,37 +83,6 @@ public class AssetBridgeFabric implements ModInitializer {
     // their contents from an event instead of being named by each item.
     // ---------------------------------------------------------------------------
 
-    //? if >=1.19.3 {
-    /*private static net.minecraft.core.Registry<Block> blockRegistry() {
-        return net.minecraft.core.registries.BuiltInRegistries.BLOCK;
-    }
-
-    private static net.minecraft.core.Registry<Item> itemRegistry() {
-        return net.minecraft.core.registries.BuiltInRegistries.ITEM;
-    }
-
-    // Builds a tab, registers it, and points it at the contents it should collect.
-    private static CreativeModeTab createTab(
-            String path,
-            Supplier<ItemStack> icon,
-            Supplier<List<Item>> contents) {
-        ResourceLocation id = modId(path);
-        net.minecraft.resources.ResourceKey<CreativeModeTab> key =
-                net.minecraft.resources.ResourceKey.create(
-                        net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, id);
-
-        CreativeModeTab tab = net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
-                .title(net.minecraft.network.chat.Component.translatable("itemGroup." + AssetBridge.MOD_ID + "." + path))
-                .icon(icon)
-                .build();
-        Registry.register(net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB, key, tab);
-
-        // Evaluated when the tab is filled, which is after the bridged items exist.
-        net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.modifyEntriesEvent(key)
-                .register(entries -> contents.get().forEach(entries::accept));
-        return tab;
-    }
-    *///?} else {
     private static net.minecraft.core.Registry<Block> blockRegistry() {
         return Registry.BLOCK;
     }
@@ -123,7 +92,7 @@ public class AssetBridgeFabric implements ModInitializer {
     }
 
     /** Up to 1.19.2 a tab only needs to exist; the items name it themselves. */
-    private static CreativeModeTab createTab(
+    private static CreativeTabs createTab(
             String path,
             Supplier<ItemStack> icon,
             Supplier<List<Item>> contents) {
@@ -132,17 +101,8 @@ public class AssetBridgeFabric implements ModInitializer {
                 .icon(icon)
                 .build();
     }
-    //?}
 
-    // 1.21 made the ResourceLocation constructor private. Its own chain, because the
-    // tab block above is already commented out per version and comments do not nest.
-    //? if >=1.21 {
-    /*private static ResourceLocation modId(String path) {
-        return ResourceLocation.fromNamespaceAndPath(AssetBridge.MOD_ID, path);
-    }
-    *///?} else {
     private static ResourceLocation modId(String path) {
         return new ResourceLocation(AssetBridge.MOD_ID, path);
     }
-    //?}
 }

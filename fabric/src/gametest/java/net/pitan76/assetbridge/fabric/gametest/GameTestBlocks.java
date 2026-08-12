@@ -4,7 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
 import net.pitan76.assetbridge.asset.BridgedProperty;
