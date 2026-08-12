@@ -1,5 +1,8 @@
 package net.pitan76.assetbridge.forge;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.FolderResourcePack;
+import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
@@ -12,6 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
@@ -20,8 +24,12 @@ import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.pack.AssetBridgeRepositorySource;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -89,6 +97,30 @@ public class AssetBridgeForge {
         // dev/run resources root, which the game's normal IResourcePack scanning already reads.
         AssetBridgeRepositorySource.RESOURCES.writeTo(gameDir.resolve("assets"));
         AssetBridgeRepositorySource.DATA.writeTo(gameDir.resolve("data"));
+
+        if (event.getSide().isClient()) {
+            Path packMcmeta = gameDir.resolve("pack.mcmeta");
+            if (!Files.exists(packMcmeta)) {
+                try {
+                    String content = "{\n  \"pack\": {\n    \"pack_format\": 3,\n    \"description\": \"Asset Bridge Resources\"\n  }\n}";
+                    Files.write(packMcmeta, content.getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    AssetBridge.LOGGER.error("Failed to write pack.mcmeta", e);
+                }
+            }
+
+            try {
+                List<IResourcePack> defaultResourcePacks =
+                        ReflectionHelper.getPrivateValue(
+                                Minecraft.class,
+                                Minecraft.getMinecraft(),
+                                "defaultResourcePacks", "field_110449_ao"
+                        );
+                defaultResourcePacks.add(new FolderResourcePack(gameDir.toFile()));
+            } catch (Exception e) {
+                AssetBridge.LOGGER.error("Failed to register FolderResourcePack via reflection", e);
+            }
+        }
 
         MinecraftForge.EVENT_BUS.register(this);
     }
