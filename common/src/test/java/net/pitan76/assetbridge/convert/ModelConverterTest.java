@@ -22,8 +22,7 @@ class ModelConverterTest {
 
     @Test
     void renamesPreFlatteningDirectories() {
-        JsonObject result = convert("""
-                {"parent": "blocks/cube_all", "textures": {"all": "examplemod:blocks/foo"}}""",
+        JsonObject result = convert("\n                {\"parent\": \"blocks/cube_all\", \"textures\": {\"all\": \"examplemod:blocks/foo\"}}",
                 AssetVersion.LEGACY);
 
         assertEquals("block/cube_all", result.get("parent").getAsString());
@@ -36,16 +35,14 @@ class ModelConverterTest {
     void leavesModNamespacedParentsAlone() {
         // Model directories were never flattened, so a mod keeping models under
         // models/blocks/ still has them there.
-        JsonObject result = convert("""
-                {"parent": "examplemod:blocks/base"}""", AssetVersion.LEGACY);
+        JsonObject result = convert("\n                {\"parent\": \"examplemod:blocks/base\"}", AssetVersion.LEGACY);
 
         assertEquals("examplemod:blocks/base", result.get("parent").getAsString());
     }
 
     @Test
     void renamesLegacyItemDirectories() {
-        JsonObject result = convert("""
-                {"parent": "items/generated", "textures": {"layer0": "items/foo"}}""",
+        JsonObject result = convert("\n                {\"parent\": \"items/generated\", \"textures\": {\"layer0\": \"items/foo\"}}",
                 AssetVersion.LEGACY);
 
         assertEquals("item/generated", result.get("parent").getAsString());
@@ -55,8 +52,7 @@ class ModelConverterTest {
     @Test
     void leavesTextureVariableReferencesAlone() {
         // '#all' points at another entry in the same map, not at a file.
-        JsonObject result = convert("""
-                {"parent": "blocks/cube_all", "textures": {"side": "#all", "all": "blocks/foo"}}""",
+        JsonObject result = convert("\n                {\"parent\": \"blocks/cube_all\", \"textures\": {\"side\": \"#all\", \"all\": \"blocks/foo\"}}",
                 AssetVersion.LEGACY);
 
         assertEquals("#all", result.getAsJsonObject("textures").get("side").getAsString());
@@ -65,8 +61,7 @@ class ModelConverterTest {
 
     @Test
     void stripsKeysThatArePostDatingThisVersion() {
-        JsonObject result = convert("""
-                {"parent": "block/cube_all", "oversized_in_gui": true}""", AssetVersion.ATLASES);
+        JsonObject result = convert("\n                {\"parent\": \"block/cube_all\", \"oversized_in_gui\": true}", AssetVersion.ATLASES);
 
         assertFalse(result.has("oversized_in_gui"));
         assertEquals("block/cube_all", result.get("parent").getAsString());
@@ -74,8 +69,7 @@ class ModelConverterTest {
 
     @Test
     void returnsTheOriginalBytesWhenNothingChanges() {
-        byte[] data = """
-                {"parent": "block/cube_all", "textures": {"all": "examplemod:block/foo"}}"""
+        byte[] data = "\n                {\"parent\": \"block/cube_all\", \"textures\": {\"all\": \"examplemod:block/foo\"}}"
                 .getBytes(StandardCharsets.UTF_8);
 
         // Same array instance: an untouched resource must not be re-serialised.

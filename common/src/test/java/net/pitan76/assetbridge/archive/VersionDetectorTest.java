@@ -71,15 +71,7 @@ class VersionDetectorTest {
     @Test
     void readsTheMinecraftDependencyFromNeoForgeMetadata() {
         Detection detection = detect("mymod.jar", new Structure(), Map.of(
-                "META-INF/neoforge.mods.toml", """
-                        [[dependencies."astralenchant"]]
-                        modId="neoforge"
-                        versionRange="[21.1.235,)"
-
-                        [[dependencies."astralenchant"]]
-                        modId="minecraft"
-                        versionRange="[1.21.1]"
-                        """));
+                "META-INF/neoforge.mods.toml", "\n                        [[dependencies.\"astralenchant\"]]\n                        modId=\"neoforge\"\n                        versionRange=\"[21.1.235,)\"\n\n                        [[dependencies.\"astralenchant\"]]\n                        modId=\"minecraft\"\n                        versionRange=\"[1.21.1]\"\n                        "));
 
         // The neoforge dependency's 21.1.235 must not be mistaken for a Minecraft version.
         assertEquals(AssetVersion.COMPONENTS, detection.version());
@@ -89,12 +81,7 @@ class VersionDetectorTest {
     @Test
     void readsTheMinecraftDependencyFromForgeMetadata() {
         Detection detection = detect("mymod.jar", new Structure(), Map.of(
-                "META-INF/mods.toml", """
-                        [[dependencies.mymod]]
-                        modId = "minecraft"
-                        mandatory = true
-                        versionRange = "[1.16.5,1.17)"
-                        """));
+                "META-INF/mods.toml", "\n                        [[dependencies.mymod]]\n                        modId = \"minecraft\"\n                        mandatory = true\n                        versionRange = \"[1.16.5,1.17)\"\n                        "));
 
         assertEquals(AssetVersion.MODERN, detection.version());
     }
