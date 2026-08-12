@@ -41,6 +41,20 @@ public class BridgedItemDefinition {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof BridgedItemDefinition other)) return false;
+        return namespace.equals(other.namespace) && path.equals(other.path);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = namespace.hashCode();
+        result = 31 * result + path.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         return id();
     }

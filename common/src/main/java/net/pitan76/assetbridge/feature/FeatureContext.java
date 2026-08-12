@@ -73,4 +73,36 @@ public class FeatureContext {
     public String getConfigValue(String featureId) {
         return Features.getConfigValue(featureId);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof FeatureContext other)) return false;
+        return gameDir.equals(other.gameDir) &&
+                assets.equals(other.assets) &&
+                enabled.equals(other.enabled) &&
+                archives.equals(other.archives) &&
+                isNamespaceUsed.equals(other.isNamespaceUsed);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = gameDir.hashCode();
+        result = 31 * result + assets.hashCode();
+        result = 31 * result + enabled.hashCode();
+        result = 31 * result + archives.hashCode();
+        result = 31 * result + isNamespaceUsed.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "FeatureContext{" +
+                "gameDir=" + gameDir +
+                ", assets=" + assets +
+                ", enabled=" + enabled +
+                ", archives=" + archives +
+                ", isNamespaceUsed=" + isNamespaceUsed +
+                '}';
+    }
 }

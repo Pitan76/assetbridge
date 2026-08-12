@@ -27,4 +27,23 @@ public class BridgedStateDefinition {
     public boolean isEmpty() {
         return properties.isEmpty();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof BridgedStateDefinition other)) return false;
+        return properties.equals(other.properties);
+    }
+
+    @Override
+    public int hashCode() {
+        return properties.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "BridgedStateDefinition{" +
+                "properties=" + properties +
+                '}';
+    }
 }

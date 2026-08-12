@@ -56,6 +56,29 @@ public class BridgedBlockDefinition {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof BridgedBlockDefinition other)) return false;
+        return namespace.equals(other.namespace)
+                && path.equals(other.path)
+                && modelId.equals(other.modelId)
+                && states.equals(other.states)
+                && sourceArchive.equals(other.sourceArchive)
+                && version.equals(other.version);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = namespace.hashCode();
+        result = 31 * result + path.hashCode();
+        result = 31 * result + modelId.hashCode();
+        result = 31 * result + states.hashCode();
+        result = 31 * result + sourceArchive.hashCode();
+        result = 31 * result + version.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         return id() + " -> " + modelId;
     }

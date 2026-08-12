@@ -250,4 +250,19 @@ public class AssetPath {
     public @NotNull String toString() {
         return toFullPath();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof AssetPath other)) return false;
+        return kind == other.kind && namespace.equals(other.namespace) && path.equals(other.path);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = kind.hashCode();
+        result = 31 * result + namespace.hashCode();
+        result = 31 * result + path.hashCode();
+        return result;
+    }
 }

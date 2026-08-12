@@ -100,4 +100,28 @@ public class BridgedProperty {
         }
         return max - min + 1 == Set.copyOf(values).size();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof BridgedProperty other)) return false;
+        return name.equals(other.name) && values.equals(other.values) && kind == other.kind;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + values.hashCode();
+        result = 31 * result + kind.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "BridgedProperty{" +
+                "name='" + name + '\'' +
+                ", values=" + values +
+                ", kind=" + kind +
+                '}';
+    }
 }

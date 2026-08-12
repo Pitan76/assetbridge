@@ -55,6 +55,28 @@ public class VersionDetector {
         public String source() {
             return source;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (!(obj instanceof Detection other)) return false;
+            return version == other.version && source.equals(other.source);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = version.hashCode();
+            result = 31 * result + source.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Detection{" +
+                    "version=" + version +
+                    ", source='" + source + '\'' +
+                    '}';
+        }
     }
 
     /**
