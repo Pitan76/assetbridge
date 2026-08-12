@@ -43,6 +43,6 @@ class ModMetadataTest {
 
     @Test
     void handlesArchivesWithoutMetadata() {
-        assertTrue(ModMetadata.displayNames(Map.of()).isEmpty());
+        assertTrue(ModMetadata.displayNames(new HashMap<>()).isEmpty());
     }
 }
