@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public class VersionDetector {
     /** Metadata files worth reading, in the order they are trusted. */
-    public static final List<String> METADATA_FILES = List.of(
+    public static final List<String> METADATA_FILES = Arrays.asList(
             "pack.mcmeta",
             "META-INF/neoforge.mods.toml",
             "META-INF/mods.toml",
