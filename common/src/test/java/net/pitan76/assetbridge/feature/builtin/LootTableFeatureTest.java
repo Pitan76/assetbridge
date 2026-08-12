@@ -13,9 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class LootTableFeatureTest {
     private static final Set<String> ALL_ON =
-            Set.of(DataPackFeature.ID, BlockFeature.ID, LootTableFeature.ID);
+            new HashSet<>(Arrays.asList(DataPackFeature.ID, BlockFeature.ID, LootTableFeature.ID));
 
     @Test
     void generatesADropSelfTablePerBlock() throws IOException {
@@ -62,7 +60,7 @@ class LootTableFeatureTest {
     void generatesNothingWithoutTheDataPack() {
         BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
 
-        apply(assets, Set.of(BlockFeature.ID, LootTableFeature.ID));
+        apply(assets, new HashSet<>(Arrays.asList(BlockFeature.ID, LootTableFeature.ID)));
 
         assertFalse(assets.hasResource(AssetPath.blockLootTable("examplemod", "foo")));
     }
@@ -72,7 +70,7 @@ class LootTableFeatureTest {
         // Nothing would exist to drop.
         BridgedAssetManager assets = bundleWithBlock("examplemod", "foo");
 
-        apply(assets, Set.of(DataPackFeature.ID, LootTableFeature.ID));
+        apply(assets, new HashSet<>(Arrays.asList(DataPackFeature.ID, LootTableFeature.ID)));
 
         assertFalse(assets.hasResource(AssetPath.blockLootTable("examplemod", "foo")));
     }

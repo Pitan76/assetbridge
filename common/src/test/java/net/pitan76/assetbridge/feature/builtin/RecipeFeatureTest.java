@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class RecipeFeatureTest {
     private static final Predicate<String> NOTHING_LOADED = namespace -> false;
-    private static final Set<String> ALL_ON = Set.of(DataPackFeature.ID, RecipeFeature.ID);
+    private static final Set<String> ALL_ON = new HashSet<>(Arrays.asList(DataPackFeature.ID, RecipeFeature.ID));
 
     private static final String SHAPELESS = "{\"type\":\"minecraft:crafting_shapeless\","
             + "\"ingredients\":[{\"item\":\"minecraft:stone\"}],"
@@ -62,7 +62,7 @@ class RecipeFeatureTest {
 
     @Test
     void bridgesNothingWithoutTheDataPack() {
-        BridgedAssetManager assets = apply(Set.of(RecipeFeature.ID), NOTHING_LOADED, Collections.singletonMap(
+        BridgedAssetManager assets = apply(new HashSet<>(Arrays.asList(RecipeFeature.ID)), NOTHING_LOADED, Collections.singletonMap(
                 "data/examplemod/recipes/foo.json", SHAPELESS
         ));
 

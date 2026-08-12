@@ -193,7 +193,7 @@ class ArchiveScannerTest {
         // The nested one loads right after its parent, so the outer still wins a collision.
         assertEquals(Arrays.asList("example-mod.jar", "example-mod.jar!META-INF_jars_inner.jar"),
                 archives.stream().map(AssetArchive::fileName).collect(Collectors.toList()));
-        assertEquals(Set.of("assets/innermod/blockstates/inner.json"),
+        assertEquals(new HashSet<>(Arrays.asList("assets/innermod/blockstates/inner.json")),
                 archives.get(1).entries().keySet().stream()
                         .map(AssetPath::toFullPath).collect(java.util.stream.Collectors.toSet()));
     }
