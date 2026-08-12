@@ -121,9 +121,9 @@ public class BridgedBlock extends Block {
         // A generic type cannot appear in an `instanceof` pattern, so the element type is checked
         // separately. This is what `instanceof DirectionProperty` amounted to before 26.1 removed
         // that class.
-        if (property instanceof EnumProperty<?> && property.getValueClass() == Direction.class) {
+        if (property instanceof EnumProperty<?> && property.getValueClass() == Direction.class)
             return (EnumProperty<Direction>) property;
-        }
+
         return null;
     }
 
@@ -131,9 +131,9 @@ public class BridgedBlock extends Block {
     @SuppressWarnings("unchecked")
     private EnumProperty<Direction.Axis> axisProperty() {
         Property<?> property = getStateDefinition().getProperty("axis");
-        if (property == BlockStateProperties.AXIS || property == BlockStateProperties.HORIZONTAL_AXIS) {
+        if (property == BlockStateProperties.AXIS || property == BlockStateProperties.HORIZONTAL_AXIS)
             return (EnumProperty<Direction.Axis>) property;
-        }
+
         return null;
     }
 
@@ -152,11 +152,16 @@ public class BridgedBlock extends Block {
         Property<?> known = KnownProperties.match(property);
         if (known != null) return known;
 
-        return switch (property.kind()) {
-            case BOOLEAN -> BooleanProperty.create(property.name());
-            case INTEGER -> IntegerProperty.create(property.name(), property.min(), property.max());
-            case STRING -> StringProperty.create(property.name(), property.values());
-        };
+        switch (property.kind()) {
+            case BOOLEAN:
+                return BooleanProperty.create(property.name());
+            case INTEGER:
+                return IntegerProperty.create(property.name(), property.min(), property.max());
+            case STRING:
+                return StringProperty.create(property.name(), property.values());
+            default:
+                return null; // should never happen
+        }
     }
 
     private static <T extends Comparable<T>> BlockState withValue(BlockState state, Property<T> property, String value) {

@@ -26,6 +26,18 @@ public class BridgedProperty {
         this.kind = kind;
     }
 
+    public String name() {
+        return name;
+    }
+
+    public List<String> values() {
+        return values;
+    }
+
+    public Kind kind() {
+        return kind;
+    }
+
     public enum Kind {
         BOOLEAN,
         INTEGER,
