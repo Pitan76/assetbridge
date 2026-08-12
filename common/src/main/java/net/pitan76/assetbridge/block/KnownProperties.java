@@ -5,6 +5,9 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -18,10 +21,14 @@ import java.util.Set;
  * looks familiar would get vanilla's values rather than the ones the blockstate file uses.
  */
 public class KnownProperties {
-    private static final Set<String> HORIZONTAL = Set.of("north", "south", "west", "east");
-    private static final Set<String> ALL_DIRECTIONS = Set.of("north", "south", "west", "east", "up", "down");
-    private static final Set<String> ALL_AXES = Set.of("x", "y", "z");
-    private static final Set<String> HORIZONTAL_AXES = Set.of("x", "z");
+    private static final Set<String> HORIZONTAL =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("north", "south", "west", "east")));
+    private static final Set<String> ALL_DIRECTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(
+            Arrays.asList("north", "south", "west", "east", "up", "down")));
+    private static final Set<String> ALL_AXES =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("x", "y", "z")));
+    private static final Set<String> HORIZONTAL_AXES =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("x", "z")));
 
     private KnownProperties() {
     }
@@ -29,21 +36,20 @@ public class KnownProperties {
     /** @return the vanilla property to use, or {@code null} to fall back to a StringProperty */
     @Nullable
     public static Property<?> match(BridgedProperty property) {
-        Set<String> values = Set.copyOf(property.values());
+        Set<String> values = Collections.unmodifiableSet(new LinkedHashSet<>(property.values()));
         if (values.size() != property.values().size()) return null;
 
-        return switch (property.name()) {
-            case "facing" -> {
-                if (values.equals(HORIZONTAL)) yield BlockStateProperties.HORIZONTAL_FACING;
-                if (values.equals(ALL_DIRECTIONS)) yield BlockStateProperties.FACING;
-                yield null;
-            }
-            case "axis" -> {
-                if (values.equals(ALL_AXES)) yield BlockStateProperties.AXIS;
-                if (values.equals(HORIZONTAL_AXES)) yield BlockStateProperties.HORIZONTAL_AXIS;
-                yield null;
-            }
-            default -> null;
-        };
+        switch (property.name()) {
+            case "facing":
+                if (values.equals(HORIZONTAL)) return BlockStateProperties.HORIZONTAL_FACING;
+                if (values.equals(ALL_DIRECTIONS)) return BlockStateProperties.FACING;
+                return null;
+            case "axis":
+                if (values.equals(ALL_AXES)) return BlockStateProperties.AXIS;
+                if (values.equals(HORIZONTAL_AXES)) return BlockStateProperties.HORIZONTAL_AXIS;
+                return null;
+            default:
+                return null;
+        }
     }
 }

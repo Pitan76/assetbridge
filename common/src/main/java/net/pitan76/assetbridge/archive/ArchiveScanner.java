@@ -10,12 +10,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -51,13 +53,13 @@ public class ArchiveScanner {
             } catch (IOException e) {
                 AssetBridge.LOGGER.warn("Could not create {}", dir, e);
             }
-            return List.of();
+            return Collections.emptyList();
         }
 
         Path cacheDir = NestedArchives.cacheDirectory(gameDir);
         List<AssetArchive> archives = new ArrayList<>();
         try (Stream<Path> files = Files.list(dir)) {
-            for (Path file : files.sorted(BY_FILE_NAME).toList()) {
+            for (Path file : files.sorted(BY_FILE_NAME).collect(Collectors.toList())) {
                 if (!Files.isRegularFile(file) || !NestedArchives.isArchive(file.getFileName().toString())) {
                     continue;
                 }
@@ -156,7 +158,7 @@ public class ArchiveScanner {
 
     private static String readText(ZipFile zip, ZipEntry entry) throws IOException {
         try (InputStream in = zip.getInputStream(entry)) {
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            return new String(net.pitan76.assetbridge.util.IoUtil.readAllBytes(in), StandardCharsets.UTF_8);
         }
     }
 }

@@ -9,7 +9,10 @@ import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +37,8 @@ public class BlockStateCoverage {
     private static final int MAX_COMBINATIONS = 4096;
 
     /** Multipart condition keys that combine other conditions rather than naming a property. */
-    private static final Set<String> COMBINATORS = Set.of("OR", "AND");
+    private static final Set<String> COMBINATORS =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("OR", "AND")));
 
     private BlockStateCoverage() {
     }
@@ -133,7 +137,7 @@ public class BlockStateCoverage {
         if (key.isEmpty()) return true;
 
         for (String pair : key.split(",")) {
-            if (pair.isBlank()) continue;
+            if (pair.trim().isEmpty()) continue;
             int equals = pair.indexOf('=');
             if (equals < 0) return false;
             String name = pair.substring(0, equals).trim();

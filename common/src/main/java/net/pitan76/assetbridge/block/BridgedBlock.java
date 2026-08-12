@@ -152,11 +152,16 @@ public class BridgedBlock extends Block {
         Property<?> known = KnownProperties.match(property);
         if (known != null) return known;
 
-        return switch (property.kind()) {
-            case BOOLEAN -> BooleanProperty.create(property.name());
-            case INTEGER -> IntegerProperty.create(property.name(), property.min(), property.max());
-            case STRING -> StringProperty.create(property.name(), property.values());
-        };
+        switch (property.kind()) {
+            case BOOLEAN:
+                return BooleanProperty.create(property.name());
+            case INTEGER:
+                return IntegerProperty.create(property.name(), property.min(), property.max());
+            case STRING:
+                return StringProperty.create(property.name(), property.values());
+            default:
+                throw new IllegalStateException("Unexpected property kind: " + property.kind());
+        }
     }
 
     private static <T extends Comparable<T>> BlockState withValue(BlockState state, Property<T> property, String value) {

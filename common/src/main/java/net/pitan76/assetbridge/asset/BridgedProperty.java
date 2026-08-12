@@ -2,7 +2,12 @@ package net.pitan76.assetbridge.asset;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -14,7 +19,50 @@ import java.util.regex.Pattern;
  *
  * @param values the values in the order they were first seen; the first one becomes the default
  */
-public record BridgedProperty(String name, List<String> values, Kind kind) {
+public class BridgedProperty {
+    private final String name;
+    private final List<String> values;
+    private final Kind kind;
+
+    public BridgedProperty(String name, List<String> values, Kind kind) {
+        this.name = name;
+        this.values = values;
+        this.kind = kind;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public List<String> values() {
+        return values;
+    }
+
+    public Kind kind() {
+        return kind;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BridgedProperty)) return false;
+        BridgedProperty other = (BridgedProperty) o;
+        return name.equals(other.name) && values.equals(other.values) && kind == other.kind;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + values.hashCode();
+        result = 31 * result + kind.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "BridgedProperty[name=" + name + ", values=" + values + ", kind=" + kind + "]";
+    }
+
     public enum Kind {
         BOOLEAN,
         INTEGER,
@@ -24,7 +72,8 @@ public record BridgedProperty(String name, List<String> values, Kind kind) {
     /** Minecraft rejects property names and values outside this shape. */
     private static final Pattern VALID = Pattern.compile("[a-z0-9_]+");
 
-    private static final Set<String> BOOLEANS = Set.of("true", "false");
+    private static final Set<String> BOOLEANS =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("true", "false")));
 
     /**
      * @return the property, or {@code null} when Minecraft could not represent it
@@ -37,7 +86,7 @@ public record BridgedProperty(String name, List<String> values, Kind kind) {
         for (String value : values) {
             if (!VALID.matcher(value).matches()) return null;
         }
-        return new BridgedProperty(name, List.copyOf(values), kindOf(values));
+        return new BridgedProperty(name, Collections.unmodifiableList(new ArrayList<>(values)), kindOf(values));
     }
 
     public String defaultValue() {
@@ -45,15 +94,20 @@ public record BridgedProperty(String name, List<String> values, Kind kind) {
     }
 
     public int min() {
-        return values.stream().mapToInt(Integer::parseInt).min().orElseThrow();
+        return orElseThrow(values.stream().mapToInt(Integer::parseInt).min());
     }
 
     public int max() {
-        return values.stream().mapToInt(Integer::parseInt).max().orElseThrow();
+        return orElseThrow(values.stream().mapToInt(Integer::parseInt).max());
+    }
+
+    private static int orElseThrow(java.util.OptionalInt value) {
+        if (!value.isPresent()) throw new NoSuchElementException("No value present");
+        return value.getAsInt();
     }
 
     private static Kind kindOf(List<String> values) {
-        if (values.size() == 2 && Set.copyOf(values).equals(BOOLEANS)) return Kind.BOOLEAN;
+        if (values.size() == 2 && copyOfSet(values).equals(BOOLEANS)) return Kind.BOOLEAN;
         return isContiguousRange(values) ? Kind.INTEGER : Kind.STRING;
     }
 
@@ -75,6 +129,10 @@ public record BridgedProperty(String name, List<String> values, Kind kind) {
             min = Math.min(min, parsed);
             max = Math.max(max, parsed);
         }
-        return max - min + 1 == Set.copyOf(values).size();
+        return max - min + 1 == copyOfSet(values).size();
+    }
+
+    private static Set<String> copyOfSet(List<String> values) {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(values));
     }
 }

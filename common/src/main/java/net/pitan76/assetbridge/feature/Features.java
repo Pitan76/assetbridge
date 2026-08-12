@@ -14,6 +14,7 @@ import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ import java.util.function.Predicate;
  * to know what the feature does.
  */
 public class Features {
-    private static final List<Feature> REGISTERED = new ArrayList<>(List.of(
+    private static final List<Feature> REGISTERED = new ArrayList<>(Arrays.asList(
             new SplitTabByNamespaceFeature(),
             new CutoutBlocksFeature(),
             new BlockFeature(),
@@ -38,7 +39,7 @@ public class Features {
             new DataPackFeature()
     ));
 
-    private static Set<String> enabled = Set.of();
+    private static Set<String> enabled = Collections.emptySet();
     private static java.util.Map<String, String> configValues = java.util.Collections.emptyMap();
     private static boolean applied;
 

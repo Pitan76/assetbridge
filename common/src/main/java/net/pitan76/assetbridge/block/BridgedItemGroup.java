@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -38,7 +39,7 @@ public class BridgedItemGroup {
     private static Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
 
     /** Display names read from the archives themselves, keyed by namespace. */
-    private static Map<String, String> archiveModNames = Map.of();
+    private static Map<String, String> archiveModNames = Collections.emptyMap();
 
     public interface TabFactory {
         CreativeModeTab create(String namespace, Supplier<ItemStack> iconSupplier);
@@ -144,7 +145,7 @@ public class BridgedItemGroup {
     //?}
 
     public static void initTabs(Set<String> namespaces, Map<String, String> modNames) {
-        archiveModNames = Map.copyOf(modNames);
+        archiveModNames = Collections.unmodifiableMap(new LinkedHashMap<>(modNames));
 
         com.google.gson.JsonObject langJson = new com.google.gson.JsonObject();
         langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge Blocks");
@@ -178,7 +179,7 @@ public class BridgedItemGroup {
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(" ");
+            if (sb.length() > 0) sb.append(" ");
             sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
         }
         return sb.toString();

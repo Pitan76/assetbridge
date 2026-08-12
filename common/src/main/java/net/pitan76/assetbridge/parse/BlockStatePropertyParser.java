@@ -8,6 +8,8 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,7 +26,8 @@ import java.util.Set;
  */
 public class BlockStatePropertyParser {
     /** Multipart condition keys that combine other conditions rather than naming a property. */
-    private static final Set<String> COMBINATORS = Set.of("OR", "AND");
+    private static final Set<String> COMBINATORS =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("OR", "AND")));
 
     private BlockStatePropertyParser() {
     }
@@ -55,7 +58,8 @@ public class BlockStatePropertyParser {
 
         List<BridgedProperty> properties = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : collected.entrySet()) {
-            BridgedProperty property = BridgedProperty.of(entry.getKey(), List.copyOf(entry.getValue()));
+            BridgedProperty property = BridgedProperty.of(entry.getKey(),
+                    Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
             if (property == null) return null;
             properties.add(property);
         }
@@ -67,7 +71,7 @@ public class BlockStatePropertyParser {
         if (key.isEmpty()) return true;
 
         for (String pair : key.split(",")) {
-            if (pair.isBlank()) continue;
+            if (pair.trim().isEmpty()) continue;
             int equals = pair.indexOf('=');
             // A key without '=' is not a property assignment. Pre-1.13 packs used "normal"
             // here, which the converter rewrites; anything else we cannot interpret.

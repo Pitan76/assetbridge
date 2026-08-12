@@ -10,6 +10,9 @@ import net.pitan76.assetbridge.util.Json;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -35,7 +38,8 @@ public class AtlasSources {
             new AssetPath(AssetPath.PackKind.CLIENT, "minecraft", "atlases/blocks.json");
 
     /** Directories vanilla's own definition already covers. */
-    private static final Set<String> COVERED = Set.of("block", "item");
+    private static final Set<String> COVERED =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("block", "item")));
 
     private AtlasSources() {
     }
@@ -73,10 +77,14 @@ public class AtlasSources {
     }
 
     private static boolean isModel(AssetPath path) {
-        return switch (path.category()) {
-            case BLOCK_MODEL, ITEM_MODEL, MODEL -> true;
-            default -> false;
-        };
+        switch (path.category()) {
+            case BLOCK_MODEL:
+            case ITEM_MODEL:
+            case MODEL:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static void collectDirectories(BridgedAssetManager assets, AssetPath path, Set<String> into) {

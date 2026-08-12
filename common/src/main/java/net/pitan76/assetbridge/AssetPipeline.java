@@ -112,27 +112,36 @@ public class AssetPipeline {
                              Set<String> seenBlocks, ItemCandidates itemCandidates) {
         AssetVersion version = archive.version();
         switch (path.category()) {
-            case BLOCKSTATE -> readBlockState(assets, archive, version, path, source, seenBlocks);
-            case ITEM_DEFINITION ->
-                    // The file itself means nothing to this Minecraft version, so it is not
-                    // served; only its name is used, as the mod's own list of items.
-                    itemCandidates.addDefinition(path.namespace(), path.itemDefinitionName(),
-                            archive.fileName(), version);
-            case ITEM_MODEL -> {
+            case BLOCKSTATE:
+                readBlockState(assets, archive, version, path, source, seenBlocks);
+                break;
+            case ITEM_DEFINITION:
+                // The file itself means nothing to this Minecraft version, so it is not
+                // served; only its name is used, as the mod's own list of items.
+                itemCandidates.addDefinition(path.namespace(), path.itemDefinitionName(),
+                        archive.fileName(), version);
+                break;
+            case ITEM_MODEL: {
                 if (convertInto(assets, MODELS, path, source, version, archive)) {
                     itemCandidates.addModel(path.namespace(), path.itemModelName(), archive.fileName(), version);
                 }
+                break;
             }
-            case BLOCK_MODEL, MODEL -> convertInto(assets, MODELS, path, source, version, archive);
-            case TEXTURE, TEXTURE_META -> {
+            case BLOCK_MODEL:
+            case MODEL:
+                convertInto(assets, MODELS, path, source, version, archive);
+                break;
+            case TEXTURE:
+            case TEXTURE_META: {
                 // Nothing to convert, so the bytes never have to enter the heap: the archive
                 // serves them when the game asks. An earlier archive claiming the path still wins.
                 // Pre-1.13 texture directories are flattened here so the sprite ends up where
                 // the atlas looks for it; ModelConverter rewrites the references to match.
                 AssetPath target = path.flattened();
                 if (!assets.hasResource(target)) assets.putResource(target, source);
+                break;
             }
-            case LANG -> {
+            case LANG: {
                 AssetPath target = path.flattened();
                 if (target.path().endsWith(".lang")) {
                     String newPath = target.path().substring(0, target.path().length() - ".lang".length()) + ".json";
@@ -151,8 +160,9 @@ public class AssetPipeline {
                         assets.putResource(target, source);
                     }
                 }
+                break;
             }
-            case TAG -> {
+            case TAG: {
                 boolean isBlockTag = path.path().startsWith("tags/blocks/") || path.path().startsWith("tags/block/");
                 String prefix;
                 if (isBlockTag) {
@@ -188,8 +198,9 @@ public class AssetPipeline {
                         assets.putResource(target, converted);
                     }
                 }
+                break;
             }
-            case LOOT_TABLE -> {
+            case LOOT_TABLE: {
                 boolean isModernLootDir = net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.COMPONENTS);
                 AssetPath target = path;
                 if (isModernLootDir) {
@@ -210,14 +221,15 @@ public class AssetPipeline {
                         assets.putResource(target, raw);
                     }
                 }
+                break;
             }
-            case RECIPE -> {
+            case RECIPE:
                 // Server-side data is a feature's business, not the core's;
                 // RecipeFeature reads these straight from the archive.
-            }
-            case OTHER -> {
+                break;
+            case OTHER:
                 // Filtered out at scan time; nothing to do.
-            }
+                break;
         }
     }
 

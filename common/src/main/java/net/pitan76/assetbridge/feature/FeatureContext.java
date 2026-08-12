@@ -24,8 +24,42 @@ import java.util.function.Predicate;
  *                       honour this for the same reason the core does: never shadow a mod the
  *                       player actually installed.
  */
-public record FeatureContext(Path gameDir, BridgedAssetManager assets, Set<String> enabled,
-                             List<AssetArchive> archives, Predicate<String> isNamespaceUsed) {
+public class FeatureContext {
+    private final Path gameDir;
+    private final BridgedAssetManager assets;
+    private final Set<String> enabled;
+    private final List<AssetArchive> archives;
+    private final Predicate<String> isNamespaceUsed;
+
+    public FeatureContext(Path gameDir, BridgedAssetManager assets, Set<String> enabled,
+                           List<AssetArchive> archives, Predicate<String> isNamespaceUsed) {
+        this.gameDir = gameDir;
+        this.assets = assets;
+        this.enabled = enabled;
+        this.archives = archives;
+        this.isNamespaceUsed = isNamespaceUsed;
+    }
+
+    public Path gameDir() {
+        return gameDir;
+    }
+
+    public BridgedAssetManager assets() {
+        return assets;
+    }
+
+    public Set<String> enabled() {
+        return enabled;
+    }
+
+    public List<AssetArchive> archives() {
+        return archives;
+    }
+
+    public Predicate<String> isNamespaceUsed() {
+        return isNamespaceUsed;
+    }
+
     /** Whether another feature is switched on, for features that build on one another. */
     public boolean isEnabled(String featureId) {
         return enabled.contains(featureId);

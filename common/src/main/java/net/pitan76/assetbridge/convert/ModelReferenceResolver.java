@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +31,8 @@ import java.util.Map;
  */
 public class ModelReferenceResolver {
     /** Texture keys worth inheriting into the replacement, most representative first. */
-    private static final List<String> TEXTURE_KEYS =
-            List.of("all", "texture", "particle", "layer0", "up", "side", "end", "north", "0");
+    private static final List<String> TEXTURE_KEYS = Collections.unmodifiableList(Arrays.asList(
+            "all", "texture", "particle", "layer0", "up", "side", "end", "north", "0"));
 
     private ModelReferenceResolver() {
     }
@@ -38,7 +41,7 @@ public class ModelReferenceResolver {
     public static int resolve(BridgedAssetManager assets) {
         int repaired = 0;
         // Copied: the loop replaces resources as it goes.
-        for (AssetPath path : List.copyOf(assets.resources().keySet())) {
+        for (AssetPath path : Collections.unmodifiableList(new ArrayList<>(assets.resources().keySet()))) {
             if (!isModel(path)) continue;
 
             JsonObject model = read(assets, path);

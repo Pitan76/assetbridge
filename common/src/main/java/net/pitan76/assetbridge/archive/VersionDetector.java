@@ -7,6 +7,8 @@ import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -21,12 +23,12 @@ import java.util.regex.Pattern;
  */
 public class VersionDetector {
     /** Metadata files worth reading, in the order they are trusted. */
-    public static final List<String> METADATA_FILES = List.of(
+    public static final List<String> METADATA_FILES = Collections.unmodifiableList(Arrays.asList(
             "pack.mcmeta",
             "META-INF/neoforge.mods.toml",
             "META-INF/mods.toml",
             "fabric.mod.json"
-    );
+    ));
 
     /** A release version such as {@code 1.21} or {@code 1.21.1}. */
     private static final Pattern VERSION = Pattern.compile("1\\.(\\d{1,2})(?:\\.(\\d{1,2}))?");
@@ -39,7 +41,40 @@ public class VersionDetector {
      * @param version the generation to convert the archive's assets from
      * @param source  where it came from, for logging
      */
-    public record Detection(AssetVersion version, String source) {
+    public static class Detection {
+        private final AssetVersion version;
+        private final String source;
+
+        public Detection(AssetVersion version, String source) {
+            this.version = version;
+            this.source = source;
+        }
+
+        public AssetVersion version() {
+            return version;
+        }
+
+        public String source() {
+            return source;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Detection)) return false;
+            Detection other = (Detection) o;
+            return version == other.version && source.equals(other.source);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * version.hashCode() + source.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Detection[version=" + version + ", source=" + source + "]";
+        }
     }
 
     /**
@@ -96,7 +131,7 @@ public class VersionDetector {
         Detection structural = structure.detect();
         if (structural != null) return structural;
 
-        for (String file : List.of("META-INF/neoforge.mods.toml", "META-INF/mods.toml")) {
+        for (String file : Arrays.asList("META-INF/neoforge.mods.toml", "META-INF/mods.toml")) {
             AssetVersion fromToml = fromModsToml(metadata.get(file));
             if (fromToml != null) return new Detection(fromToml, file);
         }

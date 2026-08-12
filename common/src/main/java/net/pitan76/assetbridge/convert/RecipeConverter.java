@@ -7,6 +7,9 @@ import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -26,7 +29,7 @@ public class RecipeConverter implements AssetConverter {
 
     static {
         //? if >=1.20 {
-        /*SUPPORTED_TYPES = Set.of(
+        /*SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
                 "minecraft:crafting_shaped",
                 "minecraft:crafting_shapeless",
                 "minecraft:smelting",
@@ -36,9 +39,9 @@ public class RecipeConverter implements AssetConverter {
                 "minecraft:stonecutting",
                 "minecraft:smithing_transform",
                 "minecraft:smithing_trim"
-        );
+        )));
         *///?} else {
-        SUPPORTED_TYPES = Set.of(
+        SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
                 "minecraft:crafting_shaped",
                 "minecraft:crafting_shapeless",
                 "minecraft:smelting",
@@ -47,7 +50,7 @@ public class RecipeConverter implements AssetConverter {
                 "minecraft:campfire_cooking",
                 "minecraft:stonecutting",
                 "minecraft:smithing"
-        );
+        )));
         //?}
     }
 
@@ -85,12 +88,12 @@ public class RecipeConverter implements AssetConverter {
             JsonElement typeEl = json.get("type");
             if (typeEl != null && typeEl.isJsonPrimitive()) {
                 String rType = qualify(typeEl.getAsString());
-                Set<String> cookingTypes = Set.of(
+                Set<String> cookingTypes = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
                         "minecraft:smelting",
                         "minecraft:blasting",
                         "minecraft:smoking",
                         "minecraft:campfire_cooking"
-                );
+                )));
                 if (cookingTypes.contains(rType)) {
                     boolean isLegacyCookingResult = !net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(net.pitan76.assetbridge.asset.AssetVersion.ATLASES);
                     if (isLegacyCookingResult) {

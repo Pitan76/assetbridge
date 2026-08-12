@@ -25,6 +25,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -223,7 +224,7 @@ public class AssetBridgePackResources implements PackResources {
     private List<ResourceLocation> collectResources(PackType type, String namespace, String path,
             int maxDepth) {
         if (!serves(type))
-            return List.of();
+            return Collections.emptyList();
 
         String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();
@@ -275,7 +276,7 @@ public class AssetBridgePackResources implements PackResources {
     @Override
     public @NotNull Set<String> getNamespaces(PackType type) {
         if (!serves(type))
-            return Set.of();
+            return Collections.emptySet();
 
         Set<String> namespaces = new LinkedHashSet<>();
         for (AssetPath key : assets.resources().keySet()) {

@@ -17,10 +17,43 @@ import java.util.Locale;
  * @param namespace the namespace directory, e.g. {@code examplemod}
  * @param path      everything below the namespace, e.g. {@code models/block/foo.json}
  */
-public record AssetPath(PackKind kind, String namespace, String path) {
-    public AssetPath {
-        namespace = namespace.toLowerCase(Locale.ROOT);
-        path = path.toLowerCase(Locale.ROOT);
+public class AssetPath {
+    private final PackKind kind;
+    private final String namespace;
+    private final String path;
+
+    public AssetPath(PackKind kind, String namespace, String path) {
+        this.kind = kind;
+        this.namespace = namespace.toLowerCase(Locale.ROOT);
+        this.path = path.toLowerCase(Locale.ROOT);
+    }
+
+    public PackKind kind() {
+        return kind;
+    }
+
+    public String namespace() {
+        return namespace;
+    }
+
+    public String path() {
+        return path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AssetPath)) return false;
+        AssetPath other = (AssetPath) o;
+        return kind == other.kind && namespace.equals(other.namespace) && path.equals(other.path);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = kind.hashCode();
+        result = 31 * result + namespace.hashCode();
+        result = 31 * result + path.hashCode();
+        return result;
     }
 
     /** Pack roots. Mirrors Minecraft's {@code PackType} without depending on it. */
@@ -114,10 +147,7 @@ public record AssetPath(PackKind kind, String namespace, String path) {
 
     /** True for the resources the MVP extracts from external archives. */
     public boolean isBridgeable() {
-        return switch (category()) {
-            case OTHER -> false;
-            default -> true;
-        };
+        return category() != Category.OTHER;
     }
 
     /**
