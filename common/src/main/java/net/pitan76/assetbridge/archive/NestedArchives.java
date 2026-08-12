@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
@@ -45,7 +46,7 @@ public class NestedArchives {
 
         try (ZipFile zip = new ZipFile(parent.toFile())) {
             List<ZipEntry> nested = new ArrayList<>();
-            var it = zip.entries();
+            Enumeration<? extends ZipEntry> it = zip.entries();
             while (it.hasMoreElements()) {
                 ZipEntry entry = it.nextElement();
                 if (!entry.isDirectory() && isArchive(entry.getName())) nested.add(entry);

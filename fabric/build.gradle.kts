@@ -40,14 +40,17 @@ dependencies {
 
 tasks.processResources {
     val mcDep = project.findProperty("mc_dep") as String
+    val fabricApiId = project.findProperty("fabric_api_id") as String
 
     inputs.property("version", project.version)
     inputs.property("mc_dep", mcDep)
+    inputs.property("fabric_api_id", fabricApiId)
 
     filesMatching("fabric.mod.json") {
         expand(
             "version" to project.version,
             "mc_dep" to mcDep,
+            "fabric_api_id" to fabricApiId,
         )
     }
 }

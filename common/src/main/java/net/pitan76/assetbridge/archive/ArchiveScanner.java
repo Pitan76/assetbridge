@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,10 +23,14 @@ import java.util.zip.ZipFile;
 /** Finds and reads the archives placed in {@code mods/assetbridge/}. */
 public class ArchiveScanner {
     /**
-     * Load order, and with it who wins an id collision, must not depend on the file system
-     * or the platform. Sorting {@code Path} would not do: path comparison is case sensitive
-     * on Linux and case insensitive on Windows, so the same two files could load in a
-     * different order on each. Case-insensitive first, then exact, so the order is total.
+     * Load order, and with it who wins an id collision, must not depend on the file
+     * system
+     * or the platform. Sorting {@code Path} would not do: path comparison is case
+     * sensitive
+     * on Linux and case insensitive on Windows, so the same two files could load in
+     * a
+     * different order on each. Case-insensitive first, then exact, so the order is
+     * total.
      */
     private static final Comparator<Path> BY_FILE_NAME = Comparator
             .comparing((Path file) -> file.getFileName().toString(), String.CASE_INSENSITIVE_ORDER)
@@ -73,9 +78,12 @@ public class ArchiveScanner {
     }
 
     /**
-     * Reads one archive, unless it holds nothing worth bridging: an empty archive would only
-     * keep a file handle open for the rest of the session. Most jar-in-jar libraries are
-     * exactly that, so their extracted copy is dropped again rather than left in the cache.
+     * Reads one archive, unless it holds nothing worth bridging: an empty archive
+     * would only
+     * keep a file handle open for the rest of the session. Most jar-in-jar
+     * libraries are
+     * exactly that, so their extracted copy is dropped again rather than left in
+     * the cache.
      */
     private static void add(List<AssetArchive> archives, Path file, String displayName, boolean nested) {
         AssetArchive archive;
@@ -83,7 +91,8 @@ public class ArchiveScanner {
             archive = read(file, displayName);
         } catch (IOException e) {
             AssetBridge.LOGGER.error("Failed to read archive {}", displayName, e);
-            if (nested) NestedArchives.forget(file);
+            if (nested)
+                NestedArchives.forget(file);
             return;
         }
 
@@ -96,12 +105,15 @@ public class ArchiveScanner {
         } catch (IOException e) {
             AssetBridge.LOGGER.warn("Could not close {}", displayName, e);
         }
-        if (nested) NestedArchives.forget(file);
+        if (nested)
+            NestedArchives.forget(file);
     }
 
     /**
-     * Indexes the archive without reading any resource body. The {@link ZipFile} stays open
-     * and is owned by the returned archive, so closing it is {@link AssetArchive#close()}'s
+     * Indexes the archive without reading any resource body. The {@link ZipFile}
+     * stays open
+     * and is owned by the returned archive, so closing it is
+     * {@link AssetArchive#close()}'s
      * job — not this method's.
      */
     private static AssetArchive read(Path file, String displayName) throws IOException {
@@ -112,10 +124,11 @@ public class ArchiveScanner {
         VersionDetector.Structure structure = new VersionDetector.Structure();
         ZipFile zip = new ZipFile(file.toFile());
         try {
-            var it = zip.entries();
+            Enumeration<? extends ZipEntry> it = zip.entries();
             while (it.hasMoreElements()) {
                 ZipEntry entry = it.nextElement();
-                if (entry.isDirectory()) continue;
+                if (entry.isDirectory())
+                    continue;
 
                 if (VersionDetector.METADATA_FILES.contains(entry.getName())) {
                     metadata.put(entry.getName(), readText(zip, entry));
@@ -124,7 +137,8 @@ public class ArchiveScanner {
                 structure.observe(entry.getName());
 
                 AssetPath path = AssetPath.parse(entry.getName());
-                if (path == null || !path.isBridgeable()) continue;
+                if (path == null || !path.isBridgeable())
+                    continue;
 
                 entries.put(path, new ZipAssetSource(zip, entry.getName()));
             }
