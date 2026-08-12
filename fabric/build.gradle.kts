@@ -22,7 +22,7 @@ unimined.minecraft {
 
     mappings {
         legacyIntermediary()
-        yarn(yarn_mappings)
+        legacyYarn(yarn_mappings.toInt())
     }
 }
 
@@ -35,7 +35,7 @@ dependencies {
     // Common shared code (compiled with MCP names → remapped at inclusion time by Unimined)
     implementation(project(commonProject.path))
 
-    modImplementation("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version")
+    "modImplementation"("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version")
 }
 
 tasks.processResources {
