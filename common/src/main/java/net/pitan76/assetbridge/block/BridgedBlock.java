@@ -1,9 +1,9 @@
 package net.pitan76.assetbridge.block;
 
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;

@@ -1,10 +1,9 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.pitan76.assetbridge.AssetBridge;
+import net.minecraft.block.Block;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.item.Item;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 
@@ -29,25 +28,11 @@ public class BridgedBlocks {
         Map<ResourceLocation, Item> createdItems = new LinkedHashMap<>();
 
         for (BridgedBlockDefinition asset : assets.blocks()) {
-            ResourceLocation id = ResourceLocation.tryParse(asset.id());
-            if (id == null) {
-                AssetBridge.LOGGER.warn("Skipping block with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
-                continue;
-            }
+            ResourceLocation id = new ResourceLocation(asset.id());
             Block block = BridgedBlock.create(id, asset.states());
             createdBlocks.put(id, block);
-            //? if >=26 {
-            /*// 26.1 derives the translation key from the item's own id and throws if it was never
-            // set, so it has to be on the properties before construction.
-            createdItems.put(id, new BlockItem(block, new Item.Properties()
-                    .setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ITEM, id))
-                    .useBlockDescriptionPrefix()));
-            *///?} elif >=1.19.3 {
-            /*// 1.19.3 removed Item.Properties#tab; tabs pull their contents instead.
-            createdItems.put(id, new BlockItem(block, new Item.Properties()));
-            *///?} else {
-            createdItems.put(id, new BlockItem(block, new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), true))));
-            //?}
+//            createdItems.put(id, new ItemBlock(block, new Item.Properties().tab(BridgedItemGroup.getTab(id.getNamespace(), true))));
+            createdItems.put(id, new ItemBlock(block));
         }
 
         blocks = Collections.unmodifiableMap(createdBlocks);

@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 // Only the >=26 branch of getMetadataSection uses this, but the class exists in every supported
 // version, so importing it unconditionally is cheaper than a preprocessor block.
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;

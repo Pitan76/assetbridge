@@ -1,10 +1,9 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.asset.AssetPath;
@@ -30,11 +29,11 @@ public class BridgedItemGroup {
     public static final String ITEMS = "items";
 
     @Nullable
-    private static CreativeModeTab blocksTab;
+    private static CreativeTabs blocksTab;
     @Nullable
-    private static CreativeModeTab itemsTab;
+    private static CreativeTabs itemsTab;
 
-    private static final Map<String, CreativeModeTab> namespaceTabs = new LinkedHashMap<>();
+    private static final Map<String, CreativeTabs> namespaceTabs = new LinkedHashMap<>();
 
     private static Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
 
@@ -42,7 +41,7 @@ public class BridgedItemGroup {
     private static Map<String, String> archiveModNames = Collections.emptyMap();
 
     public interface TabFactory {
-        CreativeModeTab create(String namespace, Supplier<ItemStack> iconSupplier);
+        CreativeTabs create(String namespace, Supplier<ItemStack> iconSupplier);
     }
 
     @Nullable
@@ -51,11 +50,11 @@ public class BridgedItemGroup {
     private BridgedItemGroup() {
     }
 
-    public static void setBlocksTab(@Nullable CreativeModeTab tab) {
+    public static void setBlocksTab(@Nullable CreativeTabs tab) {
         blocksTab = tab;
     }
 
-    public static void setItemsTab(@Nullable CreativeModeTab tab) {
+    public static void setItemsTab(@Nullable CreativeTabs tab) {
         itemsTab = tab;
     }
 
@@ -83,7 +82,7 @@ public class BridgedItemGroup {
 
     /** The namespace's own tab, when that feature is on and it got one. */
     @Nullable
-    public static CreativeModeTab namespaceTab(String namespace) {
+    public static CreativeTabs namespaceTab(String namespace) {
         return Features.isEnabled(SplitTabByNamespaceFeature.ID) ? namespaceTabs.get(namespace) : null;
     }
 

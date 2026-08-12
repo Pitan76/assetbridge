@@ -1,6 +1,6 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;

@@ -2,11 +2,11 @@ package net.pitan76.assetbridge.fabric.gametest;
 
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.BlockItem;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.block.Block;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.block.BridgedBlock;
@@ -44,7 +44,7 @@ public class GameTestBlocks implements ModInitializer {
         ResourceLocation id = id(name);
         Registry.register(Registry.BLOCK, id, block);
         Registry.register(Registry.ITEM, id,
-                new BlockItem(block, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
+                new ItemBlock(block, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
     }
 
     /** The id is now part of a block's properties, so it has to be known before construction. */

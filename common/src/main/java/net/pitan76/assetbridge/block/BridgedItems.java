@@ -1,7 +1,7 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.item.Item;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedItemDefinition;

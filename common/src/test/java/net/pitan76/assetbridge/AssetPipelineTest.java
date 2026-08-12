@@ -265,7 +265,7 @@ class AssetPipelineTest {
                 "assets/examplemod/models/item/wand.json", "{\"parent\": \"item/generated\"}"
         )));
 
-        // 'foo' is already covered by the block's own BlockItem.
+        // 'foo' is already covered by the block's own ItemBlock.
         assertEquals(List.of("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
     }
 
