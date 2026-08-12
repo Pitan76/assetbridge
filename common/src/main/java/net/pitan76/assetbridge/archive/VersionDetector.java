@@ -7,6 +7,7 @@ import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -134,7 +135,7 @@ public class VersionDetector {
         Detection structural = structure.detect();
         if (structural != null) return structural;
 
-        for (String file : List.of("META-INF/neoforge.mods.toml", "META-INF/mods.toml")) {
+        for (String file : Arrays.asList("META-INF/neoforge.mods.toml", "META-INF/mods.toml")) {
             AssetVersion fromToml = fromModsToml(metadata.get(file));
             if (fromToml != null) return new Detection(fromToml, file);
         }

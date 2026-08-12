@@ -5,7 +5,9 @@ import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +38,7 @@ public class ModMetadata {
         Map<String, String> names = new LinkedHashMap<>();
         // Fabric first: an archive carrying both is a multi-loader jar, and either is as good.
         putFabricName(names, metadata.get("fabric.mod.json"));
-        for (String file : java.util.List.of("META-INF/neoforge.mods.toml", "META-INF/mods.toml")) {
+        for (String file : Arrays.asList("META-INF/neoforge.mods.toml", "META-INF/mods.toml")) {
             putTomlNames(names, metadata.get(file));
         }
         return names;
