@@ -67,8 +67,8 @@ public class StringProperty extends Property<String> {
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        return other instanceof StringProperty property
-                && super.equals(other) && values.equals(property.values);
+        return other instanceof StringProperty
+                && super.equals(other) && values.equals(((StringProperty) other).values);
     }
 
     /** {@code Property#hashCode} is final and delegates here. */

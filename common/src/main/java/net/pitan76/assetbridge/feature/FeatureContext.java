@@ -77,7 +77,8 @@ public class FeatureContext {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof FeatureContext other)) return false;
+        if (!(obj instanceof FeatureContext)) return false;
+        FeatureContext other = (FeatureContext) obj;
         return gameDir.equals(other.gameDir) &&
                 assets.equals(other.assets) &&
                 enabled.equals(other.enabled) &&
