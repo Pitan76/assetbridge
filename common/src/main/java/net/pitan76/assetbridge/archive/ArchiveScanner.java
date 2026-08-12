@@ -9,12 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -46,7 +41,7 @@ public class ArchiveScanner {
             } catch (IOException e) {
                 AssetBridge.LOGGER.warn("Could not create {}", dir, e);
             }
-            return List.of();
+            return Collections.emptyList();
         }
 
         Path cacheDir = NestedArchives.cacheDirectory(gameDir);

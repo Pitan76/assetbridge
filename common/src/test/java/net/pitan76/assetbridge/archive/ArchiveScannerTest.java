@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -37,7 +34,7 @@ class ArchiveScannerTest {
 
     @Test
     void createsTheDirectoryWhenItIsMissing() {
-        assertEquals(List.of(), scan());
+        assertEquals(Collections.emptyList(), scan());
 
         assertTrue(Files.isDirectory(ArchiveScanner.directory(gameDir)));
     }

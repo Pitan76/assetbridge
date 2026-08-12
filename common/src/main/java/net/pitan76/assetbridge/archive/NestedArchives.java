@@ -7,10 +7,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -50,7 +47,7 @@ public class NestedArchives {
                 ZipEntry entry = it.nextElement();
                 if (!entry.isDirectory() && isArchive(entry.getName())) nested.add(entry);
             }
-            if (nested.isEmpty()) return List.of();
+            if (nested.isEmpty()) return Collections.emptyList();
 
             nested.sort(Comparator.comparing(ZipEntry::getName));
             Path target = cacheDir.resolve(safeName(parent.getFileName().toString()));

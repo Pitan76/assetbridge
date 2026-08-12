@@ -24,11 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -222,7 +218,7 @@ public class AssetBridgePackResources implements PackResources {
      *                 {@link Integer#MAX_VALUE} on versions that dropped the limit
      */
     private List<ResourceLocation> collectResources(PackType type, String namespace, String path, int maxDepth) {
-        if (!serves(type)) return List.of();
+        if (!serves(type)) return Collections.emptyList();
 
         String prefix = path.endsWith("/") ? path : path + "/";
         List<ResourceLocation> found = new ArrayList<>();

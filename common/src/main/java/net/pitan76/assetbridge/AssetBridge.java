@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -32,7 +33,7 @@ public class AssetBridge {
     private static BridgedAssetManager assets = new BridgedAssetManager();
     // Held for the lifetime of the game: the bundle serves textures straight out of these
     // archives, so closing one would break every resource it still backs.
-    private static List<AssetArchive> archives = List.of();
+    private static List<AssetArchive> archives = Collections.emptyList();
 
     private AssetBridge() {
     }
@@ -75,6 +76,6 @@ public class AssetBridge {
                 LOGGER.warn("Could not close {}", archive.fileName(), e);
             }
         }
-        archives = List.of();
+        archives = Collections.emptyList();
     }
 }

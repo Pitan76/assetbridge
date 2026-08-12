@@ -15,6 +15,7 @@ import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -319,7 +320,7 @@ class AssetPipelineTest {
                 "assets/examplemod/models/item/parts/handle.json", "{\"parent\": \"item/generated\"}"
         )));
 
-        assertEquals(List.of(), assets.items());
+        assertEquals(Collections.emptyList(), assets.items());
     }
 
     @Test
@@ -339,7 +340,7 @@ class AssetPipelineTest {
 
     @Test
     void producesNothingForAnEmptyDirectory() {
-        assertTrue(AssetPipeline.build(List.of(), NOTHING_LOADED).isEmpty());
+        assertTrue(AssetPipeline.build(Collections.emptyList(), NOTHING_LOADED).isEmpty());
     }
 
     @Test
