@@ -37,7 +37,7 @@ public class BridgedItemGroup {
     private static Function<String, String> modNameProvider = BridgedItemGroup::capitalize;
 
     /** Display names read from the archives themselves, keyed by namespace. */
-    private static Map<String, String> archiveModNames = Map.of();
+    private static Map<String, String> archiveModNames = Collections.emptyMap();
 
     public interface TabFactory {
         CreativeModeTab create(String namespace, Supplier<ItemStack> iconSupplier);
