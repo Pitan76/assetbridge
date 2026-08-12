@@ -163,7 +163,7 @@ class ArchiveScannerTest {
         entries.put("assets/examplemod/blockstates/b.json", "{}");
         writeArchive("example-mod.jar", entries);
 
-        assertEquals(List.copyOf(entries.keySet()),
+        assertEquals(new ArrayList<>(entries.keySet()),
                 single().entries().keySet().stream().map(AssetPath::toFullPath).toList());
     }
 

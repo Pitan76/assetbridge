@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public class ModelReferenceResolver {
     public static int resolve(BridgedAssetManager assets) {
         int repaired = 0;
         // Copied: the loop replaces resources as it goes.
-        for (AssetPath path : List.copyOf(assets.resources().keySet())) {
+        for (AssetPath path : new ArrayList<>(assets.resources().keySet())) {
             if (!isModel(path)) continue;
 
             JsonObject model = read(assets, path);

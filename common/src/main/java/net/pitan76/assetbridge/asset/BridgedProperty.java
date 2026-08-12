@@ -2,10 +2,7 @@ package net.pitan76.assetbridge.asset;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -62,7 +59,7 @@ public class BridgedProperty {
         for (String value : values) {
             if (!VALID.matcher(value).matches()) return null;
         }
-        return new BridgedProperty(name, List.copyOf(values), kindOf(values));
+        return new BridgedProperty(name, new ArrayList<>(values), kindOf(values));
     }
 
     public String defaultValue() {

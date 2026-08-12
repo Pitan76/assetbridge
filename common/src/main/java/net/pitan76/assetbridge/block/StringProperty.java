@@ -3,10 +3,7 @@ package net.pitan76.assetbridge.block;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * A block property over an arbitrary set of strings.
@@ -29,7 +26,7 @@ public class StringProperty extends Property<String> {
     }
 
     public static StringProperty create(String name, Collection<String> values) {
-        return new StringProperty(name, List.copyOf(new LinkedHashSet<>(values)));
+        return new StringProperty(name, new ArrayList<>(new LinkedHashSet<>(values)));
     }
 
     /**

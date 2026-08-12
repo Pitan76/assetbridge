@@ -55,7 +55,7 @@ public class BlockStatePropertyParser {
 
         List<BridgedProperty> properties = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : collected.entrySet()) {
-            BridgedProperty property = BridgedProperty.of(entry.getKey(), List.copyOf(entry.getValue()));
+            BridgedProperty property = BridgedProperty.of(entry.getKey(), new ArrayList<>(entry.getValue()));
             if (property == null) return null;
             properties.add(property);
         }
