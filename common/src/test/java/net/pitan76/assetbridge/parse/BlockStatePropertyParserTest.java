@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -99,7 +100,7 @@ class BlockStatePropertyParserTest {
     }
 
     private static List<String> names(BridgedStateDefinition states) {
-        return states.properties().stream().map(BridgedProperty::name).toList();
+        return states.properties().stream().map(BridgedProperty::name).collect(Collectors.toList());
     }
 
     private static BridgedStateDefinition parse(String text) {

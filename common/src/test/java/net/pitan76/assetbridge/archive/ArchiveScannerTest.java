@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -101,7 +102,7 @@ class ArchiveScannerTest {
         writeArchive("c.txt", Map.of("assets/c/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("a.jar", "b.ZIP"), scan().stream()
-                .map(AssetArchive::fileName).toList());
+                .map(AssetArchive::fileName).collect(Collectors.toList()));
     }
 
     @Test
@@ -111,7 +112,7 @@ class ArchiveScannerTest {
         writeArchive("good.jar", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("good.jar"), scan().stream()
-                .map(AssetArchive::fileName).toList());
+                .map(AssetArchive::fileName).collect(Collectors.toList()));
     }
 
     @Test
@@ -152,7 +153,7 @@ class ArchiveScannerTest {
         writeArchive("Charlie.zip", Map.of("assets/c/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("alpha.jar", "Beta.jar", "Charlie.zip"),
-                scan().stream().map(AssetArchive::fileName).toList());
+                scan().stream().map(AssetArchive::fileName).collect(Collectors.toList()));
     }
 
     @Test
@@ -164,7 +165,7 @@ class ArchiveScannerTest {
         writeArchive("example-mod.jar", entries);
 
         assertEquals(new ArrayList<>(entries.keySet()),
-                single().entries().keySet().stream().map(AssetPath::toFullPath).toList());
+                single().entries().keySet().stream().map(AssetPath::toFullPath).collect(Collectors.toList()));
     }
 
     @Test
@@ -179,7 +180,7 @@ class ArchiveScannerTest {
 
         // The nested one loads right after its parent, so the outer still wins a collision.
         assertEquals(Arrays.asList("example-mod.jar", "example-mod.jar!META-INF_jars_inner.jar"),
-                archives.stream().map(AssetArchive::fileName).toList());
+                archives.stream().map(AssetArchive::fileName).collect(Collectors.toList()));
         assertEquals(Set.of("assets/innermod/blockstates/inner.json"),
                 archives.get(1).entries().keySet().stream()
                         .map(AssetPath::toFullPath).collect(java.util.stream.Collectors.toSet()));
@@ -191,7 +192,7 @@ class ArchiveScannerTest {
                 Map.of("assets/examplemod/blockstates/outer.json", "{}"),
                 Map.of("META-INF/jars/library.jar", Map.of("net/example/Library.class", "cafebabe")));
 
-        assertEquals(Arrays.asList("example-mod.jar"), scan().stream().map(AssetArchive::fileName).toList());
+        assertEquals(Arrays.asList("example-mod.jar"), scan().stream().map(AssetArchive::fileName).collect(Collectors.toList()));
 
         // Nothing useful came out of it, so the extracted copy is not left behind either.
         Path cached = NestedArchives.cacheDirectory(gameDir)
