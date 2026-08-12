@@ -32,11 +32,8 @@ configurations.create("shadowBundle") {
 }
 
 dependencies {
-    // Common shared code (compiled with MCP names → remapped at inclusion time by Unimined).
-    // Must go through "modImplementation", not plain "implementation": only Unimined's mod-aware
-    // configurations get cross-mapping-namespace remapping applied, and common's classes (MCP
-    // names, e.g. CreativeTabs) need remapping to this module's Legacy Yarn names (e.g. ItemGroup).
-    "modImplementation"(project(commonProject.path))
+    // Common shared code (compiled with MCP names → remapped at inclusion time by Unimined)
+    implementation(project(commonProject.path))
 
     "modImplementation"("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version")
 }
