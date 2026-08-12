@@ -35,11 +35,26 @@ public class VersionDetector {
     private static final Pattern TOML_MINECRAFT_RANGE = Pattern.compile(
             "modId\\s*=\\s*\"minecraft\"[\\s\\S]{0,400}?versionRange\\s*=\\s*\"([^\"]*)\"");
 
-    /**
-     * @param version the generation to convert the archive's assets from
-     * @param source  where it came from, for logging
-     */
-    public record Detection(AssetVersion version, String source) {
+    public static class Detection {
+        public final AssetVersion version;
+        public final String source;
+
+        /**
+         * @param version the generation to convert the archive's assets from
+         * @param source  where it came from, for logging
+         */
+        public Detection(AssetVersion version, String source) {
+            this.version = version;
+            this.source = source;
+        }
+
+        public AssetVersion version() {
+            return version;
+        }
+
+        public String source() {
+            return source;
+        }
     }
 
     /**

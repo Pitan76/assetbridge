@@ -75,6 +75,10 @@ public class Features {
         return enabled.contains(featureId);
     }
 
+    public static boolean isDisabled(String featureId) {
+        return !isEnabled(featureId);
+    }
+
     public static void loadConfig(Path gameDir) {
         enabled = FeatureConfig.read(gameDir, registered());
     }

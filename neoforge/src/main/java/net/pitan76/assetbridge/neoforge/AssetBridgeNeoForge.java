@@ -60,7 +60,7 @@ public class AssetBridgeNeoForge {
     public AssetBridgeNeoForge(IEventBus modBus) {
         Features.loadConfig(FMLPaths.GAMEDIR.get());
 
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
+        if (Features.isDisabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(buildTab(BridgedItemGroup.BLOCKS, BridgedItemGroup::blocksIcon));
             BridgedItemGroup.setItemsTab(buildTab(BridgedItemGroup.ITEMS, BridgedItemGroup::itemsIcon));
         }
@@ -150,7 +150,7 @@ public class AssetBridgeNeoForge {
     }
 
     private void clientSetup(FMLClientSetupEvent event) {
-        if (!Features.isEnabled(CutoutBlocksFeature.ID)) return;
+        if (Features.isDisabled(CutoutBlocksFeature.ID)) return;
         //? if >=26 {
         /*// 26.1 removed ItemBlockRenderTypes; the layer a block draws on now comes from its block
         // model JSON (`"render_type"`), so there is nothing to register from code. Assets from

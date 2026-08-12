@@ -11,10 +11,21 @@ import java.util.regex.Pattern;
  *
  * <p>Version-neutral: it only records the name, the values seen and which shape they take.
  * Turning this into a Minecraft {@code Property} is the provider layer's job.
- *
- * @param values the values in the order they were first seen; the first one becomes the default
  */
-public record BridgedProperty(String name, List<String> values, Kind kind) {
+public class BridgedProperty {
+    public final String name;
+    public final List<String> values;
+    public final Kind kind;
+
+    /**
+     * @param values the values in the order they were first seen; the first one becomes the default
+     */
+    public BridgedProperty(String name, List<String> values, Kind kind) {
+        this.name = name;
+        this.values = values;
+        this.kind = kind;
+    }
+
     public enum Kind {
         BOOLEAN,
         INTEGER,

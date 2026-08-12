@@ -71,7 +71,7 @@ public class RecipeFeature implements Feature {
                     }
                 }
 
-                if (context.isNamespaceUsed().test(targetPath.namespace())) continue;
+                if (context.isNamespaceUsedTest(targetPath.namespace())) continue;
                 // An archive read earlier claimed this recipe already.
                 if (context.assets().hasResource(targetPath)) continue;
 

@@ -12,15 +12,35 @@ import java.util.Locale;
  * {@code assets/examplemod/models/block/foo.json} goes through here, so path handling
  * lives in one class. Deliberately free of Minecraft types: the input and parsing layers
  * must stay testable without the game.
- *
- * @param kind      the pack root the resource lives under
- * @param namespace the namespace directory, e.g. {@code examplemod}
- * @param path      everything below the namespace, e.g. {@code models/block/foo.json}
  */
-public record AssetPath(PackKind kind, String namespace, String path) {
-    public AssetPath {
-        namespace = namespace.toLowerCase(Locale.ROOT);
-        path = path.toLowerCase(Locale.ROOT);
+public class AssetPath {
+    public final PackKind kind;
+    public final String namespace;
+    public final String path;
+
+    /**
+     * Creates a new path. The namespace and path are normalised to lower case, as Minecraft does.
+     *
+     * @param kind      the pack root the resource lives under
+     * @param namespace the namespace directory, e.g. {@code examplemod}
+     * @param path      everything below the namespace, e.g. {@code models/block/foo.json}
+     */
+    public AssetPath(PackKind kind, String namespace, String path) {
+        this.kind = kind;
+        this.namespace = namespace.toLowerCase(Locale.ROOT);
+        this.path = path.toLowerCase(Locale.ROOT);
+    }
+
+    public PackKind kind() {
+        return kind;
+    }
+
+    public String namespace() {
+        return namespace;
+    }
+
+    public String path() {
+        return path;
     }
 
     /** Pack roots. Mirrors Minecraft's {@code PackType} without depending on it. */

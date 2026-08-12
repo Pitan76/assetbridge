@@ -27,7 +27,7 @@ public class AssetBridgeFabric implements ModInitializer {
         Features.loadConfig(FabricLoader.getInstance().getGameDir());
 
         // The tabs have to exist before the items are built.
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
+        if (Features.isDisabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(createTab(
                     BridgedItemGroup.BLOCKS,
                     BridgedItemGroup::blocksIcon,

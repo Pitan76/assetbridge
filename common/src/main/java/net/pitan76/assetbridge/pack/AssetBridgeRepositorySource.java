@@ -37,7 +37,7 @@ public class AssetBridgeRepositorySource implements RepositorySource {
 
     /** Whether this source should contribute a pack at all. */
     private boolean shouldLoad() {
-        if (!Features.isEnabled(featureId)) return false;
+        if (Features.isDisabled(featureId)) return false;
         // An empty pack is not an error, but Minecraft has no reason to load one.
         return AssetBridge.assets().hasResources(kind);
     }

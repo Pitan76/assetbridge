@@ -149,7 +149,7 @@ public class BridgedItemGroup {
         langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge: Blocks");
         langJson.addProperty("itemGroup.assetbridge.items", "Asset Bridge: Items");
 
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID) || tabFactory == null) {
+        if (Features.isDisabled(SplitTabByNamespaceFeature.ID) || tabFactory == null) {
             registerLang(langJson);
             return;
         }

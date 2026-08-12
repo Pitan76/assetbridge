@@ -324,7 +324,7 @@ public class AssetPipeline {
      * @return the number of models that were patched
      */
     private static int injectRenderTypes(BridgedAssetManager assets) {
-        if (!Features.isEnabled(CutoutBlocksFeature.ID)) return 0;
+        if (Features.isDisabled(CutoutBlocksFeature.ID)) return 0;
 
         int count = 0;
         for (BridgedBlockDefinition block : assets.blocks()) {

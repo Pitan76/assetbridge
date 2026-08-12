@@ -76,7 +76,7 @@ public class AssetBridgeForge {
         // Forge patches a String constructor into CreativeModeTab; the label becomes the
         // translation key suffix, so it is kept identical to Fabric's tab ids.
         //? if >=1.20.1 {
-        /*if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
+        /*if (Features.isDisabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(createTab(
                     BridgedItemGroup.BLOCKS,
                     BridgedItemGroup::blocksIcon,
@@ -92,7 +92,7 @@ public class AssetBridgeForge {
                 iconSupplier,
                 () -> BridgedItemGroup.namespaceTabContents(namespace)));
         *///?} else {
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
+        if (Features.isDisabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(new CreativeModeTab(AssetBridge.MOD_ID + "." + BridgedItemGroup.BLOCKS) {
                 @Override
                 public ItemStack makeIcon() {
