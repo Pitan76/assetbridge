@@ -1,8 +1,9 @@
 pluginManagement {
     repositories {
-        maven { url = uri("https://maven.fabricmc.net/") }
-        maven { url = uri("https://maven.architectury.dev/") }
-        maven { url = uri("https://files.minecraftforge.net/maven/") }
+        maven { url = uri("https://maven.wagyourtail.xyz/releases") }
+        maven { url = uri("https://maven.wagyourtail.xyz/snapshots") }
+        maven { url = uri("https://maven.minecraftforge.net/") }
+        maven { url = uri("https://maven.legacyfabric.net/") }
         maven {
             name = "KikuGie Snapshots"
             url = uri("https://maven.kikugie.dev/snapshots")

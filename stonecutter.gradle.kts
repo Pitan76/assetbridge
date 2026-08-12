@@ -1,75 +1,68 @@
 plugins {
     id("dev.kikugie.stonecutter")
-    id("architectury-plugin") version "3.5.169" apply false
+    id("xyz.wagyourtail.unimined") version "1.4.1" apply false
     id("com.gradleup.shadow") version "9.6.1" apply false
 }
 stonecutter active "1.12.2"
 
-// stonecutter parameters {
-//     replacements {
-//         string {
-//             direction = eval(current.version, ">=26")
-//             replace("ResourceLocation", "Identifier")
-//         }
-//     }
-// }
-
-fun javaFor(nodeName: String): JavaVersion {
-    return JavaVersion.VERSION_1_8
-}
-
 val maven_group = project.findProperty("maven_group") as String
 val mod_version = project.findProperty("mod_version") as String
 val archives_name = project.findProperty("archives_name") as String
- 
+
 allprojects {
     group = maven_group
     version = mod_version
 }
- 
+
 subprojects {
     repositories {
         mavenCentral()
+        maven("https://maven.wagyourtail.xyz/releases")
+        maven("https://maven.wagyourtail.xyz/snapshots")
+        maven("https://maven.minecraftforge.net/")
         maven("https://maven.legacyfabric.net/")
+        maven("https://maven.fabricmc.net/")
+        // Minecraft assets/libraries
+        maven("https://libraries.minecraft.net/")
+        maven("https://piston-meta.mojang.com/v1/packages/")
+        maven("https://repo.spongepowered.org/repository/maven-public/")
+        maven("https://maven.tterrag.com/")
+        maven("https://dvs1.progwml6.com/files/maven/")
     }
- 
+
     pluginManager.withPlugin("java") {
         val branchName = project.parent?.name ?: project.name
         configure<BasePluginExtension> {
             archivesName.set("$archives_name-$branchName")
         }
- 
+
         group = "$maven_group.$branchName"
         version = "$mod_version+${project.name}"
- 
+
         configure<JavaPluginExtension> {
             withSourcesJar()
+            // 1.12.2 は Java 8
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(javaFor(project.name).majorVersion))
+                languageVersion.set(JavaLanguageVersion.of(8))
             }
         }
- 
+
         tasks.withType<JavaCompile>().configureEach {
-            val major = javaFor(project.name).majorVersion.toInt()
-            if (major >= 9) {
-                options.release.set(major)
-            } else {
-                options.release.set(null as Int?)
-            }
+            // Java 8 ターゲット — options.release は Java 9+ のみ
+            options.release.set(null as Int?)
+            sourceCompatibility = "1.8"
+            targetCompatibility = "1.8"
         }
     }
 }
 
-// Builds every registered version. The 0.6-era `registerChiseled`/`chiseled` API is
-// gone in 0.9.x; task aggregation replaces it.
+// Builds every registered version.
 tasks.register("chiseledBuild") {
     group = "project"
     description = "Builds every registered version."
     dependsOn(stonecutter.tasks.named("build"))
 }
 
-// Serialise `build` across nodes. Stonecutter documents task ordering as a way to
-// keep concurrency-sensitive tasks from running in parallel.
 stonecutter tasks {
     order("build")
 }

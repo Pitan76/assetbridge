@@ -1,25 +1,32 @@
 plugins {
-    id("dev.architectury.loom")
-    id("architectury-plugin")
+    id("xyz.wagyourtail.unimined")
     id("com.gradleup.shadow")
     id("me.modmuss50.mod-publish-plugin") version "2.2.0"
+    java
 }
 
-val forge_version = project.findProperty("forge_version") as String
 val minecraft_version = project.findProperty("minecraft_version") as String
+val forge_version     = project.findProperty("forge_version")     as String
 
-loom {
-    forge {
+val commonProject: Project = project(":common:${stonecutter.current.project}")
+evaluationDependsOn(commonProject.path)
+
+unimined.minecraft {
+    version(minecraft_version)
+
+    minecraftForge {
+        loader(forge_version.substringAfter("-"))   // "14.23.5.2859"
         mixinConfig("assetbridge.mixins.json")
+    }
+
+    mappings {
+        searge()
+        mcp("stable", "39-1.12")
     }
 }
 
-
-architectury {
-    platformSetupLoomIde()
-    forge()
-}
-
+// Common shared code linked in via a separate configuration so Unimined
+// can remap it alongside the Forge classpath.
 configurations.create("common") {
     isCanBeResolved = true
     isCanBeConsumed = false
@@ -28,7 +35,6 @@ configurations.create("common") {
 configurations {
     compileClasspath.get().extendsFrom(configurations["common"])
     runtimeClasspath.get().extendsFrom(configurations["common"])
-    getByName("developmentForge").extendsFrom(configurations["common"])
 }
 
 configurations.create("shadowBundle") {
@@ -36,33 +42,13 @@ configurations.create("shadowBundle") {
     isCanBeConsumed = false
 }
 
-val commonProject: Project = project(":common:${stonecutter.current.project}")
-
-evaluationDependsOn(commonProject.path)
-
-repositories {
-    maven("https://maven.legacyfabric.net/")
-}
-// Legacy Fabric uses its own intermediary (not Fabric's).
-loom.intermediaryUrl.set(
-    "https://maven.legacyfabric.net/net/legacyfabric/intermediary/%1\$s/intermediary-%1\$s-v2.jar"
-)
-
 dependencies {
-    "minecraft"("net.minecraft:minecraft:$minecraft_version")
-    
-    val yarn_mappings = project.findProperty("yarn_mappings") as String
-    "mappings"("net.legacyfabric:yarn:$yarn_mappings:v2")
-    "forge"("net.minecraftforge:forge:$forge_version")
-
-    "common"(project(commonProject.path, "namedElements")) { isTransitive = false }
-    "shadowBundle"(project(commonProject.path, "transformProductionForge"))
+    "common"(project(commonProject.path)) { isTransitive = false }
+    "shadowBundle"(project(commonProject.path))
 }
 
 tasks.processResources {
-    // Dependency ranges come from the node's gradle.properties, so adding a version
-    // means adding a property rather than editing the manifest.
-    val mcDep = project.findProperty("mc_dep") as String
+    val mcDep          = project.findProperty("mc_dep")           as String
     val forgeLoaderDep = project.findProperty("forge_loader_dep") as String
 
     inputs.property("version", project.version)
@@ -71,8 +57,8 @@ tasks.processResources {
 
     filesMatching("META-INF/mods.toml") {
         expand(
-            "version" to project.version,
-            "mc_dep" to mcDep,
+            "version"          to project.version,
+            "mc_dep"           to mcDep,
             "forge_loader_dep" to forgeLoaderDep,
         )
     }
@@ -83,25 +69,22 @@ tasks.shadowJar {
     archiveClassifier.set("dev-shadow")
 }
 
-tasks.remapJar {
-    inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
-}
-
 publishMods {
     val mcVersion = project.name
 
     @Suppress("UNCHECKED_CAST")
     val getCompatibleMcVersions = rootProject.extra.get("getCompatibleMcVersions") as (Project) -> List<String>
     val mcVersions = getCompatibleMcVersions(project)
-    
-    file.set(tasks.remapJar.flatMap { it.archiveFile })
-    displayName.set(tasks.remapJar.flatMap { it.archiveFile.map { it.asFile.name } })
+
+    file.set(tasks.jar.flatMap { it.archiveFile })
+    displayName.set(tasks.jar.flatMap { it.archiveFile.map { f -> f.asFile.name } })
     changelog.set("Release of version ${project.version} for Minecraft $mcVersion (Forge)")
     type.set(me.modmuss50.mpp.ReleaseType.STABLE)
     modLoaders.add("forge")
 
     val curseforgeId = project.findProperty("curseforge_project_id")?.toString()
-    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN").orNull ?: project.findProperty("curseforge_token")?.toString()
+    val curseforgeToken = providers.environmentVariable("CURSEFORGE_TOKEN").orNull
+        ?: project.findProperty("curseforge_token")?.toString()
     if (!curseforgeId.isNullOrEmpty() && !curseforgeToken.isNullOrEmpty()) {
         curseforge {
             projectId.set(curseforgeId)
@@ -113,7 +96,8 @@ publishMods {
     }
 
     val modrinthId = project.findProperty("modrinth_project_id")?.toString()
-    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orNull ?: project.findProperty("modrinth_token")?.toString()
+    val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orNull
+        ?: project.findProperty("modrinth_token")?.toString()
     if (!modrinthId.isNullOrEmpty() && !modrinthToken.isNullOrEmpty()) {
         modrinth {
             projectId.set(modrinthId)
