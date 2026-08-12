@@ -2,24 +2,35 @@ package net.pitan76.assetbridge.fabric;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.legacyfabric.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.minecraft.util.Identifier;
-import net.minecraft.item.itemgroup.ItemGroup;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.block.Block;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.block.BridgedBlocks;
 import net.pitan76.assetbridge.block.BridgedItemGroup;
 import net.pitan76.assetbridge.block.BridgedItems;
 import net.pitan76.assetbridge.feature.Features;
-import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.pack.AssetBridgeRepositorySource;
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.function.Supplier;
 
+/**
+ * Unlike Forge, this platform cannot construct and hand {@code BridgedItemGroup} a real creative
+ * tab: {@code BridgedItemGroup.setBlocksTab}/{@code setItemsTab}/{@code setTabFactory} take
+ * {@code net.minecraft.creativetab.CreativeTabs} because that is the name the shared {@code
+ * common} module was compiled against (MCP mapping, shared with Forge). Legacy Fabric's own
+ * compile classpath (Legacy Yarn mapping) has no such class -- the same game class is named
+ * {@code net.minecraft.item.itemgroup.ItemGroup} there -- and the {@code common} project
+ * dependency is plain library code with no {@code fabric.mod.json}, so Unimined's mod remapper
+ * (which only remaps jars it recognises as mods) never bridges the two names for it. Calling
+ * those setters from here is therefore not just a source-level type mismatch but a real
+ * cross-mapping gap with no remapping step behind it; wiring a namespace tab through them would
+ * not link. Bridged blocks/items on this platform fall back to {@code BridgedItemGroup}'s own
+ * vanilla-tab default ({@code CreativeTabs.BUILDING_BLOCKS}/{@code MISC}, resolved entirely
+ * inside {@code common} where the mapping is consistent) until that gap is closed with a real
+ * remap step for the {@code common} dependency.
+ */
 public class AssetBridgeFabric implements ModInitializer {
     @Override
     public void onInitialize() {
@@ -27,14 +38,6 @@ public class AssetBridgeFabric implements ModInitializer {
 
         // Load config first to check enabled features during tab setup
         Features.loadConfig(gameDir);
-
-        // The tabs have to exist before the items are built.
-        if (!Features.isEnabled(SplitTabByNamespaceFeature.ID)) {
-            BridgedItemGroup.setBlocksTab(createTab(BridgedItemGroup.BLOCKS, BridgedItemGroup::blocksIcon));
-            BridgedItemGroup.setItemsTab(createTab(BridgedItemGroup.ITEMS, BridgedItemGroup::itemsIcon));
-        }
-
-        BridgedItemGroup.setTabFactory((namespace, iconSupplier) -> createTab(namespace, iconSupplier));
 
         BridgedItemGroup.setModNameProvider(namespace -> FabricLoader.getInstance().getModContainer(namespace)
                 .map(container -> container.getMetadata().getName())
@@ -78,18 +81,6 @@ public class AssetBridgeFabric implements ModInitializer {
     // ---------------------------------------------------------------------------
     // Version-specific glue. 1.12.2 predates the flattened registry types entirely:
     // Block/Item still key their registries by Identifier through a plain MutableRegistry
-    // (put/containsKey, no Registry.register helper), and creative tabs are ItemGroup, built
-    // through Legacy Fabric API's builder since ItemGroup's own constructor takes an explicit
-    // slot index it does not allocate for you.
+    // (put/containsKey, no Registry.register helper).
     // ---------------------------------------------------------------------------
-
-    private static ItemGroup createTab(String path, Supplier<ItemStack> icon) {
-        return FabricItemGroupBuilder.create(modId(path))
-                .iconWithItemStack(icon)
-                .build();
-    }
-
-    private static Identifier modId(String path) {
-        return new Identifier(AssetBridge.MOD_ID, path);
-    }
 }
