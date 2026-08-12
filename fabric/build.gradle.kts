@@ -32,8 +32,12 @@ configurations.create("shadowBundle") {
 }
 
 dependencies {
-    // Common shared code (compiled with MCP names → remapped at inclusion time by Unimined)
+    // Common shared code (compiled with MCP names → remapped at inclusion time by Unimined).
+    // Also bundled via "shadowBundle" (mirroring forge/build.gradle.kts) so its classes actually
+    // end up in the built jar -- shadowJar below is scoped to only that configuration, so without
+    // this, common's classes are silently absent from the final jar.
     implementation(project(commonProject.path))
+    "shadowBundle"(project(commonProject.path))
 
     "modImplementation"("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version")
 }

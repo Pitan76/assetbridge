@@ -21,9 +21,6 @@
       "net.pitan76.assetbridge.fabric.client.AssetBridgeFabricClient"
     ]
   },
-  "mixins": [
-    "assetbridge.mixins.json"
-  ],
   "depends": {
     "fabricloader": "*",
     "minecraft": "${mc_dep}",
