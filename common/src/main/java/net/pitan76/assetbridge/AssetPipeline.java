@@ -425,7 +425,7 @@ public class AssetPipeline {
     }
 
     private static int generateSingleItemDefinition(BridgedAssetManager assets, String itemId) {
-        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(itemId);
+        net.minecraft.util.ResourceLocation id = net.minecraft.util.ResourceLocation.tryParse(itemId);
         if (id == null) return 0;
 
         String namespace = id.getNamespace();

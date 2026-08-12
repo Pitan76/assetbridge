@@ -83,11 +83,11 @@ public class BridgedAssetManager {
     public java.util.Set<String> namespaces() {
         java.util.Set<String> ns = new java.util.LinkedHashSet<>();
         for (BridgedBlockDefinition block : blocks) {
-            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(block.id());
+            net.minecraft.util.ResourceLocation id = net.minecraft.util.ResourceLocation.tryParse(block.id());
             if (id != null) ns.add(id.getNamespace());
         }
         for (BridgedItemDefinition item : items) {
-            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(item.id());
+            net.minecraft.util.ResourceLocation id = net.minecraft.util.ResourceLocation.tryParse(item.id());
             if (id != null) ns.add(id.getNamespace());
         }
         return ns;
