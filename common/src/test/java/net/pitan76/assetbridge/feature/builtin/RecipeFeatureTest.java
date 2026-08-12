@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -76,7 +77,7 @@ class RecipeFeatureTest {
                 Arrays.asList(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, entries));
 
         new RecipeFeature().apply(
-                new FeatureContext(Path.of("."), assets, enabled, archives, isNamespaceUsed));
+                new FeatureContext(Paths.get("."), assets, enabled, archives, isNamespaceUsed));
         return assets;
     }
 }

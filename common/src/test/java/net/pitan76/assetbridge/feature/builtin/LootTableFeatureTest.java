@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,7 +78,7 @@ class LootTableFeatureTest {
 
     private static void apply(BridgedAssetManager assets, Set<String> enabled) {
         new LootTableFeature().apply(new FeatureContext(
-                Path.of("."), assets, enabled, Collections.emptyList(),namespace -> false));
+                Paths.get("."), assets, enabled, Collections.emptyList(), namespace -> false));
     }
 
     private static BridgedAssetManager bundleWithBlock(String namespace, String name) {
