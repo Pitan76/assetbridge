@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  * to know what the feature does.
  */
 public class Features {
-    private static final List<Feature> REGISTERED = new ArrayList<>(List.of(
+    private static final List<Feature> REGISTERED = new ArrayList<>(Arrays.asList(
             new SplitTabByNamespaceFeature(),
             new CutoutBlocksFeature(),
             new BlockFeature(),

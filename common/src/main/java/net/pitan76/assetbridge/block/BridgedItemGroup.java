@@ -143,7 +143,7 @@ public class BridgedItemGroup {
     //?}
 
     public static void initTabs(Set<String> namespaces, Map<String, String> modNames) {
-        archiveModNames = Map.copyOf(modNames);
+        archiveModNames = new HashMap<>(modNames);
 
         JsonObject langJson = new JsonObject();
         langJson.addProperty("itemGroup.assetbridge.blocks", "Asset Bridge: Blocks");
@@ -179,7 +179,7 @@ public class BridgedItemGroup {
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(" ");
+            if (sb.length() > 0) sb.append(" ");
             sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
         }
 

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ import java.util.Map;
 public class ModelReferenceResolver {
     /** Texture keys worth inheriting into the replacement, most representative first. */
     private static final List<String> TEXTURE_KEYS =
-            List.of("all", "texture", "particle", "layer0", "up", "side", "end", "north", "0");
+            Arrays.asList("all", "texture", "particle", "layer0", "up", "side", "end", "north", "0");
 
     private ModelReferenceResolver() {
     }

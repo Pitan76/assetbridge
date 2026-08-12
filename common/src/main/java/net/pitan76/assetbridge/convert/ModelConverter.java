@@ -9,6 +9,7 @@ import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -79,11 +80,12 @@ public class ModelConverter implements AssetConverter {
         return changed;
     }
 
-    private static final Map<String, String> VANILLA_REMAP = Map.of(
-        "block/glass_white", "block/white_stained_glass",
-        "block/anvil_base", "block/anvil"
-        // Add more common legacy mappings as needed
-    );
+    private static final Map<String, String> VANILLA_REMAP = new HashMap<>();
+
+    static {
+        VANILLA_REMAP.put("block/glass_white", "block/white_stained_glass");
+        VANILLA_REMAP.put("block/anvil_base", "block/anvil");
+    }
 
     /**
      * A texture reference. {@code blocks/} and {@code items/} are flattened whatever the
