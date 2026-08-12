@@ -1,5 +1,7 @@
 package net.pitan76.assetbridge.asset;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +21,12 @@ public interface AssetSource {
 
     default byte[] readAll() throws IOException {
         try (InputStream in = open()) {
+            //? if >=1.17 {
             return in.readAllBytes();
+            //? } else {
+            /*
+            return IOUtils.toByteArray(in);
+            *///? }
         }
     }
 
