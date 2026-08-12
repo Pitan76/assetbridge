@@ -1,32 +1,33 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.world.level.block.state.properties.Property;
-import org.jetbrains.annotations.NotNull;
+import com.google.common.base.Optional;
+import net.minecraft.block.properties.IProperty;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * A block property over an arbitrary set of strings.
+ * A block property over an arbitrary set of strings, matching 1.12.2's {@code IProperty<T>}.
  *
- * <p>Vanilla's {@code EnumProperty} needs an {@code Enum} implementing {@code StringRepresentable},
- * which cannot be produced for value sets that are only known at runtime. Since
- * {@code Property} is generic over any {@code Comparable}, {@code String} works directly.
+ * <p>Vanilla's {@code PropertyEnum} needs an actual {@code Enum}, which cannot be produced for
+ * value sets only known at runtime. {@code IProperty} only requires {@code Comparable}, so
+ * {@code String} works directly -- the same reasoning as the modern-version {@code Property}
+ * subclass this mirrors.
+ *
+ * <p>Not currently used by {@link BridgedBlock}: on 1.12.2, bridged blocks are registered
+ * without any {@code IProperty}/metadata variants at all (see {@link BridgedBlock}), so this
+ * class exists only so the shape of a bridged property is representable here too, the same
+ * way it is on every other supported version.
  */
-public class StringProperty extends Property<String> {
-    /**
-     * A list rather than a set: 26.1 narrowed {@code getPossibleValues} to {@code List} and added
-     * {@code getInternalIndex}, both of which want a defined order. Duplicates are dropped on the
-     * way in, so it still behaves as a set of values.
-     */
+public class StringProperty implements IProperty<String> {
+    private final String name;
     private final List<String> values;
 
     private StringProperty(String name, List<String> values) {
-        super(name, String.class);
+        this.name = name;
         this.values = values;
     }
 
@@ -34,49 +35,41 @@ public class StringProperty extends Property<String> {
         return new StringProperty(name, Collections.unmodifiableList(new ArrayList<>(new LinkedHashSet<>(values))));
     }
 
-    /**
-     * Returning {@code List} rather than {@code Collection} satisfies 26.1 and remains a valid
-     * covariant override of the older {@code Collection}-returning declaration.
-     */
     @Override
-    public @NotNull List<String> getPossibleValues() {
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Collection<String> getAllowedValues() {
         return values;
     }
 
     @Override
-    public @NotNull String getName(String value) {
-        return value;
+    public Class<String> getValueClass() {
+        return String.class;
     }
 
     @Override
-    public @NotNull Optional<String> getValue(String name) {
-        return values.contains(name) ? Optional.of(name) : Optional.empty();
+    public Optional<String> parseValue(String value) {
+        return values.contains(value) ? Optional.of(value) : Optional.<String>absent();
     }
 
-    /**
-     * Abstract as of 26.1 and absent before it, so this deliberately carries no {@code @Override}:
-     * the annotation would fail to compile on the older nodes, while an extra method there is
-     * simply unused.
-     */
-    public int getInternalIndex(String value) {
-        return values.indexOf(value);
+    @Override
+    public String getName(String value) {
+        return value;
     }
 
-    /**
-     * The base class compares on name and value type only, which would make two bridged
-     * properties that happen to share a name interchangeable even with different values.
-     */
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         if (!(other instanceof StringProperty)) return false;
         StringProperty property = (StringProperty) other;
-        return super.equals(other) && values.equals(property.values);
+        return name.equals(property.name) && values.equals(property.values);
     }
 
-    /** {@code Property#hashCode} is final and delegates here. */
     @Override
-    public int generateHashCode() {
-        return 31 * super.generateHashCode() + values.hashCode();
+    public int hashCode() {
+        return 31 * name.hashCode() + values.hashCode();
     }
 }
