@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge.asset;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class BridgedStateDefinition {
     private static final BridgedStateDefinition EMPTY = new BridgedStateDefinition(Collections.emptyList());
 
     public BridgedStateDefinition(List<BridgedProperty> properties) {
-        this.properties = List.copyOf(properties);
+        this.properties = new ArrayList<>(properties);
     }
 
     public List<BridgedProperty> properties() {

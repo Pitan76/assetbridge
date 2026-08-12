@@ -2,6 +2,8 @@ package net.pitan76.assetbridge.asset;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -47,7 +49,7 @@ public class BridgedProperty {
     /** Minecraft rejects property names and values outside this shape. */
     private static final Pattern VALID = Pattern.compile("[a-z0-9_]+");
 
-    private static final Set<String> BOOLEANS = Set.of("true", "false");
+    private static final Set<String> BOOLEANS = new HashSet<>(Arrays.asList("true", "false"));
 
     /**
      * @return the property, or {@code null} when Minecraft could not represent it
