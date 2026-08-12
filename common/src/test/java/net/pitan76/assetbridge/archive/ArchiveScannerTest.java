@@ -42,32 +42,43 @@ class ArchiveScannerTest {
 
     @Test
     void readsOnlyAssetEntries() throws IOException {
-        writeArchive("example-mod.jar", Map.of(
-                "assets/examplemod/blockstates/foo.json", "{}",
-                "assets/examplemod/models/block/foo.json", "{}",
-                "assets/examplemod/textures/block/foo.png", "not really a png",
-                "assets/examplemod/lang/en_us.json", "{}",
-                "assets/examplemod/sounds.json", "{}",
-                "net/example/ExampleMod.class", "cafebabe",
-                "META-INF/MANIFEST.MF", "Manifest-Version: 1.0"
-        ));
+        Map<String, String> map = new HashMap<>();
+        map.put("assets/examplemod/blockstates/foo.json", "{}");
+        map.put("assets/examplemod/models/block/foo.json", "{}");
+        map.put("assets/examplemod/textures/block/foo.png", "not really a png");
+        map.put("assets/examplemod/lang/en_us.json", "{}");
+        map.put("assets/examplemod/sounds.json", "{}");
+        map.put("net/example/ExampleMod.class", "cafebabe");
+        map.put("META-INF/MANIFEST.MF", "Manifest-Version: 1.0");
+        writeArchive("example-mod.jar",    map);
+
+//        writeArchive("example-mod.jar", Collections.singletonMap(
+//                "assets/examplemod/blockstates/foo.json", "{}",
+//                "assets/examplemod/models/block/foo.json", "{}",
+//                "assets/examplemod/textures/block/foo.png", "not really a png",
+//                "assets/examplemod/lang/en_us.json", "{}",
+//                "assets/examplemod/sounds.json", "{}",
+//                "net/example/ExampleMod.class", "cafebabe",
+//                "META-INF/MANIFEST.MF", "Manifest-Version: 1.0"
+//        ));
 
         AssetArchive archive = single();
 
-        assertEquals(Set.of(
+        assertEquals(new HashSet(Arrays.asList(
                 "assets/examplemod/blockstates/foo.json",
                 "assets/examplemod/models/block/foo.json",
                 "assets/examplemod/textures/block/foo.png",
                 "assets/examplemod/lang/en_us.json"
-        ), archive.entries().keySet().stream().map(AssetPath::toFullPath).collect(java.util.stream.Collectors.toSet()));
+        )), archive.entries().keySet().stream().map(AssetPath::toFullPath).collect(Collectors.toSet()));
     }
 
     @Test
     void detectsTheVersionFromThePackMetadata() throws IOException {
-        writeArchive("example-mod.jar", Map.of(
-                "pack.mcmeta", "{\"pack\": {\"pack_format\": 4, \"description\": \"x\"}}",
-                "assets/examplemod/blockstates/foo.json", "{}"
-        ));
+        Map<String, String> map = new HashMap<>();
+        map.put("pack.mcmeta", "{\"pack\": {\"pack_format\": 4, \"description\": \"x\"}}");
+        map.put("assets/examplemod/blockstates/foo.json", "{}");
+
+        writeArchive("example-mod.jar", map);
 
         AssetArchive archive = single();
         assertEquals(AssetVersion.FLATTENED, archive.version());
@@ -76,12 +87,10 @@ class ArchiveScannerTest {
 
     @Test
     void fallsBackToTheLoaderMetadataWhenThereIsNoPackMcmeta() throws IOException {
-        // The common case: mod JARs are not resource packs and ship no pack.mcmeta.
-        writeArchive("example-mod.jar", Map.of(
-                "META-INF/neoforge.mods.toml",
-                "[[dependencies.\"examplemod\"]]\nmodId=\"minecraft\"\nversionRange=\"[1.21.1]\"\n",
-                "assets/examplemod/blockstates/foo.json", "{}"
-        ));
+        Map<String, String> map = new HashMap<>();
+        map.put("META-INF/neoforge.mods.toml", "[[dependencies.\"examplemod\"]]\nmodId=\"minecraft\"\nversionRange=\"[1.21.1]\"\n");
+        map.put("assets/examplemod/blockstates/foo.json", "{}");
+        writeArchive("example-mod.jar", map);
 
         AssetArchive archive = single();
         assertEquals(AssetVersion.COMPONENTS, archive.version());
@@ -90,16 +99,16 @@ class ArchiveScannerTest {
 
     @Test
     void assumesTheCurrentVersionWhenNothingSaysOtherwise() throws IOException {
-        writeArchive("assets.zip", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
+        writeArchive("assets.zip", Collections.singletonMap("assets/examplemod/blockstates/foo.json", "{}"));
 
         assertEquals(AssetVersion.MODERN, single().version());
     }
 
     @Test
     void picksUpJarAndZipOnly() throws IOException {
-        writeArchive("a.jar", Map.of("assets/a/blockstates/foo.json", "{}"));
-        writeArchive("b.ZIP", Map.of("assets/b/blockstates/foo.json", "{}"));
-        writeArchive("c.txt", Map.of("assets/c/blockstates/foo.json", "{}"));
+        writeArchive("a.jar", Collections.singletonMap("assets/a/blockstates/foo.json", "{}"));
+        writeArchive("b.ZIP", Collections.singletonMap("assets/b/blockstates/foo.json", "{}"));
+        writeArchive("c.txt", Collections.singletonMap("assets/c/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("a.jar", "b.ZIP"), scan().stream()
                 .map(AssetArchive::fileName).collect(Collectors.toList()));
@@ -109,7 +118,7 @@ class ArchiveScannerTest {
     void survivesAFileThatIsNotAnArchive() throws IOException {
         Files.writeString(bridgeDir().resolve("broken.jar"), "definitely not a zip",
                 StandardCharsets.UTF_8);
-        writeArchive("good.jar", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
+        writeArchive("good.jar", Collections.singletonMap("assets/examplemod/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("good.jar"), scan().stream()
                 .map(AssetArchive::fileName).collect(Collectors.toList()));
@@ -117,7 +126,7 @@ class ArchiveScannerTest {
 
     @Test
     void readsAnEntryOnDemandRatherThanAtScanTime() throws IOException {
-        writeArchive("example-mod.jar", Map.of(
+        writeArchive("example-mod.jar", Collections.singletonMap(
                 "assets/examplemod/textures/block/foo.png", "not really a png"
         ));
 
@@ -132,7 +141,7 @@ class ArchiveScannerTest {
 
     @Test
     void closingTheArchiveInvalidatesItsEntries() throws IOException {
-        writeArchive("example-mod.jar", Map.of(
+        writeArchive("example-mod.jar", Collections.singletonMap(
                 "assets/examplemod/textures/block/foo.png", "not really a png"
         ));
 
@@ -148,9 +157,9 @@ class ArchiveScannerTest {
     void loadsArchivesInTheSameOrderOnEveryPlatform() throws IOException {
         // Upper and lower case must not sort into two different orders depending on whether
         // the file system happens to be case sensitive.
-        writeArchive("Beta.jar", Map.of("assets/b/blockstates/foo.json", "{}"));
-        writeArchive("alpha.jar", Map.of("assets/a/blockstates/foo.json", "{}"));
-        writeArchive("Charlie.zip", Map.of("assets/c/blockstates/foo.json", "{}"));
+        writeArchive("Beta.jar", Collections.singletonMap("assets/b/blockstates/foo.json", "{}"));
+        writeArchive("alpha.jar", Collections.singletonMap("assets/a/blockstates/foo.json", "{}"));
+        writeArchive("Charlie.zip", Collections.singletonMap("assets/c/blockstates/foo.json", "{}"));
 
         assertEquals(Arrays.asList("alpha.jar", "Beta.jar", "Charlie.zip"),
                 scan().stream().map(AssetArchive::fileName).collect(Collectors.toList()));
@@ -172,9 +181,9 @@ class ArchiveScannerTest {
     void bridgesAnArchiveThatIsItselfInsideAnArchive() throws IOException {
         // A mod carrying its own resource pack, and the jar-in-jar case, are the same shape.
         writeNested("example-mod.jar",
-                Map.of("assets/examplemod/blockstates/outer.json", "{}"),
-                Map.of("META-INF/jars/inner.jar",
-                        Map.of("assets/innermod/blockstates/inner.json", "{}")));
+                Collections.singletonMap("assets/examplemod/blockstates/outer.json", "{}"),
+                Collections.singletonMap("META-INF/jars/inner.jar",
+                        Collections.singletonMap("assets/innermod/blockstates/inner.json", "{}")));
 
         List<AssetArchive> archives = scan();
 
@@ -189,8 +198,8 @@ class ArchiveScannerTest {
     @Test
     void dropsANestedLibraryThatCarriesNoAssets() throws IOException {
         writeNested("example-mod.jar",
-                Map.of("assets/examplemod/blockstates/outer.json", "{}"),
-                Map.of("META-INF/jars/library.jar", Map.of("net/example/Library.class", "cafebabe")));
+                Collections.singletonMap("assets/examplemod/blockstates/outer.json", "{}"),
+                Collections.singletonMap("META-INF/jars/library.jar", Collections.singletonMap("net/example/Library.class", "cafebabe")));
 
         assertEquals(Arrays.asList("example-mod.jar"), scan().stream().map(AssetArchive::fileName).collect(Collectors.toList()));
 
@@ -203,7 +212,7 @@ class ArchiveScannerTest {
     @Test
     void readsTheNestedAssetsLazilyFromTheCachedCopy() throws IOException {
         writeNested("example-mod.jar", Collections.emptyMap(),
-                Map.of("inner.zip", Map.of("assets/innermod/textures/block/foo.png", "png bytes")));
+                Collections.singletonMap("inner.zip", Collections.singletonMap("assets/innermod/textures/block/foo.png", "png bytes")));
 
         AssetArchive archive = single();
         AssetSource source = archive.entries()
