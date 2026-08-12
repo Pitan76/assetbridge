@@ -18,6 +18,7 @@ import net.pitan76.assetbridge.block.BridgedItems;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
+import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -51,7 +52,7 @@ public class AssetBridgeForge {
             String path,
             Supplier<ItemStack> icon,
             Supplier<java.util.List<Item>> contents) {
-        ResourceLocation id = new ResourceLocation(AssetBridge.MOD_ID, path);
+        ResourceLocation id = IdUtil.of(AssetBridge.MOD_ID, path);
         net.minecraft.resources.ResourceKey<CreativeModeTab> key =
                 net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, id);
