@@ -24,16 +24,14 @@ class BlockStateConverterTest {
 
     @Test
     void rewritesThePre113NormalVariantKey() {
-        JsonObject result = convert("""
-                {"variants": {"normal": {"model": "oldmod:block/foo"}}}""", AssetVersion.LEGACY);
+        JsonObject result = convert("\n                {\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}", AssetVersion.LEGACY);
 
         assertEquals(Set.of(""), keysOf(result.getAsJsonObject("variants")));
     }
 
     @Test
     void keepsOtherVariantKeysWhenRewritingNormal() {
-        JsonObject result = convert("""
-                {"variants": {"normal": {"model": "oldmod:block/a"}, "facing=north": {"model": "oldmod:block/b"}}}""",
+        JsonObject result = convert("\n                {\"variants\": {\"normal\": {\"model\": \"oldmod:block/a\"}, \"facing=north\": {\"model\": \"oldmod:block/b\"}}}",
                 AssetVersion.LEGACY);
 
         assertEquals(Set.of("", "facing=north"), keysOf(result.getAsJsonObject("variants")));
@@ -42,8 +40,7 @@ class BlockStateConverterTest {
     @Test
     void qualifiesBareModelReferences() {
         // Pre-1.13 blockstate model paths are relative to models/block/.
-        JsonObject result = convert("""
-                {"variants": {"normal": {"model": "cube_all"}}}""", AssetVersion.LEGACY);
+        JsonObject result = convert("\n                {\"variants\": {\"normal\": {\"model\": \"cube_all\"}}}", AssetVersion.LEGACY);
 
         assertEquals("block/cube_all",
                 result.getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString());
@@ -51,21 +48,18 @@ class BlockStateConverterTest {
 
     @Test
     void qualifiesModelReferencesInsideWeightedVariantsAndMultipart() {
-        JsonObject variants = convert("""
-                {"variants": {"normal": [{"model": "a"}, {"model": "b"}]}}""", AssetVersion.LEGACY);
+        JsonObject variants = convert("\n                {\"variants\": {\"normal\": [{\"model\": \"a\"}, {\"model\": \"b\"}]}}", AssetVersion.LEGACY);
         assertEquals("block/a", variants.getAsJsonObject("variants").getAsJsonArray("")
                 .get(0).getAsJsonObject().get("model").getAsString());
 
-        JsonObject multipart = convert("""
-                {"multipart": [{"when": {"north": "true"}, "apply": {"model": "side"}}]}""", AssetVersion.LEGACY);
+        JsonObject multipart = convert("\n                {\"multipart\": [{\"when\": {\"north\": \"true\"}, \"apply\": {\"model\": \"side\"}}]}", AssetVersion.LEGACY);
         assertEquals("block/side", multipart.getAsJsonArray("multipart").get(0).getAsJsonObject()
                 .getAsJsonObject("apply").get("model").getAsString());
     }
 
     @Test
     void leavesAlreadyQualifiedReferencesAlone() {
-        JsonObject result = convert("""
-                {"variants": {"normal": {"model": "oldmod:block/foo"}}}""", AssetVersion.LEGACY);
+        JsonObject result = convert("\n                {\"variants\": {\"normal\": {\"model\": \"oldmod:block/foo\"}}}", AssetVersion.LEGACY);
 
         assertEquals("oldmod:block/foo",
                 result.getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString());
@@ -98,8 +92,7 @@ class BlockStateConverterTest {
     @Test
     void pullsUnusableWeightsBackToOne() {
         // A weight of zero or below makes the weighted draw fail and the state renders nothing.
-        JsonObject result = convert("""
-                {"variants": {"": [{"model": "m:block/a", "weight": 0}, {"model": "m:block/b", "weight": -2}]}}""",
+        JsonObject result = convert("\n                {\"variants\": {\"\": [{\"model\": \"m:block/a\", \"weight\": 0}, {\"model\": \"m:block/b\", \"weight\": -2}]}}",
                 AssetVersion.MODERN);
 
         JsonArray variants = result.getAsJsonObject("variants").getAsJsonArray("");
@@ -109,9 +102,7 @@ class BlockStateConverterTest {
 
     @Test
     void pullsFractionalAndNonNumericWeightsBackToOne() {
-        JsonObject result = convert("""
-                {"multipart": [{"apply": [{"model": "m:block/a", "weight": 1.5},
-                                          {"model": "m:block/b", "weight": "many"}]}]}""", AssetVersion.MODERN);
+        JsonObject result = convert("\n                {\"multipart\": [{\"apply\": [{\"model\": \"m:block/a\", \"weight\": 1.5},\n                                          {\"model\": \"m:block/b\", \"weight\": \"many\"}]}]}", AssetVersion.MODERN);
 
         JsonArray applied = result.getAsJsonArray("multipart").get(0).getAsJsonObject().getAsJsonArray("apply");
         assertEquals(1, applied.get(0).getAsJsonObject().get("weight").getAsInt());
