@@ -10,9 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
@@ -95,13 +93,15 @@ public class AssetBridgeForge {
         // 1.12.2 has neither PackResources nor a PackRepository to inject into: the bridged
         // resources/data are written straight into this mod's own assets/data folders under the
         // dev/run resources root, which the game's normal IResourcePack scanning already reads.
-        AssetBridgeRepositorySource.RESOURCES.writeTo(gameDir.resolve("assets"));
+        Path resourcePackDir = gameDir.resolve("assetbridge");
+        AssetBridgeRepositorySource.RESOURCES.writeTo(resourcePackDir.resolve("assets"));
         AssetBridgeRepositorySource.DATA.writeTo(gameDir.resolve("data"));
 
         if (event.getSide().isClient()) {
-            Path packMcmeta = gameDir.resolve("pack.mcmeta");
+            Path packMcmeta = resourcePackDir.resolve("pack.mcmeta");
             if (!Files.exists(packMcmeta)) {
                 try {
+                    Files.createDirectories(resourcePackDir);
                     String content = "{\n  \"pack\": {\n    \"pack_format\": 3,\n    \"description\": \"Asset Bridge Resources\"\n  }\n}";
                     Files.write(packMcmeta, content.getBytes(StandardCharsets.UTF_8));
                 } catch (IOException e) {
@@ -116,13 +116,29 @@ public class AssetBridgeForge {
                                 Minecraft.getMinecraft(),
                                 "defaultResourcePacks", "field_110449_ao"
                         );
-                defaultResourcePacks.add(new FolderResourcePack(gameDir.toFile()));
+                defaultResourcePacks.add(new FolderResourcePack(resourcePackDir.toFile()));
             } catch (Exception e) {
                 AssetBridge.LOGGER.error("Failed to register FolderResourcePack via reflection", e);
             }
         }
 
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    private static class DummyContainer extends DummyModContainer {
+        private final String modId;
+
+        public DummyContainer(String modId) {
+            super(new ModMetadata());
+            this.modId = modId;
+            getMetadata().modId = modId;
+            getMetadata().name = modId;
+        }
+
+        @Override
+        public String getModId() {
+            return modId;
+        }
     }
 
     // ---------------------------------------------------------------------------
@@ -170,7 +186,11 @@ public class AssetBridgeForge {
 
     private void registerWithContainer(ResourceLocation id, Runnable registerAction) {
         ModContainer original = Loader.instance().activeModContainer();
-        ModContainer target = Loader.instance().getIndexedModList().get(id.getNamespace());
+        String namespace = id.getNamespace();
+        ModContainer target = Loader.instance().getIndexedModList().get(namespace);
+        if (target == null) {
+            target = new DummyContainer(namespace);
+        }
         Loader.instance().setActiveModContainer(target);
         try {
             registerAction.run();
