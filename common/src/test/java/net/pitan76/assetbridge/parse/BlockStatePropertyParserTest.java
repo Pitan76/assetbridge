@@ -7,6 +7,7 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,9 +24,9 @@ class BlockStatePropertyParserTest {
                     "facing=south,half=top":    {"model": "examplemod:block/b"}
                 }}""");
 
-        assertEquals(List.of("facing", "half"), names(states));
-        assertEquals(List.of("north", "south"), states.properties().get(0).values());
-        assertEquals(List.of("bottom", "top"), states.properties().get(1).values());
+        assertEquals(Arrays.asList("facing", "half"), names(states));
+        assertEquals(Arrays.asList("north", "south"), states.properties().get(0).values());
+        assertEquals(Arrays.asList("bottom", "top"), states.properties().get(1).values());
     }
 
     @Test
@@ -53,7 +54,7 @@ class BlockStatePropertyParserTest {
                     {"when": {"south": "true"}, "apply": {"model": "examplemod:block/side"}}
                 ]}""");
 
-        assertEquals(List.of("north", "south"), names(states));
+        assertEquals(Arrays.asList("north", "south"), names(states));
     }
 
     @Test
@@ -66,8 +67,8 @@ class BlockStatePropertyParserTest {
                     ]}, "apply": {"model": "examplemod:block/a"}}
                 ]}""");
 
-        assertEquals(List.of("facing", "lit"), names(states));
-        assertEquals(List.of("north", "south", "east"), states.properties().get(0).values());
+        assertEquals(Arrays.asList("facing", "lit"), names(states));
+        assertEquals(Arrays.asList("north", "south", "east"), states.properties().get(0).values());
     }
 
     @Test

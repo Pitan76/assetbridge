@@ -100,7 +100,7 @@ class ArchiveScannerTest {
         writeArchive("b.ZIP", Map.of("assets/b/blockstates/foo.json", "{}"));
         writeArchive("c.txt", Map.of("assets/c/blockstates/foo.json", "{}"));
 
-        assertEquals(List.of("a.jar", "b.ZIP"), scan().stream()
+        assertEquals(Arrays.asList("a.jar", "b.ZIP"), scan().stream()
                 .map(AssetArchive::fileName).toList());
     }
 
@@ -110,7 +110,7 @@ class ArchiveScannerTest {
                 StandardCharsets.UTF_8);
         writeArchive("good.jar", Map.of("assets/examplemod/blockstates/foo.json", "{}"));
 
-        assertEquals(List.of("good.jar"), scan().stream()
+        assertEquals(Arrays.asList("good.jar"), scan().stream()
                 .map(AssetArchive::fileName).toList());
     }
 
@@ -151,7 +151,7 @@ class ArchiveScannerTest {
         writeArchive("alpha.jar", Map.of("assets/a/blockstates/foo.json", "{}"));
         writeArchive("Charlie.zip", Map.of("assets/c/blockstates/foo.json", "{}"));
 
-        assertEquals(List.of("alpha.jar", "Beta.jar", "Charlie.zip"),
+        assertEquals(Arrays.asList("alpha.jar", "Beta.jar", "Charlie.zip"),
                 scan().stream().map(AssetArchive::fileName).toList());
     }
 
@@ -178,7 +178,7 @@ class ArchiveScannerTest {
         List<AssetArchive> archives = scan();
 
         // The nested one loads right after its parent, so the outer still wins a collision.
-        assertEquals(List.of("example-mod.jar", "example-mod.jar!META-INF_jars_inner.jar"),
+        assertEquals(Arrays.asList("example-mod.jar", "example-mod.jar!META-INF_jars_inner.jar"),
                 archives.stream().map(AssetArchive::fileName).toList());
         assertEquals(Set.of("assets/innermod/blockstates/inner.json"),
                 archives.get(1).entries().keySet().stream()
@@ -191,7 +191,7 @@ class ArchiveScannerTest {
                 Map.of("assets/examplemod/blockstates/outer.json", "{}"),
                 Map.of("META-INF/jars/library.jar", Map.of("net/example/Library.class", "cafebabe")));
 
-        assertEquals(List.of("example-mod.jar"), scan().stream().map(AssetArchive::fileName).toList());
+        assertEquals(Arrays.asList("example-mod.jar"), scan().stream().map(AssetArchive::fileName).toList());
 
         // Nothing useful came out of it, so the extracted copy is not left behind either.
         Path cached = NestedArchives.cacheDirectory(gameDir)

@@ -66,7 +66,7 @@ class KnownPropertiesTest {
     }
 
     private static Object match(String name, String... values) {
-        BridgedProperty property = BridgedProperty.of(name, List.of(values));
+        BridgedProperty property = BridgedProperty.of(name, Arrays.asList(values));
         assertNotNull(property);
         return KnownProperties.match(property);
     }

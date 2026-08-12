@@ -74,8 +74,8 @@ class AssetPipelineTest {
         assertEquals(90, variants.getAsJsonObject("facing=north").get("y").getAsInt());
 
         BridgedStateDefinition states = assets.blocks().get(0).states();
-        assertEquals(List.of("facing"), states.properties().stream().map(BridgedProperty::name).toList());
-        assertEquals(List.of("north", "south"), states.properties().get(0).values());
+        assertEquals(Arrays.asList("facing"), states.properties().stream().map(BridgedProperty::name).toList());
+        assertEquals(Arrays.asList("north", "south"), states.properties().get(0).values());
     }
 
     @Test
@@ -183,7 +183,7 @@ class AssetPipelineTest {
                         "{\"variants\": {\"\": {\"model\": \"newmod:block/bar\"}}}",
                         "assets/newmod/models/block/bar.json", "{\"parent\": \"blocks/cube_all\"}")));
 
-        for (String namespace : List.of("oldmod", "newmod")) {
+        for (String namespace : Arrays.asList("oldmod", "newmod")) {
             String model = namespace.equals("oldmod") ? "foo" : "bar";
             assertEquals("block/cube_all",
                     json(assets, new AssetPath(AssetPath.PackKind.CLIENT, namespace, "models/block/" + model + ".json"))
@@ -201,13 +201,13 @@ class AssetPipelineTest {
                         "assets/newmod/blockstates/bar.json",
                         "{\"variants\": {\"\": {\"model\": \"newmod:block/bar\"}}}")));
 
-        assertEquals(List.of(AssetVersion.LEGACY, AssetVersion.ATLASES),
+        assertEquals(Arrays.asList(AssetVersion.LEGACY, AssetVersion.ATLASES),
                 assets.blocks().stream().map(BridgedBlockDefinition::version).toList());
     }
 
     @Test
     void skipsNamespacesThatALoadedModAlreadyOwns() {
-        BridgedAssetManager assets = AssetPipeline.build(List.of(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
+        BridgedAssetManager assets = AssetPipeline.build(Arrays.asList(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, Map.of(
                 "assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}",
                 "assets/examplemod/models/block/foo.json", "{\"parent\": \"block/cube_all\"}",
@@ -217,7 +217,7 @@ class AssetPipelineTest {
 
         // Neither the block nor its resources may reach the assets, or the real mod's
         // appearance would be overridden by ours.
-        assertEquals(List.of("othermod:bar"), assets.blocks().stream().map(BridgedBlockDefinition::id).toList());
+        assertEquals(Arrays.asList("othermod:bar"), assets.blocks().stream().map(BridgedBlockDefinition::id).toList());
         assertTrue(assets.resources().keySet().stream().noneMatch(path -> path.namespace().equals("examplemod")));
     }
 
@@ -242,7 +242,7 @@ class AssetPipelineTest {
                 "{\"variants\": {\"\": {\"model\": \"examplemod:block/fine\"}}}"
         )));
 
-        assertEquals(List.of("examplemod:fine"), assets.blocks().stream().map(BridgedBlockDefinition::id).toList());
+        assertEquals(Arrays.asList("examplemod:fine"), assets.blocks().stream().map(BridgedBlockDefinition::id).toList());
     }
 
     @Test
@@ -253,7 +253,7 @@ class AssetPipelineTest {
                 "assets/examplemod/textures/item/wand.png", "png bytes"
         )));
 
-        assertEquals(List.of("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
+        assertEquals(Arrays.asList("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
         assertEquals("example-mod.jar", assets.items().get(0).sourceArchive());
     }
 
@@ -267,7 +267,7 @@ class AssetPipelineTest {
         )));
 
         // 'foo' is already covered by the block's own BlockItem.
-        assertEquals(List.of("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
+        assertEquals(Arrays.asList("examplemod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
     }
 
     @Test
@@ -280,7 +280,7 @@ class AssetPipelineTest {
                 "assets/newmod/models/item/leftover.json", "{\"parent\": \"item/generated\"}"
         )));
 
-        assertEquals(List.of("newmod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
+        assertEquals(Arrays.asList("newmod:wand"), assets.items().stream().map(BridgedItemDefinition::id).toList());
     }
 
     //? if >=26 {
@@ -310,7 +310,7 @@ class AssetPipelineTest {
                 "assets/oldmod/models/item/gem.json", "{\"parent\": \"item/generated\"}"
         )));
 
-        assertEquals(List.of("newmod:wand", "oldmod:gem"),
+        assertEquals(Arrays.asList("newmod:wand", "oldmod:gem"),
                 assets.items().stream().map(BridgedItemDefinition::id).sorted().toList());
     }
 
@@ -384,7 +384,7 @@ class AssetPipelineTest {
     }
 
     private static BridgedAssetManager build(AssetArchive... archives) {
-        return AssetPipeline.build(List.of(archives), NOTHING_LOADED);
+        return AssetPipeline.build(Arrays.asList(archives), NOTHING_LOADED);
     }
 
     private static JsonObject json(BridgedAssetManager assets, AssetPath path) {

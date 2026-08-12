@@ -22,7 +22,7 @@ class FeatureConfigTest {
 
     @Test
     void usesTheDefaultsAndWritesThemOutWhenThereIsNoConfig() throws IOException {
-        assertEquals(Set.of("on"), FeatureConfig.read(gameDir, List.of(ON, OFF)));
+        assertEquals(Set.of("on"), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
 
         String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=true"), written);
@@ -35,7 +35,7 @@ class FeatureConfigTest {
     void honoursWhatThePlayerWrote() {
         write("feature.on=false\nfeature.off=true\n");
 
-        assertEquals(Set.of("off"), FeatureConfig.read(gameDir, List.of(ON, OFF)));
+        assertEquals(Set.of("off"), FeatureConfig.read(gameDir, Arrays.asList(ON, OFF)));
     }
 
     @Test
@@ -43,7 +43,7 @@ class FeatureConfigTest {
         write("feature.on=false\n");
 
         // A feature added in a later version keeps its default instead of counting as off.
-        assertEquals(Set.of("off"), FeatureConfig.read(gameDir, List.of(ON, feature("off", true))));
+        assertEquals(Set.of("off"), FeatureConfig.read(gameDir, Arrays.asList(ON, feature("off", true))));
 
         String written = Files.readString(FeatureConfig.file(gameDir), StandardCharsets.UTF_8);
         assertTrue(written.contains("feature.on=false"), written);
@@ -54,7 +54,7 @@ class FeatureConfigTest {
     void treatsAnUnreadableValueAsOff() {
         write("feature.on=yes please\n");
 
-        assertEquals(Set.of(), FeatureConfig.read(gameDir, List.of(ON)));
+        assertEquals(Set.of(), FeatureConfig.read(gameDir, Arrays.asList(ON)));
     }
 
     private void write(String contents) {

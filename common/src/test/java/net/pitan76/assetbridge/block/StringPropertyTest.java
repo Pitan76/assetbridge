@@ -16,7 +16,7 @@ class StringPropertyTest {
         StringProperty property = StringProperty.create("facing", Arrays.asList("north", "south"));
 
         assertEquals(Optional.of("north"), property.getValue("north"));
-        assertEquals(List.of("north", "south"), new ArrayList<>(property.getPossibleValues()));
+        assertEquals(Arrays.asList("north", "south"), new ArrayList<>(property.getPossibleValues()));
         assertEquals(Optional.empty(), property.getValue("west"));
         assertEquals("north", property.getName("north"));
     }

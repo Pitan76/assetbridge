@@ -75,7 +75,7 @@ class RecipeFeatureTest {
                                      Map<String, String> entries) {
         BridgedAssetManager assets = new BridgedAssetManager();
         List<AssetArchive> archives =
-                List.of(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, entries));
+                Arrays.asList(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, entries));
 
         new RecipeFeature().apply(
                 new FeatureContext(Path.of("."), assets, enabled, archives, isNamespaceUsed));
