@@ -162,6 +162,58 @@ public class BlockStateConverter implements AssetConverter {
         return root;
     }
 
+    /** Whether the representative variant already carries its own fixed {@code x}/{@code y} rotation. */
+    public static boolean hasOwnRotation(JsonElement variant) {
+        if (variant.isJsonArray()) {
+            for (JsonElement el : variant.getAsJsonArray()) {
+                if (hasOwnRotation(el)) return true;
+            }
+            return false;
+        }
+        if (!variant.isJsonObject()) return false;
+        JsonObject obj = variant.getAsJsonObject();
+        return obj.has("x") || obj.has("y");
+    }
+
+    /**
+     * Same idea as {@link #singleVariant}, but keyed by {@code BlockHorizontal.FACING}'s four
+     * horizontal directions instead of a single "normal"/"" variant, each with the {@code y}
+     * rotation that reproduces facing that direction -- the same convention vanilla's own
+     * directional blocks (furnaces, logs placed with {@code axis=x/z}, etc.) use: north = 0,
+     * east = 90, south = 180, west = 270. Only safe when the representative model has no
+     * rotation of its own to compose with; see {@code BridgedBlockDefinition#supportsFacing()}.
+     */
+    public static JsonObject facingVariants(JsonElement variant) {
+        JsonElement bare = unqualifyModels(variant);
+        JsonObject variants = new JsonObject();
+        variants.add("facing=north", withYRotation(bare, 0));
+        variants.add("facing=east", withYRotation(bare, 90));
+        variants.add("facing=south", withYRotation(bare, 180));
+        variants.add("facing=west", withYRotation(bare, 270));
+        // The item-form icon ignores block properties entirely and always looks up "inventory".
+        variants.add("inventory", bare);
+        JsonObject root = new JsonObject();
+        root.add("variants", variants);
+        return root;
+    }
+
+    private static JsonElement withYRotation(JsonElement variant, int y) {
+        if (variant.isJsonArray()) {
+            JsonArray copy = new JsonArray();
+            for (JsonElement el : variant.getAsJsonArray()) {
+                copy.add(withYRotation(el, y));
+            }
+            return copy;
+        }
+        if (!variant.isJsonObject()) return variant;
+        JsonObject copy = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : variant.getAsJsonObject().entrySet()) {
+            if (!entry.getKey().equals("y")) copy.add(entry.getKey(), entry.getValue());
+        }
+        if (y != 0) copy.addProperty("y", y);
+        return copy;
+    }
+
     /**
      * The inverse of {@link #qualify}: strips a leading {@code block/} path segment off any
      * {@code model} value found in {@code element} (object or array), so a fully-qualified
