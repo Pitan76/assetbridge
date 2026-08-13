@@ -306,23 +306,4 @@ public class AssetBridgeForge {
             }
         }
     }
-
-    /**
-     * Converts a modern-format ({@code block.<namespace>.<path>} / {@code item.<namespace>.<path>})
-     * translation key to 1.12.2's own ({@code tile.<namespace>.<path>.name} /
-     * {@code item.<namespace>.<path>.name}): {@code Block#getLocalizedName()} looks up
-     * {@code "tile." + translationKey + ".name"} and {@code Item#getItemStackDisplayName()} looks
-     * up {@code "item." + translationKey + ".name"} -- neither of those exists in the source
-     * archive's own (modern-format) lang file, so injecting its keys unconverted leaves every
-     * name showing as the raw, untranslated key.
-     */
-    private static String toLegacyTranslationKey(String key) {
-        if (key.startsWith("block.")) {
-            return "tile." + key.substring("block.".length()) + ".name";
-        }
-        if (key.startsWith("item.")) {
-            return key + ".name";
-        }
-        return key;
-    }
 }
