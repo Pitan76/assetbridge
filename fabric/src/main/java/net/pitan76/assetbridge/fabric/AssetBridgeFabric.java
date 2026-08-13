@@ -2,9 +2,8 @@ package net.pitan76.assetbridge.fabric;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.legacyfabric.fabric.api.registry.v2.RegistryHelper;
-import net.legacyfabric.fabric.api.registry.v2.RegistryIds;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
 import net.pitan76.assetbridge.AssetBridge;
@@ -90,6 +89,25 @@ public class AssetBridgeFabric implements ModInitializer {
         Map<String, Item> blockItems = BridgedBlocks.items();
         Map<String, Item> items = BridgedItems.items();
 
+        // Registry#put only adds the name->object mapping; it never assigns the object a raw int
+        // id (that's SimpleRegistry#add(int, K, V)). Item/Block ids that skip this step still
+        // look registered (present, resolvable by name, model/texture loads fine) but
+        // Item#getRawId returns -1 for them, so anything indexed by raw id -- e.g.
+        // Stats.used(Item), read via ItemStack#use on every right-click/placement -- throws
+        // ArrayIndexOutOfBoundsException(-1) the first time the item is used.
+        //
+        // Legacy Fabric's own registry-sync API (RegistryHelper.register) exists to assign that
+        // raw id, but its "next free id" bookkeeping collided with vanilla's own low, fixed ids
+        // (observed: Bedrock silently replaced by a bridged block) -- it does not appear to
+        // consult the registry's actual occupied ids before picking one. nextFreeRawId below
+        // does that consultation itself: starting from a base well above vanilla's own item/block
+        // id range and probing upward with SimpleRegistry#getByRawId, which is O(1) per lookup.
+        // (Do not iterate the registry to find where its "current" occupancy ends first -- that
+        // walks its full backing structure, which measured many minutes here for reasons unclear
+        // and made the whole registration step appear to hang.)
+        int nextItemId = nextFreeRawId((SimpleRegistry<Identifier, Item>) Item.REGISTRY, 20000);
+        int nextBlockId = nextFreeRawId((SimpleRegistry<Identifier, Block>) Block.REGISTRY, 20000);
+
         int registeredBlocks = 0;
         for (Map.Entry<String, Block> entry : blocks.entrySet()) {
             // Mod init order is not controllable, so a mod loaded after us can still claim the
@@ -99,17 +117,8 @@ public class AssetBridgeFabric implements ModInitializer {
                 AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", id);
                 continue;
             }
-            // Registry#put only adds the name->object mapping; it never assigns the object a raw
-            // int id (that's SimpleRegistry#add). Item/Block IDs that skip this step still look
-            // registered (present, resolvable by name, model/texture loads fine) but
-            // Item#getRawId returns -1 for them, so anything indexed by raw id -- e.g.
-            // Stats.used(Item), read via ItemStack#use on every right-click/placement -- throws
-            // ArrayIndexOutOfBoundsException(-1) the first time the item is used. RegistryHelper
-            // (Legacy Fabric's registry-sync API) is the sanctioned way to register with a real,
-            // synced raw id on this platform.
-            net.legacyfabric.fabric.api.util.Identifier fabricId = new net.legacyfabric.fabric.api.util.Identifier(entry.getKey());
-            RegistryHelper.register(RegistryIds.BLOCKS, fabricId, entry.getValue());
-            RegistryHelper.register(RegistryIds.ITEMS, fabricId, blockItems.get(entry.getKey()));
+            ((SimpleRegistry<Identifier, Block>) Block.REGISTRY).add(nextBlockId++, id, entry.getValue());
+            ((SimpleRegistry<Identifier, Item>) Item.REGISTRY).add(nextItemId++, id, blockItems.get(entry.getKey()));
             registeredBlocks++;
         }
 
@@ -120,9 +129,18 @@ public class AssetBridgeFabric implements ModInitializer {
                 AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", id);
                 continue;
             }
-            RegistryHelper.register(RegistryIds.ITEMS, new net.legacyfabric.fabric.api.util.Identifier(entry.getKey()), entry.getValue());
+            ((SimpleRegistry<Identifier, Item>) Item.REGISTRY).add(nextItemId++, id, entry.getValue());
             registeredItems++;
         }
         AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registeredBlocks, registeredItems);
+    }
+
+    /** The lowest raw id at or above {@code start} that {@code registry} has no entry at. */
+    private static int nextFreeRawId(SimpleRegistry<Identifier, ?> registry, int start) {
+        int candidate = start;
+        while (registry.getByRawId(candidate) != null) {
+            candidate++;
+        }
+        return candidate;
     }
 }
