@@ -15,15 +15,33 @@ public class BridgedBlockDefinition {
     private final BridgedStateDefinition states;
     private final String sourceArchive;
     private final AssetVersion version;
+    private final boolean supportsFacing;
 
     public BridgedBlockDefinition(String namespace, String path, String modelId,
                                    BridgedStateDefinition states, String sourceArchive, AssetVersion version) {
+        this(namespace, path, modelId, states, sourceArchive, version, false);
+    }
+
+    public BridgedBlockDefinition(String namespace, String path, String modelId, BridgedStateDefinition states,
+                                   String sourceArchive, AssetVersion version, boolean supportsFacing) {
         this.namespace = namespace;
         this.path = path;
         this.modelId = modelId;
         this.states = states;
         this.sourceArchive = sourceArchive;
         this.version = version;
+        this.supportsFacing = supportsFacing;
+    }
+
+    /**
+     * Whether this block was registered with a placement-facing property (1.12.2 only; see
+     * {@code BridgedBlock}). False when the representative model already carries its own fixed
+     * {@code x}/{@code y} rotation (e.g. a log lying on its side): composing that with a second,
+     * placement-driven rotation is not a simple addition, so those blocks keep their single fixed
+     * orientation instead of risking an incorrectly rotated model.
+     */
+    public boolean supportsFacing() {
+        return supportsFacing;
     }
 
     public String namespace() {
@@ -61,7 +79,7 @@ public class BridgedBlockDefinition {
         BridgedBlockDefinition other = (BridgedBlockDefinition) o;
         return namespace.equals(other.namespace) && path.equals(other.path) && modelId.equals(other.modelId)
                 && states.equals(other.states) && sourceArchive.equals(other.sourceArchive)
-                && version == other.version;
+                && version == other.version && supportsFacing == other.supportsFacing;
     }
 
     @Override
@@ -72,6 +90,7 @@ public class BridgedBlockDefinition {
         result = 31 * result + states.hashCode();
         result = 31 * result + sourceArchive.hashCode();
         result = 31 * result + version.hashCode();
+        result = 31 * result + Boolean.hashCode(supportsFacing);
         return result;
     }
 

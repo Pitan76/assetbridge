@@ -287,8 +287,7 @@ public class AssetBridgeForge {
                         if (json != null) {
                             for (Map.Entry<String, com.google.gson.JsonElement> member : json.entrySet()) {
                                 if (member.getValue().isJsonPrimitive()) {
-                                    String key = member.getKey();
-                                    String fixedKey = key.replace(':', '.');
+                                    String fixedKey = toLegacyTranslationKey(member.getKey().replace(':', '.'));
                                     String value = member.getValue().getAsString();
                                     net.pitan76.assetbridge.block.LanguageHelper.injectTranslation(fixedKey, value);
                                 }
@@ -300,5 +299,24 @@ public class AssetBridgeForge {
                 }
             }
         }
+    }
+
+    /**
+     * Converts a modern-format ({@code block.<namespace>.<path>} / {@code item.<namespace>.<path>})
+     * translation key to 1.12.2's own ({@code tile.<namespace>.<path>.name} /
+     * {@code item.<namespace>.<path>.name}): {@code Block#getLocalizedName()} looks up
+     * {@code "tile." + translationKey + ".name"} and {@code Item#getItemStackDisplayName()} looks
+     * up {@code "item." + translationKey + ".name"} -- neither of those exists in the source
+     * archive's own (modern-format) lang file, so injecting its keys unconverted leaves every
+     * name showing as the raw, untranslated key.
+     */
+    private static String toLegacyTranslationKey(String key) {
+        if (key.startsWith("block.")) {
+            return "tile." + key.substring("block.".length()) + ".name";
+        }
+        if (key.startsWith("item.")) {
+            return key + ".name";
+        }
+        return key;
     }
 }
