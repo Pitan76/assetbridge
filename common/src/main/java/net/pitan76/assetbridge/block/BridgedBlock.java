@@ -24,7 +24,7 @@ import net.pitan76.assetbridge.util.Ids;
 public class BridgedBlock extends Block {
     private BridgedBlock(String id, BridgedStateDefinition states) {
         super(rockMaterial());
-        setTranslationKey(id);
+        setTranslationKey(id.replace(':', '.'));
         if (BridgedItemGroup.creativeTabsSupported()) {
             setCreativeTab(BridgedItemGroup.getTab(Ids.namespaceOf(id), true));
         } else {

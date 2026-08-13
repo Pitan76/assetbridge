@@ -35,7 +35,7 @@ public class BridgedItems {
                 continue;
             }
             Item item = new Item();
-            item.setTranslationKey(id);
+            item.setTranslationKey(id.replace(':', '.'));
             if (BridgedItemGroup.creativeTabsSupported()) {
                 item.setCreativeTab(BridgedItemGroup.getTab(Ids.namespaceOf(id), false));
             } else {
