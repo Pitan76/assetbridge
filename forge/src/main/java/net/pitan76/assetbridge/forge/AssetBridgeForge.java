@@ -287,7 +287,13 @@ public class AssetBridgeForge {
                         if (json != null) {
                             for (Map.Entry<String, com.google.gson.JsonElement> member : json.entrySet()) {
                                 if (member.getValue().isJsonPrimitive()) {
-                                    String fixedKey = toLegacyTranslationKey(member.getKey().replace(':', '.'));
+                                    // The resource itself already carries 1.12.2-shaped keys --
+                                    // AssetPipeline's LANG handling converts modern
+                                    // block./item. keys to tile....name/item....name before this
+                                    // ever gets served. Converting again here would double up the
+                                    // ".name" suffix (item.sakura.x.name -> item.sakura.x.name.name)
+                                    // and leave every name showing its own raw, unmatched key.
+                                    String fixedKey = member.getKey().replace(':', '.');
                                     String value = member.getValue().getAsString();
                                     net.pitan76.assetbridge.block.LanguageHelper.injectTranslation(fixedKey, value);
                                 }

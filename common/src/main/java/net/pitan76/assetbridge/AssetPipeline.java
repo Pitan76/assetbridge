@@ -156,8 +156,12 @@ public class AssetPipeline {
                     }
                 } else {
                     if (!assets.hasResource(target)) {
-                        AssetBridge.LOGGER.info("Registered existing json lang: namespace={}, path={}", target.namespace(), target.path());
-                        assets.putResource(target, source);
+                        byte[] raw = readBytes(source, path, archive);
+                        if (raw != null) {
+                            byte[] relabelled = relabelToLegacyKeys(raw);
+                            AssetBridge.LOGGER.info("Registered existing json lang: namespace={}, path={}", target.namespace(), target.path());
+                            assets.putResource(target, relabelled);
+                        }
                     }
                 }
                 break;
@@ -457,6 +461,39 @@ public class AssetPipeline {
             }
         }
         return Json.toString(json).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Rewrites a modern-format lang JSON's keys to what 1.12.2 actually looks up.
+     *
+     * <p>{@code Block#getLocalizedName()} looks up {@code "tile." + translationKey + ".name"}
+     * and {@code Item#getItemStackDisplayName()} looks up {@code "item." + translationKey +
+     * ".name"} -- 1.13+ dropped both the {@code tile.} prefix and the {@code .name} suffix (a
+     * source archive's own {@code block.<namespace>.<path>} / {@code item.<namespace>.<path>}
+     * key matches neither), so passing modern keys through unchanged leaves every bridged
+     * block/item showing its own raw, untranslated key in this generation. Keys this pipeline
+     * itself generates ({@code itemGroup....}) already use the legacy-shaped key and pass through
+     * unchanged; so does anything this doesn't recognise, rather than risk breaking it.
+     */
+    private static byte[] relabelToLegacyKeys(byte[] raw) {
+        JsonObject json = Json.parse(new String(raw, StandardCharsets.UTF_8));
+        if (json == null) return raw;
+
+        JsonObject relabelled = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            relabelled.add(toLegacyLangKey(entry.getKey()), entry.getValue());
+        }
+        return Json.toString(relabelled).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static String toLegacyLangKey(String key) {
+        if (key.startsWith("block.")) {
+            return "tile." + key.substring("block.".length()) + ".name";
+        }
+        if (key.startsWith("item.")) {
+            return key + ".name";
+        }
+        return key;
     }
 
     private static byte[] convertTagJson(byte[] raw, boolean toFabric) {
