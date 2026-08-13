@@ -85,7 +85,7 @@ public class BridgedBlock extends Block {
     @Override
     public IBlockState getStateFromMeta(int meta) {
         if (!supportsFacing) return getDefaultState();
-        return getDefaultState().withProperty(BlockHorizontal.FACING, EnumFacing.getHorizontal(meta));
+        return getDefaultState().withProperty(BlockHorizontal.FACING, EnumFacing.byHorizontalIndex(meta));
     }
 
     @Override
