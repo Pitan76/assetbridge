@@ -39,7 +39,7 @@ public class BridgedBlocks {
                 AssetBridge.LOGGER.warn("Skipping block with invalid id '{}' from {}", id, asset.sourceArchive());
                 continue;
             }
-            Block block = BridgedBlock.create(id, asset.states());
+            Block block = BridgedBlock.create(id, asset.states(), asset.supportsFacing());
             createdBlocks.put(id, block);
             // 1.12.2's block item always declares its tab through the block's own
             // getCreativeTab(), which BridgedBlock already set; there is no later-version

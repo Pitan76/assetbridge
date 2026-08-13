@@ -1,5 +1,6 @@
 package net.pitan76.assetbridge.convert;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;

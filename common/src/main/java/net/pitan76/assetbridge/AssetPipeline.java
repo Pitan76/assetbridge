@@ -259,13 +259,15 @@ public class AssetPipeline {
             return;
         }
 
-        // BridgedBlock always registers a single, property-free block on this platform (1.12.2
-        // predates the flattened blockstate system; see its class doc), regardless of whether
+        // BridgedBlock always registers a single block on this platform (1.12.2 predates the
+        // flattened blockstate system; see its class doc), regardless of whether
         // BlockStatePropertyParser could otherwise represent the source file's properties. Serving
         // the original multi-variant JSON here would describe states ("age=0", ...) the actual
         // registered block never has, and Forge/Fabric would fail to resolve any of them (looked
         // up variant key never matches) -- every bridged block would render as missing. The served
-        // blockstate must always collapse to the block's single representative variant to match.
+        // blockstate must always collapse to the representative variant to match, optionally
+        // spread across BridgedBlock's own facing property instead of a single fixed orientation
+        // (see BridgedBlockDefinition#supportsFacing()).
         BridgedStateDefinition states = BlockStatePropertyParser.parse(json);
         if (states != null && !states.isEmpty()) {
             AssetBridge.LOGGER.debug(
@@ -273,11 +275,14 @@ public class AssetPipeline {
                     states.properties().size(), states.properties().size() == 1 ? "y" : "ies", id, archive.fileName());
         }
         states = BridgedStateDefinition.empty();
-        assets.putResource(path, Json.toString(BlockStateConverter.singleVariant(variant))
-                .getBytes(StandardCharsets.UTF_8));
+        boolean supportsFacing = !BlockStateConverter.hasOwnRotation(variant);
+        JsonObject servedBlockState = supportsFacing
+                ? BlockStateConverter.facingVariants(variant)
+                : BlockStateConverter.singleVariant(variant);
+        assets.putResource(path, Json.toString(servedBlockState).getBytes(StandardCharsets.UTF_8));
 
         assets.addBlock(new BridgedBlockDefinition(path.namespace(), name, qualify(model, path.namespace()),
-                states, archive.fileName(), version));
+                states, archive.fileName(), version, supportsFacing));
     }
 
     private static boolean convertInto(BridgedAssetManager assets, AssetConverter converter, AssetPath path, AssetSource source,
