@@ -149,9 +149,14 @@ public class BlockStateConverter implements AssetConverter {
         // "" is vanilla/Fabric's key for a property-less block's only variant; Forge's own
         // StateMapperBase instead looks up "normal" for the same case. Serving both means the
         // single JSON works unmodified on either platform without this converter needing to know
-        // which one is currently running.
+        // which one is currently running. "inventory" is separate again: 1.12.2 blockstate files
+        // resolve a block's *item* icon (creative menu, held item, dropped entity, inventory
+        // slot -- everything except the block placed in the world) through that key specifically,
+        // regardless of platform. Without it the world block rendered fine (it only ever needed
+        // "normal"/"") while every one of its item-form appearances stayed missing.
         variants.add("", bare);
         variants.add("normal", bare);
+        variants.add("inventory", bare);
         JsonObject root = new JsonObject();
         root.add("variants", variants);
         return root;

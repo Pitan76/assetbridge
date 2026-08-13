@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.forge;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.resources.FolderResourcePack;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.util.ResourceLocation;
@@ -8,6 +9,8 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.block.Block;
+import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.*;
@@ -50,6 +53,16 @@ import java.util.function.Predicate;
 public class AssetBridgeForge {
     /** Ids that lost the race against a real mod, so their items must be skipped too. */
     private final Set<ResourceLocation> skipped = new LinkedHashSet<>();
+
+    /**
+     * Every {@code Item} (including {@code ItemBlock}s) this mod actually registered, so
+     * {@link #registerModels} can wire each one to its inventory-icon model. Forge does not
+     * infer this automatically for items outside vanilla's own bootstrap: without an explicit
+     * {@code ModelLoader.setCustomModelResourceLocation} call, an item stays associated with no
+     * model at all and renders as the missing-texture placeholder everywhere except -- for a
+     * block -- the world, which resolves through the blockstate's own variant instead.
+     */
+    private final List<Item> registeredItemModels = new java.util.ArrayList<>();
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
