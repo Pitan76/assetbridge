@@ -4,7 +4,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.asset.AssetPath;
@@ -41,6 +40,26 @@ public class BridgedItemGroup {
     private static CreativeTabs blocksTab;
     @Nullable
     private static CreativeTabs itemsTab;
+
+    /**
+     * Whether {@code CreativeTabs} (the class, not a specific tab) can even be touched on the
+     * running platform. False on Legacy Fabric: {@code common} is compiled against MCP, where
+     * this class is named {@code CreativeTabs}; Legacy Fabric's Legacy Yarn mapping names the
+     * same game class {@code ItemGroup} instead, and {@code common} runs there as a plain,
+     * unremapped dependency, so referencing {@code CreativeTabs} throws
+     * {@code NoClassDefFoundError} the moment the call actually happens. Callers must check this
+     * before calling {@link #getTab}/{@link #blocks}/{@link #items} (or anything that returns a
+     * {@code CreativeTabs}) so that call is never reached on that platform.
+     */
+    private static boolean creativeTabsSupported = true;
+
+    public static void setCreativeTabsSupported(boolean supported) {
+        creativeTabsSupported = supported;
+    }
+
+    public static boolean creativeTabsSupported() {
+        return creativeTabsSupported;
+    }
 
     private static final Map<String, CreativeTabs> namespaceTabs = new LinkedHashMap<>();
 
@@ -110,8 +129,8 @@ public class BridgedItemGroup {
     /** Everything that belongs in the shared blocks or items tab. */
     public static List<Item> sharedTabContents(boolean isBlock) {
         List<Item> contents = new ArrayList<>();
-        for (Map.Entry<ResourceLocation, ? extends Item> entry : sourceFor(isBlock).entrySet()) {
-            if (namespaceTab(entry.getKey().getNamespace()) == null) contents.add(entry.getValue());
+        for (Map.Entry<String, ? extends Item> entry : sourceFor(isBlock).entrySet()) {
+            if (namespaceTab(net.pitan76.assetbridge.util.Ids.namespaceOf(entry.getKey())) == null) contents.add(entry.getValue());
         }
         return contents;
     }
@@ -120,14 +139,14 @@ public class BridgedItemGroup {
     public static List<Item> namespaceTabContents(String namespace) {
         List<Item> contents = new ArrayList<>();
         for (boolean isBlock : new boolean[]{true, false}) {
-            for (Map.Entry<ResourceLocation, ? extends Item> entry : sourceFor(isBlock).entrySet()) {
-                if (entry.getKey().getNamespace().equals(namespace)) contents.add(entry.getValue());
+            for (Map.Entry<String, ? extends Item> entry : sourceFor(isBlock).entrySet()) {
+                if (net.pitan76.assetbridge.util.Ids.namespaceOf(entry.getKey()).equals(namespace)) contents.add(entry.getValue());
             }
         }
         return contents;
     }
 
-    private static Map<ResourceLocation, ? extends Item> sourceFor(boolean isBlock) {
+    private static Map<String, ? extends Item> sourceFor(boolean isBlock) {
         return isBlock ? BridgedBlocks.items() : BridgedItems.items();
     }
 
@@ -208,9 +227,9 @@ public class BridgedItemGroup {
     }
 
     @Nullable
-    private static Item firstIn(Map<ResourceLocation, Item> items, String namespace) {
-        for (Map.Entry<ResourceLocation, Item> entry : items.entrySet()) {
-            if (entry.getKey().getNamespace().equals(namespace)) return entry.getValue();
+    private static Item firstIn(Map<String, Item> items, String namespace) {
+        for (Map.Entry<String, Item> entry : items.entrySet()) {
+            if (net.pitan76.assetbridge.util.Ids.namespaceOf(entry.getKey()).equals(namespace)) return entry.getValue();
         }
         return null;
     }

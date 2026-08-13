@@ -138,10 +138,59 @@ public class BlockStateConverter implements AssetConverter {
      * of models keeps all of its entries instead of collapsing to the first one.
      */
     public static JsonObject singleVariant(JsonElement variant) {
+        // 1.12.2's own blockstate loader treats a variant's "model" value as bare and relative
+        // to models/block/ itself, unlike 1.13+'s fully-qualified "namespace:block/name". The
+        // source archive is typically a modern-format pack whose "model" already reads
+        // "sakura:block/rice_stage0"; served as-is, 1.12.2 re-prepends "block/" on top of that
+        // and looks for the nonsensical "sakura:models/block/block/rice_stage0.json".
+        JsonElement bare = unqualifyModels(variant);
+
         JsonObject variants = new JsonObject();
-        variants.add("", variant);
+        // "" is vanilla/Fabric's key for a property-less block's only variant; Forge's own
+        // StateMapperBase instead looks up "normal" for the same case. Serving both means the
+        // single JSON works unmodified on either platform without this converter needing to know
+        // which one is currently running.
+        variants.add("", bare);
+        variants.add("normal", bare);
         JsonObject root = new JsonObject();
         root.add("variants", variants);
         return root;
+    }
+
+    /**
+     * The inverse of {@link #qualify}: strips a leading {@code block/} path segment off any
+     * {@code model} value found in {@code element} (object or array), so a fully-qualified
+     * modern-format reference becomes the bare name 1.12.2's own blockstate loader expects.
+     * Returns a fresh copy; {@code element} itself is left untouched.
+     */
+    private static JsonElement unqualifyModels(JsonElement element) {
+        if (element.isJsonArray()) {
+            com.google.gson.JsonArray copy = new com.google.gson.JsonArray();
+            for (JsonElement child : element.getAsJsonArray()) {
+                copy.add(unqualifyModels(child));
+            }
+            return copy;
+        }
+        if (!element.isJsonObject()) return element;
+
+        JsonObject copy = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+            if (entry.getKey().equals("model") && entry.getValue().isJsonPrimitive()) {
+                String model = entry.getValue().getAsString();
+                copy.addProperty("model", unqualify(model));
+            } else if (entry.getValue().isJsonObject() || entry.getValue().isJsonArray()) {
+                copy.add(entry.getKey(), unqualifyModels(entry.getValue()));
+            } else {
+                copy.add(entry.getKey(), entry.getValue());
+            }
+        }
+        return copy;
+    }
+
+    private static String unqualify(String model) {
+        int colon = model.indexOf(':');
+        String namespace = colon < 0 ? "" : model.substring(0, colon + 1);
+        String path = model.substring(colon + 1);
+        return path.startsWith("block/") ? namespace + path.substring("block/".length()) : model;
     }
 }

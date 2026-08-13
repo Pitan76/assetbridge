@@ -159,33 +159,41 @@ public class AssetBridgeForge {
     // version means supplying those two, not reworking the policy.
     // ---------------------------------------------------------------------------
 
+    // BridgedBlocks/BridgedItems key their maps by the plain "namespace:path" id string, not
+    // net.minecraft.util.ResourceLocation -- see BridgedBlocks' class doc for why (common is
+    // shared with a platform where that class does not exist). Forge itself has no such
+    // restriction, so ResourceLocation is constructed here at the platform boundary.
+
     private void registerBlocksInto(Predicate<ResourceLocation> taken,
                                     BiConsumer<ResourceLocation, Block> register) {
-        for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
-            if (taken.test(entry.getKey())) {
-                AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", entry.getKey());
-                skipped.add(entry.getKey());
+        for (Map.Entry<String, Block> entry : BridgedBlocks.blocks().entrySet()) {
+            ResourceLocation id = new ResourceLocation(entry.getKey());
+            if (taken.test(id)) {
+                AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", id);
+                skipped.add(id);
                 continue;
             }
-            register.accept(entry.getKey(), entry.getValue());
+            register.accept(id, entry.getValue());
         }
         AssetBridge.LOGGER.info("Registered {} bridged blocks", BridgedBlocks.blocks().size() - skipped.size());
     }
 
     private void registerItemsInto(Predicate<ResourceLocation> taken,
                                    BiConsumer<ResourceLocation, Item> register) {
-        for (Map.Entry<ResourceLocation, Item> entry : BridgedBlocks.items().entrySet()) {
-            if (skipped.contains(entry.getKey()) || taken.test(entry.getKey())) continue;
-            register.accept(entry.getKey(), entry.getValue());
+        for (Map.Entry<String, Item> entry : BridgedBlocks.items().entrySet()) {
+            ResourceLocation id = new ResourceLocation(entry.getKey());
+            if (skipped.contains(id) || taken.test(id)) continue;
+            register.accept(id, entry.getValue());
         }
 
         int registered = 0;
-        for (Map.Entry<ResourceLocation, Item> entry : BridgedItems.items().entrySet()) {
-            if (taken.test(entry.getKey())) {
-                AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
+        for (Map.Entry<String, Item> entry : BridgedItems.items().entrySet()) {
+            ResourceLocation id = new ResourceLocation(entry.getKey());
+            if (taken.test(id)) {
+                AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", id);
                 continue;
             }
-            register.accept(entry.getKey(), entry.getValue());
+            register.accept(id, entry.getValue());
             registered++;
         }
         AssetBridge.LOGGER.info("Registered {} bridged items", registered);

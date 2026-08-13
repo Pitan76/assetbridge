@@ -1,6 +1,7 @@
 package net.pitan76.assetbridge.block;
 
-import net.minecraft.util.ResourceLocation;
+import net.pitan76.assetbridge.util.Ids;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -51,8 +52,8 @@ public class BlockConfig {
         }
     }
 
-    public static float getHardness(ResourceLocation id) {
-        String val = customHardness.get(id.toString());
+    public static float getHardness(String id) {
+        String val = customHardness.get(id);
         if (val == null) {
             val = defaultHardness;
         }
@@ -63,8 +64,8 @@ public class BlockConfig {
         }
     }
 
-    public static float getResistance(ResourceLocation id) {
-        String val = customResistance.get(id.toString());
+    public static float getResistance(String id) {
+        String val = customResistance.get(id);
         if (val == null) {
             val = defaultResistance;
         }
@@ -75,10 +76,10 @@ public class BlockConfig {
         }
     }
 
-    public static boolean isCutout(ResourceLocation id) {
+    public static boolean isCutout(String id) {
         if (cutoutBlocks.equalsIgnoreCase("false")) return false;
         if (cutoutBlocks.equalsIgnoreCase("true")) {
-            String path = id.getPath().toLowerCase();
+            String path = Ids.pathOf(id).toLowerCase();
             return path.contains("leaves")
                     || path.contains("glass")
                     || path.contains("sapling")
@@ -89,22 +90,21 @@ public class BlockConfig {
                     || path.contains("portal");
         }
         String[] ids = cutoutBlocks.split(",");
-        String idStr = id.toString();
         for (String targetId : ids) {
-            if (targetId.trim().equals(idStr)) {
+            if (targetId.trim().equals(id)) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean shouldDisableOcclusion(ResourceLocation id) {
+    public static boolean shouldDisableOcclusion(String id) {
         if (noOcclusionBlocks.equalsIgnoreCase("false")) {
             return false;
         }
 
         if (noOcclusionBlocks.equalsIgnoreCase("true")) {
-            String path = id.getPath().toLowerCase();
+            String path = Ids.pathOf(id).toLowerCase();
             return path.contains("stairs")
                     || path.contains("slab")
                     || path.contains("wall")
@@ -127,9 +127,8 @@ public class BlockConfig {
 
         // Commas separated list of block IDs
         String[] ids = noOcclusionBlocks.split(",");
-        String idStr = id.toString();
         for (String targetId : ids) {
-            if (targetId.trim().equals(idStr)) {
+            if (targetId.trim().equals(id)) {
                 return true;
             }
         }
