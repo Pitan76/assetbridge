@@ -102,7 +102,7 @@ public class ModelConverter implements AssetConverter {
      * was already stored under its lowercased name when the archive was read.
      */
     private static String renameTexture(String reference) {
-        String renamed = rename(reference, true);
+        String renamed = rename(reference, true, true);
         // Lowercase the path portion only; the namespace is already required to be lowercase.
         int colon = renamed.indexOf(':');
         if (colon < 0) {
@@ -117,7 +117,7 @@ public class ModelConverter implements AssetConverter {
      * has them there and rewriting the reference would break it.
      */
     private static String renameParent(String reference) {
-        String renamed = rename(reference, false);
+        String renamed = rename(reference, false, false);
         int colon = renamed.indexOf(':');
         if (colon < 0) {
             return renamed.toLowerCase(Locale.ROOT);
@@ -125,17 +125,36 @@ public class ModelConverter implements AssetConverter {
         return renamed.substring(0, colon + 1) + renamed.substring(colon + 1).toLowerCase(Locale.ROOT);
     }
 
-    private static String rename(String reference, boolean anyNamespace) {
+    /**
+     * @param isTextureReference whether {@code reference} points at a texture rather than a
+     *                          model. Texture directory naming tracks {@link RuntimePack#generation()}
+     *                          ({@code textures/blocks/} pre-1.13, {@code textures/block/} from
+     *                          1.13 on -- see {@link net.pitan76.assetbridge.asset.AssetPath#flattened()});
+     *                          model json always lives under the singular {@code models/block/}
+     *                          directory regardless of version, so parent references are always
+     *                          flattened towards singular instead.
+     */
+    private static String rename(String reference, boolean anyNamespace, boolean isTextureReference) {
         int colon = reference.indexOf(':');
         String namespace = colon < 0 ? "" : reference.substring(0, colon + 1);
         String path = reference.substring(colon + 1);
         boolean vanilla = namespace.isEmpty() || namespace.equals("minecraft:");
         if (!vanilla && !anyNamespace) return reference;
 
-        if (path.startsWith("blocks/")) {
-            path = "block/" + path.substring("blocks/".length());
-        } else if (path.startsWith("items/")) {
-            path = "item/" + path.substring("items/".length());
+        if (isTextureReference && !net.pitan76.assetbridge.asset.RuntimePack.generation().isAtLeast(AssetVersion.FLATTENED)) {
+            // Legacy (pre-1.13) targets only ever scan the plural texture directories; a
+            // modern-format (singular) source reference is renamed down to match instead.
+            if (path.startsWith("block/")) {
+                path = "blocks/" + path.substring("block/".length());
+            } else if (path.startsWith("item/")) {
+                path = "items/" + path.substring("item/".length());
+            }
+        } else {
+            if (path.startsWith("blocks/")) {
+                path = "block/" + path.substring("blocks/".length());
+            } else if (path.startsWith("items/")) {
+                path = "item/" + path.substring("items/".length());
+            }
         }
 
         // Apply legacy vanilla name mapping

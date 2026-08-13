@@ -1,4 +1,5 @@
 package net.pitan76.assetbridge.asset;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -83,14 +84,30 @@ public class BridgedAssetManager {
     public java.util.Set<String> namespaces() {
         java.util.Set<String> ns = new java.util.LinkedHashSet<>();
         for (BridgedBlockDefinition block : blocks) {
-            net.minecraft.util.ResourceLocation id = net.pitan76.assetbridge.util.ResourceLocations.tryParse(block.id());
-            if (id != null) ns.add(id.getNamespace());
+            String namespace = namespaceOf(block.id());
+            if (namespace != null) ns.add(namespace);
         }
         for (BridgedItemDefinition item : items) {
-            net.minecraft.util.ResourceLocation id = net.pitan76.assetbridge.util.ResourceLocations.tryParse(item.id());
-            if (id != null) ns.add(id.getNamespace());
+            String namespace = namespaceOf(item.id());
+            if (namespace != null) ns.add(namespace);
         }
         return ns;
+    }
+
+    /**
+     * The {@code namespace} half of a plain {@code namespace:path} id string.
+     *
+     * <p>Deliberately not {@code net.minecraft.util.ResourceLocation}: that class is not named
+     * the same on every platform this module is compiled once and shared across (e.g. Legacy
+     * Fabric's Legacy Yarn mapping calls it {@code Identifier}), and unlike the platform glue
+     * classes, this runs unremapped wherever {@code common} is consumed as a plain dependency --
+     * touching the wrong-named class throws {@code NoClassDefFoundError} at the first call.
+     */
+    @Nullable
+    private static String namespaceOf(String id) {
+        if (id == null || id.isEmpty()) return null;
+        int colon = id.indexOf(':');
+        return colon < 0 ? null : id.substring(0, colon);
     }
 
     public boolean isEmpty() {

@@ -24,6 +24,24 @@ unimined.minecraft {
         legacyIntermediary()
         legacyYarn(yarn_mappings.toInt())
     }
+
+    // FabricLikeMinecraftTransformer defaults every dependency mod's mixin remap to
+    // MixinRemapOptions.off() -- no hard-remap of @Inject "method" targets and no refmap
+    // generation at all. legacy-fabric-api's own mixins (compiled against Yarn-style
+    // method_XXXX intermediary names, e.g. MinecraftClient#reloadResources() = method_5576) are
+    // therefore shipped unremapped; Mixin then tries to resolve that literal intermediary string
+    // as a final legacyYarn name against the remapped game jar, finds nothing ("No refMap
+    // loaded"), and crashes MinecraftClient's class transform before any mod -- including
+    // AssetBridge -- initialises. Explicitly re-enabling the base Mixin remapper for the
+    // modImplementation configuration restores the hard-remap + refmap generation this ecosystem
+    // needs.
+    mods {
+        modImplementation {
+            mixinRemap {
+                enableBaseMixin()
+            }
+        }
+    }
 }
 
 configurations.create("shadowBundle") {
@@ -39,7 +57,24 @@ dependencies {
     implementation(project(commonProject.path))
     "shadowBundle"(project(commonProject.path))
 
-    "modImplementation"("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version")
+    "modImplementation"("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:$fabric_api_version") {
+        // legacy-fabric-lifecycle-events-v1's "-common-1.8.9" jar carries a mixin
+        // (MinecraftClientMixin, target intermediary method_2954) that only resolves under
+        // 1.8.9's intermediary numbering. Applied against this project's 1.12.2 intermediary it
+        // has no matching target and crashes MinecraftClient's class transform before any mod
+        // code -- including AssetBridge's own init -- ever runs. Only that 1.8.9-specific jar is
+        // excluded: legacy-fabric-command-api-v1 hard-depends on the plain
+        // legacy-fabric-lifecycle-events-v1-common module (the 1.12.2-targeted one, which is not
+        // affected), so that one has to stay.
+        exclude(group = "net.legacyfabric.legacy-fabric-api", module = "legacy-fabric-lifecycle-events-v1-common-1.8.9")
+        // Same story for legacy-fabric-item-groups-v1: its "-common-1.8.9" jar (merged into the
+        // runtime mod list as "legacy-fabric-item-groups-v1-common-versioned") carries a
+        // ButtonWidgetMixin whose @WrapMethod target only resolves under 1.8.9's mapping, and it
+        // is not covered by the modImplementation-wide mixinRemap override below -- Unimined
+        // splits these version-merged jars out before that applies. It crashes TitleScreen the
+        // same way the lifecycle-events one crashed MinecraftClient's own transform.
+        exclude(group = "net.legacyfabric.legacy-fabric-api", module = "legacy-fabric-item-groups-v1-common-1.8.9")
+    }
 }
 
 tasks.processResources {

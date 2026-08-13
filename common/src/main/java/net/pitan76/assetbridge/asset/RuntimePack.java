@@ -29,8 +29,11 @@ public final class RuntimePack {
         /*return 15;
         *///?} elif >=1.19 {
         /*return 9;
+        *///?} elif >=1.13 {
+        /*return 4;
         *///?} else {
-        return 8;
+        // 1.6 - 1.12.2: the last pack_format before the 1.13 flattening.
+        return 3;
         //?}
     }
 
@@ -45,8 +48,12 @@ public final class RuntimePack {
         /*return 15;
         *///?} elif >=1.19 {
         /*return 10;
+        *///?} elif >=1.13 {
+        /*return 4;
         *///?} else {
-        return 9;
+        // Pre-1.13 has no data packs at all; mirrors the resource format so nothing that reads
+        // this value (there is nothing to read on these versions) sees an inconsistent number.
+        return 3;
         //?}
     }
 

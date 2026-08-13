@@ -117,6 +117,17 @@ public class AssetBridgeForge {
                                 "defaultResourcePacks", "field_110449_ao"
                         );
                 defaultResourcePacks.add(new FolderResourcePack(resourcePackDir.toFile()));
+                AssetBridge.LOGGER.info("Registered the Asset Bridge resource pack at {} ({} default resource pack(s) total)",
+                        resourcePackDir, defaultResourcePacks.size());
+
+                // Adding to defaultResourcePacks alone changes nothing until the resource manager
+                // actually reloads from it. FML's own reload -- the "Reloading ResourceManager:
+                // Default, FMLFileResourcePack:..." seen right after mod discovery -- already ran
+                // before preInit gets here, and nothing forces a second one before block/item
+                // models are baked later in Minecraft#init(). Without this, the pack sits in the
+                // list, registered but never actually read, and every bridged model/texture comes
+                // back as a FileNotFoundException.
+                Minecraft.getMinecraft().refreshResources();
             } catch (Exception e) {
                 AssetBridge.LOGGER.error("Failed to register FolderResourcePack via reflection", e);
             }

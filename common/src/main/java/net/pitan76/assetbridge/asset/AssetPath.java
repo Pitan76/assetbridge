@@ -187,21 +187,35 @@ public class AssetPath {
     }
 
     /**
-     * This path with the pre-1.13 texture directories renamed to their flattened form,
+     * This path with the texture directory named to match {@link RuntimePack#generation()},
      * or {@code this} when there is nothing to rename.
      *
      * <p>Serving a legacy texture where it was found is not enough on 1.19.3+: the block
      * atlas is assembled from {@code textures/block/} by definition, so a sprite left in
      * {@code textures/blocks/} is never stitched and every model using it renders as
-     * missing. The model references are rewritten to match.
+     * missing. The model references are rewritten to match ({@link net.pitan76.assetbridge.convert.ModelConverter}).
+     *
+     * <p>The reverse applies when the target itself is {@link AssetVersion#LEGACY} (pre-1.13,
+     * e.g. 1.12.2): that generation only ever scans {@code textures/blocks/}/{@code textures/items/},
+     * so a texture from a modern-format ({@code textures/block/}) source archive has to be
+     * renamed down to the plural directory instead, or it is never found either.
      */
     public AssetPath flattened() {
         if (kind != PackKind.CLIENT) return this;
-        if (path.startsWith("textures/blocks/")) {
-            return new AssetPath(kind, namespace, "textures/block/" + path.substring("textures/blocks/".length()));
-        }
-        if (path.startsWith("textures/items/")) {
-            return new AssetPath(kind, namespace, "textures/item/" + path.substring("textures/items/".length()));
+        if (RuntimePack.generation().isAtLeast(AssetVersion.FLATTENED)) {
+            if (path.startsWith("textures/blocks/")) {
+                return new AssetPath(kind, namespace, "textures/block/" + path.substring("textures/blocks/".length()));
+            }
+            if (path.startsWith("textures/items/")) {
+                return new AssetPath(kind, namespace, "textures/item/" + path.substring("textures/items/".length()));
+            }
+        } else {
+            if (path.startsWith("textures/block/")) {
+                return new AssetPath(kind, namespace, "textures/blocks/" + path.substring("textures/block/".length()));
+            }
+            if (path.startsWith("textures/item/")) {
+                return new AssetPath(kind, namespace, "textures/items/" + path.substring("textures/item/".length()));
+            }
         }
         return this;
     }

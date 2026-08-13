@@ -46,11 +46,31 @@ public class AssetBridgeFabric implements ModInitializer {
         AssetBridge.init(gameDir, FabricLoader.getInstance()::isModLoaded);
         AssetBridge.applyFeatures(gameDir, FabricLoader.getInstance()::isModLoaded);
 
-        // 1.12.2 has neither PackResources nor a PackRepository to inject into: the bridged
-        // resources/data are written straight into this mod's own assets/data folders under the
-        // dev/run resources root, which the game's normal IResourcePack scanning already reads.
-        AssetBridgeRepositorySource.RESOURCES.writeTo(gameDir.resolve("assets"));
+        // Legacy Fabric 1.12.2 has no PackResources/PackRepository (those are 1.14+ concepts).
+        // The bridged resources are written into a dedicated "assetbridge" folder -- mirroring
+        // AssetBridgeForge -- so AssetBridgeFabricClient can wrap it in a DirectoryResourcePack
+        // (Legacy Yarn's FolderResourcePack equivalent) and inject it into
+        // MinecraftClient.getInstance()'s resourcePacks list via reflection. A bare "assets/"
+        // folder under the run directory is never scanned by anything on this version, so writing
+        // straight there (as this used to) left the converted textures/models unloaded.
+        Path resourcePackDir = gameDir.resolve("assetbridge");
+        AssetBridgeRepositorySource.RESOURCES.writeTo(resourcePackDir.resolve("assets"));
         AssetBridgeRepositorySource.DATA.writeTo(gameDir.resolve("data"));
+
+        // DirectoryResourcePack (net.minecraft.resource.AbstractFileResourcePack) requires a
+        // pack.mcmeta sibling to the assets/ directory it wraps, exactly like a real pack folder.
+        if (Features.isEnabled(net.pitan76.assetbridge.feature.builtin.ResourcePackFeature.ID)) {
+            java.nio.file.Path packMcmeta = resourcePackDir.resolve("pack.mcmeta");
+            if (!java.nio.file.Files.exists(packMcmeta)) {
+                try {
+                    java.nio.file.Files.createDirectories(resourcePackDir);
+                    String content = "{\n  \"pack\": {\n    \"pack_format\": 3,\n    \"description\": \"Asset Bridge Resources\"\n  }\n}";
+                    java.nio.file.Files.write(packMcmeta, content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                } catch (java.io.IOException e) {
+                    AssetBridge.LOGGER.error("Failed to write pack.mcmeta", e);
+                }
+            }
+        }
 
         // Mod initialisation runs before the registries freeze, so direct registration is fine.
         //
