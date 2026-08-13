@@ -38,6 +38,8 @@ public class BridgedItems {
             item.setTranslationKey(id);
             if (BridgedItemGroup.creativeTabsSupported()) {
                 item.setCreativeTab(BridgedItemGroup.getTab(Ids.namespaceOf(id), false));
+            } else {
+                net.pitan76.assetbridge.util.DefaultCreativeTab.assignDefault(item, false);
             }
             created.put(id, item);
         }

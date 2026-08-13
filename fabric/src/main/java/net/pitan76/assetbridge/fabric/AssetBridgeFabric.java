@@ -2,6 +2,8 @@ package net.pitan76.assetbridge.fabric;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.legacyfabric.fabric.api.registry.v2.RegistryHelper;
+import net.legacyfabric.fabric.api.registry.v2.RegistryIds;
 import net.minecraft.util.Identifier;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
@@ -27,11 +29,14 @@ import java.util.Map;
  * those setters from here is therefore not just a source-level type mismatch but a real
  * cross-mapping gap with no remapping step behind it; wiring a namespace tab through them would
  * not link. {@code BridgedItemGroup.setCreativeTabsSupported(false)} below tells {@code
- * BridgedBlock}/{@code BridgedItems} to skip calling {@code Block#setCreativeTab}/{@code
- * Item#setCreativeTab} entirely on this platform, since even reaching that call throws {@code
- * NoClassDefFoundError} the moment it is executed (the type simply is not resolvable here).
- * Bridged blocks/items on Fabric therefore have no tab at all until that gap is closed with a
- * real remap step for the {@code common} dependency.
+ * BridgedBlock}/{@code BridgedItems} to skip {@code BridgedItemGroup}'s own tab API and instead
+ * assign the vanilla default tab (Building Blocks/Miscellaneous) via
+ * {@code net.pitan76.assetbridge.util.DefaultCreativeTab}, which resolves the tab class, its
+ * setter method, and the constant to assign entirely by reflection so neither
+ * {@code CreativeTabs} nor {@code ItemGroup} is ever referenced as a static type. Namespace-split
+ * tabs ({@link net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature}) still have no
+ * effect on this platform until that gap is closed with a real remap step for the {@code common}
+ * dependency.
  */
 public class AssetBridgeFabric implements ModInitializer {
     @Override
@@ -94,8 +99,17 @@ public class AssetBridgeFabric implements ModInitializer {
                 AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", id);
                 continue;
             }
-            Block.REGISTRY.put(id, entry.getValue());
-            Item.REGISTRY.put(id, blockItems.get(entry.getKey()));
+            // Registry#put only adds the name->object mapping; it never assigns the object a raw
+            // int id (that's SimpleRegistry#add). Item/Block IDs that skip this step still look
+            // registered (present, resolvable by name, model/texture loads fine) but
+            // Item#getRawId returns -1 for them, so anything indexed by raw id -- e.g.
+            // Stats.used(Item), read via ItemStack#use on every right-click/placement -- throws
+            // ArrayIndexOutOfBoundsException(-1) the first time the item is used. RegistryHelper
+            // (Legacy Fabric's registry-sync API) is the sanctioned way to register with a real,
+            // synced raw id on this platform.
+            net.legacyfabric.fabric.api.util.Identifier fabricId = new net.legacyfabric.fabric.api.util.Identifier(entry.getKey());
+            RegistryHelper.register(RegistryIds.BLOCKS, fabricId, entry.getValue());
+            RegistryHelper.register(RegistryIds.ITEMS, fabricId, blockItems.get(entry.getKey()));
             registeredBlocks++;
         }
 
@@ -106,7 +120,7 @@ public class AssetBridgeFabric implements ModInitializer {
                 AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", id);
                 continue;
             }
-            Item.REGISTRY.put(id, entry.getValue());
+            RegistryHelper.register(RegistryIds.ITEMS, new net.legacyfabric.fabric.api.util.Identifier(entry.getKey()), entry.getValue());
             registeredItems++;
         }
         AssetBridge.LOGGER.info("Registered {} bridged blocks and {} items", registeredBlocks, registeredItems);

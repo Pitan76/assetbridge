@@ -27,6 +27,8 @@ public class BridgedBlock extends Block {
         setTranslationKey(id);
         if (BridgedItemGroup.creativeTabsSupported()) {
             setCreativeTab(BridgedItemGroup.getTab(Ids.namespaceOf(id), true));
+        } else {
+            net.pitan76.assetbridge.util.DefaultCreativeTab.assignDefault(this, true);
         }
         setHardness(this, BlockConfig.getHardness(id));
         setResistance(BlockConfig.getResistance(id));
