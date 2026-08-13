@@ -86,6 +86,14 @@ public class ModelConverter implements AssetConverter {
         Map<String, String> remap = new LinkedHashMap<>();
         remap.put("block/glass_white", "block/white_stained_glass");
         remap.put("block/anvil_base", "block/anvil");
+        // 1.13 split the single pre-flattening "cube_column" model (rotated to a horizontal
+        // orientation entirely via the blockstate variant's own x/y) into three explicit
+        // orientation models; none of the "_horizontal"/"_vertical" ones exist on 1.12.2, so a
+        // parent reference to them is simply unresolvable there. The blockstate variant already
+        // carries the x/y rotation that gave the split models their name, so collapsing all three
+        // back onto the single pre-split model reproduces the same orientation on this version.
+        remap.put("block/cube_column_horizontal", "block/cube_column");
+        remap.put("block/cube_column_vertical", "block/cube_column");
         // Add more common legacy mappings as needed
         VANILLA_REMAP = Collections.unmodifiableMap(remap);
     }
