@@ -141,6 +141,7 @@ public class AssetBridgeForge {
                 // list, registered but never actually read, and every bridged model/texture comes
                 // back as a FileNotFoundException.
                 Minecraft.getMinecraft().refreshResources();
+                injectAllTranslations(AssetBridge.assets());
             } catch (Exception e) {
                 AssetBridge.LOGGER.error("Failed to register FolderResourcePack via reflection", e);
             }
@@ -260,5 +261,44 @@ public class AssetBridgeForge {
         registerItemsInto(
                 id -> event.getRegistry().containsKey(id),
                 (id, item) -> registerWithContainer(id, () -> event.getRegistry().register(item.setRegistryName(id))));
+    }
+
+    private static void injectAllTranslations(net.pitan76.assetbridge.asset.BridgedAssetManager assets) {
+        String currentLang = "en_us";
+        try {
+            currentLang = Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getLanguageCode().toLowerCase(java.util.Locale.ROOT);
+        } catch (Throwable ignored) {}
+
+        loadAndInject(assets, "en_us");
+        if (!currentLang.equals("en_us")) {
+            loadAndInject(assets, currentLang);
+        }
+    }
+
+    private static void loadAndInject(net.pitan76.assetbridge.asset.BridgedAssetManager assets, String langCode) {
+        for (Map.Entry<net.pitan76.assetbridge.asset.AssetPath, net.pitan76.assetbridge.asset.AssetSource> entry : assets.resources().entrySet()) {
+            net.pitan76.assetbridge.asset.AssetPath path = entry.getKey();
+            if (path.path().endsWith("/" + langCode + ".json") || path.path().equals("lang/" + langCode + ".json")) {
+                try {
+                    byte[] bytes = entry.getValue().readAll();
+                    if (bytes != null) {
+                        String jsonStr = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                        com.google.gson.JsonObject json = net.pitan76.assetbridge.util.Json.parse(jsonStr);
+                        if (json != null) {
+                            for (Map.Entry<String, com.google.gson.JsonElement> member : json.entrySet()) {
+                                if (member.getValue().isJsonPrimitive()) {
+                                    String key = member.getKey();
+                                    String fixedKey = key.replace(':', '.');
+                                    String value = member.getValue().getAsString();
+                                    net.pitan76.assetbridge.block.LanguageHelper.injectTranslation(fixedKey, value);
+                                }
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    AssetBridge.LOGGER.error("Failed to inject translations for " + langCode, e);
+                }
+            }
+        }
     }
 }
