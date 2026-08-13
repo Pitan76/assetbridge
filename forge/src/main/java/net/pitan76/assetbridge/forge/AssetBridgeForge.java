@@ -197,6 +197,7 @@ public class AssetBridgeForge {
             ResourceLocation id = new ResourceLocation(entry.getKey());
             if (skipped.contains(id) || taken.test(id)) continue;
             register.accept(id, entry.getValue());
+            registeredItemModels.add(entry.getValue());
         }
 
         int registered = 0;
@@ -207,9 +208,25 @@ public class AssetBridgeForge {
                 continue;
             }
             register.accept(id, entry.getValue());
+            registeredItemModels.add(entry.getValue());
             registered++;
         }
         AssetBridge.LOGGER.info("Registered {} bridged items", registered);
+    }
+
+    /**
+     * Wires every registered item (and {@code ItemBlock}) to its {@code #inventory} model.
+     * Without this, an item stays associated with no model at all -- not even a fallback --
+     * and Forge renders it as the missing-texture placeholder in every context except a block's
+     * own world rendering (which goes through its blockstate variant instead, not this).
+     */
+    @SubscribeEvent
+    public void registerModels(ModelRegistryEvent event) {
+        for (Item item : registeredItemModels) {
+            ModelLoader.setCustomModelResourceLocation(item, 0,
+                    new ModelResourceLocation(item.getRegistryName(), "inventory"));
+        }
+        AssetBridge.LOGGER.info("Registered {} bridged item model(s)", registeredItemModels.size());
     }
 
     // ---------------------------------------------------------------------------
