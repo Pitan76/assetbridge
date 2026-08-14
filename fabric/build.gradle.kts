@@ -99,6 +99,17 @@ tasks.shadowJar {
     archiveClassifier.set("dev-shadow")
 }
 
+// The plain `jar`/`remapJar` output never contains common's classes (they're only pulled
+// in via "shadowBundle", scoped to shadowJar). Remap shadowJar itself so the published
+// artifact is both obfuscated (intermediary→yarn) and has common bundled in.
+val remapShadowJar = unimined.minecrafts[sourceSets.main.get()]!!
+    .remap(tasks.shadowJar.get(), "remapShadowJar") {
+        asJar { archiveClassifier.set("") }
+    }
+tasks.build {
+    dependsOn(remapShadowJar)
+}
+
 publishMods {
     val mcVersion = project.name
 
@@ -106,8 +117,8 @@ publishMods {
     val getCompatibleMcVersions = rootProject.extra.get("getCompatibleMcVersions") as (Project) -> List<String>
     val mcVersions = getCompatibleMcVersions(project)
 
-    file.set(tasks.jar.flatMap { it.archiveFile })
-    displayName.set(tasks.jar.flatMap { it.archiveFile.map { f -> f.asFile.name } })
+    file.set(remapShadowJar.flatMap { it.asJar.archiveFile })
+    displayName.set(remapShadowJar.flatMap { it.asJar.archiveFile.map { f -> f.asFile.name } })
     changelog.set("Release of version ${project.version} for Minecraft $mcVersion (Fabric)")
     type.set(me.modmuss50.mpp.ReleaseType.STABLE)
     modLoaders.add("fabric")
