@@ -3,7 +3,7 @@
 ゲームバージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
 
 なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。<br />
-Fabric/Forge 1.16.5/1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2対応です。
+Fabric/Forge 1.12.2/1.16.5/1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2/26.2対応です。
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
@@ -13,7 +13,7 @@ Fabric/Forge 1.16.5/1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2対応で
 ゲームディレクトリの`mods/`に`assetbridge/`を作り、その中に読み込むMODのjarやzipを置きます。
 （なお、初回起動時にAsset Bridgeが`assetbridge/`を自動で生成する）
 
-```text
+```
 mods/
 └─ assetbridge/
    ├─ aaa.jar
@@ -21,12 +21,10 @@ mods/
    └─ ccc.zip
 ```
 
-`assets/<namespace>/blockstates/*.json` が見つかったブロックと、
-`assets/<namespace>/models/item/*.json` が見つかったアイテムが、元の名前空間のまま
-登録され、クリエイティブタブとして
-「Asset Bridge: ブロック」、「Asset Bridge: アイテム」から取り出せる。
+`/blockstates/*.json` と`/models/item/*.json` からブロック、アイテムとして登録します。<br />
+登録されたアイテムは各MOD（名前空間）ごとのクリエイティブタブもしくは「Asset Bridge: ブロック」、「Asset Bridge: アイテム」から取り出せます。（feature.split_tab_by_namespaceでどちらかを設定する）
 
-## 設定 (Config)
+## 設定
 `config/assetbridge.properties` でAsset Bridgeの設定をします。<br />
 初回起動でconfigフォルダの中に設定ファイルが作成されます。
 
