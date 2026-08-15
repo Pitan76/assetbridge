@@ -401,6 +401,190 @@ class AssetPipelineTest {
         assertEquals(mcmeta, new String(served, StandardCharsets.UTF_8));
     }
 
+    /**
+     * The symptom this covers: a door used to reach the game as an item and never as a block.
+     * Mods write doors in Forge's blockstate format, where no {@code model} sits at the depth
+     * the parser looks, so the block was dropped for having no model and only its item model
+     * survived.
+     */
+    @Test
+    void registersABlockWrittenInTheForgeBlockStateFormat() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/oak_door.json", "{"
+                + "\"forge_marker\": 1,"
+                + "\"defaults\": {\"textures\": {\"bottom\": \"examplemod:blocks/door_lower\"}},"
+                + "\"variants\": {"
+                + "  \"half\": {\"lower\": {\"model\": \"examplemod:block/door_bottom\"},"
+                + "             \"upper\": {\"model\": \"examplemod:block/door_top\"}},"
+                + "  \"facing\": {\"east\": {}, \"north\": {\"y\": 90}}}}");
+        resources.put("assets/examplemod/models/block/door_bottom.json", "{\"parent\": \"block/cube_all\"}");
+        resources.put("assets/examplemod/models/block/door_top.json", "{\"parent\": \"block/cube_all\"}");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        assertEquals(1, assets.blocks().size());
+        assertEquals("examplemod:oak_door", assets.blocks().get(0).id());
+
+        BridgedStateDefinition states = assets.blocks().get(0).states();
+        assertEquals(new HashSet<>(Arrays.asList("half", "facing")),
+                states.properties().stream().map(BridgedProperty::name).collect(Collectors.toSet()));
+
+        JsonObject served = json(assets, AssetPath.blockState("examplemod", "oak_door"));
+        JsonObject variants = served.getAsJsonObject("variants");
+        assertEquals(4, variants.size());
+        assertTrue(variants.has("half=lower,facing=east"));
+        assertTrue(variants.has("half=upper,facing=north"));
+    }
+
+    /** A Forge variant may retexture its model; a vanilla one cannot, so it needs a model of its own. */
+    @Test
+    void servesTheModelsAForgeBlockStateNeededSynthesising() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json", "{"
+                + "\"forge_marker\": 1,"
+                + "\"defaults\": {\"model\": \"cube_all\"},"
+                + "\"variants\": {\"variant\": {"
+                + "  \"red\": {\"textures\": {\"all\": \"examplemod:blocks/red\"}},"
+                + "  \"blue\": {\"textures\": {\"all\": \"examplemod:blocks/blue\"}}}}}");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        String reference = json(assets, AssetPath.blockState("examplemod", "foo"))
+                .getAsJsonObject("variants").getAsJsonObject("variant=red").get("model").getAsString();
+        assertEquals("examplemod:block/foo_ab0", reference);
+
+        JsonObject generated = json(assets, AssetPath.blockModel("examplemod", "foo_ab0"));
+        assertEquals("block/cube_all", generated.get("parent").getAsString());
+        // The generated model goes through the same conversion an archive's own model does,
+        // so its pre-1.13 texture directory is flattened with everything else.
+        assertEquals("examplemod:block/red", generated.getAsJsonObject("textures").get("all").getAsString());
+    }
+
+    /**
+     * Pre-1.13 packed several blocks behind one id as metadata values. Which value meant what
+     * is only visible in the language file, and only recoverable as a state when the blockstate
+     * leaves one reading: a single property lining up one-to-one with the values found.
+     */
+    @Test
+    void registersASubBlockPerMetadataValue() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"variant=red\": {\"model\": \"examplemod:block/red\"},"
+                        + " \"variant=blue\": {\"model\": \"examplemod:block/blue\"}}}");
+        resources.put("assets/examplemod/lang/en_us.lang",
+                "tile.foo.0.name=Red Foo\ntile.foo.1.name=Blue Foo\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        Map<String, String> models = assets.blocks().stream()
+                .collect(Collectors.toMap(BridgedBlockDefinition::id, BridgedBlockDefinition::modelId));
+        assertEquals(new HashSet<>(Arrays.asList("examplemod:foo", "examplemod:foo_meta1")), models.keySet());
+        // Metadata 1 is the second variant, and the sub-block is property-free with just that one.
+        assertEquals("examplemod:block/blue", models.get("examplemod:foo_meta1"));
+
+        JsonObject served = json(assets, AssetPath.blockState("examplemod", "foo_meta1"));
+        assertEquals(Collections.singleton(""), keysOf(served.getAsJsonObject("variants")));
+        assertEquals("examplemod:block/blue",
+                served.getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString());
+    }
+
+    /** The names have to follow the ids, or the sub-block shows up as a raw translation key. */
+    @Test
+    void namesEveryMetadataValueItRegistered() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"variant=red\": {\"model\": \"examplemod:block/red\"},"
+                        + " \"variant=blue\": {\"model\": \"examplemod:block/blue\"}}}");
+        resources.put("assets/examplemod/lang/en_us.lang",
+                "tile.foo.0.name=Red Foo\ntile.foo.1.name=Blue Foo\ntile.foo.tooltip=Some prose\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        JsonObject lang = json(assets, AssetPath.lang("examplemod", "en_us"));
+        assertEquals("Red Foo", lang.get("block.examplemod.foo").getAsString());
+        assertEquals("Blue Foo", lang.get("block.examplemod.foo_meta1").getAsString());
+        // Not a name key: it has no modern counterpart, so it survives exactly as it was.
+        assertEquals("Some prose", lang.get("tile.foo.tooltip").getAsString());
+    }
+
+    /**
+     * When the blockstate cannot say which state a metadata value stood for, guessing one would
+     * put the wrong block in the world. The sub-entry still exists, as an item.
+     */
+    @Test
+    void fallsBackToAnItemWhenTheStateCannotBeRecovered() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources.put("assets/examplemod/lang/en_us.lang",
+                "tile.foo.0.name=Foo\ntile.foo.1.name=Other Foo\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        assertEquals(Collections.singletonList("examplemod:foo"),
+                assets.blocks().stream().map(BridgedBlockDefinition::id).collect(Collectors.toList()));
+        assertEquals(Collections.singletonList("examplemod:foo_meta1"),
+                assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toList()));
+        // It has no model of its own, so it looks like the block it was packed with.
+        assertEquals("examplemod:item/foo",
+                json(assets, AssetPath.itemModel("examplemod", "foo_meta1")).get("parent").getAsString());
+    }
+
+    @Test
+    void registersASubItemPerMetadataValue() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/models/item/bar.json",
+                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:items/bar\"}}");
+        resources.put("assets/examplemod/lang/en_us.lang",
+                "item.bar.0.name=Bar\nitem.bar.1.name=Other Bar\nitem.bar.2.name=Third Bar\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        assertEquals(new HashSet<>(Arrays.asList("examplemod:bar", "examplemod:bar_meta1", "examplemod:bar_meta2")),
+                assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toSet()));
+        assertEquals("examplemod:item/bar",
+                json(assets, AssetPath.itemModel("examplemod", "bar_meta2")).get("parent").getAsString());
+    }
+
+    /**
+     * Plenty of mods write {@code tile.foo.0.name} for a block that has no metadata at all.
+     * One value is not a set of sub-entries, and inventing a second block from it would be wrong.
+     */
+    @Test
+    void doesNotExpandASingleMetadataValue() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources.put("assets/examplemod/lang/en_us.lang", "tile.foo.0.name=Foo\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        assertEquals(1, assets.blocks().size());
+        assertTrue(assets.items().isEmpty());
+        assertEquals("Foo", json(assets, AssetPath.lang("examplemod", "en_us"))
+                .get("block.examplemod.foo").getAsString());
+    }
+
+    /** An archive that spells the sub-entry out itself knows better than the expansion does. */
+    @Test
+    void leavesAnExplicitSubBlockAlone() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/blockstates/foo.json",
+                "{\"variants\": {\"variant=red\": {\"model\": \"examplemod:block/red\"},"
+                        + " \"variant=blue\": {\"model\": \"examplemod:block/blue\"}}}");
+        resources.put("assets/examplemod/blockstates/foo_meta1.json",
+                "{\"variants\": {\"\": {\"model\": \"examplemod:block/handwritten\"}}}");
+        resources.put("assets/examplemod/lang/en_us.lang",
+                "tile.foo.0.name=Red Foo\ntile.foo.1.name=Blue Foo\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        Map<String, String> models = assets.blocks().stream()
+                .collect(Collectors.toMap(BridgedBlockDefinition::id, BridgedBlockDefinition::modelId));
+        assertEquals(2, models.size());
+        assertEquals("examplemod:block/handwritten", models.get("examplemod:foo_meta1"));
+    }
+
     private static BridgedAssetManager build(AssetArchive... archives) {
         return AssetPipeline.build(Arrays.asList(archives), NOTHING_LOADED);
     }

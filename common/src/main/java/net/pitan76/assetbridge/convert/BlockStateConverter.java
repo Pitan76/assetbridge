@@ -114,6 +114,15 @@ public class BlockStateConverter implements AssetConverter {
         return changed;
     }
 
+    /**
+     * Exposed for {@link ForgeBlockStateExpander}: a model it synthesises is referenced from a
+     * {@code parent}, which this class never walks, so the expander has to qualify it itself
+     * and must do it by exactly the same rule.
+     */
+    public static String qualifyModelReference(String model) {
+        return qualify(model);
+    }
+
     private static String qualify(String model) {
         int colon = model.indexOf(':');
         String namespace = colon < 0 ? "" : model.substring(0, colon + 1);

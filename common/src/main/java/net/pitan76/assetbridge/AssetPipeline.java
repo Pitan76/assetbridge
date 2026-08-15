@@ -8,6 +8,7 @@ import net.pitan76.assetbridge.asset.*;
 import net.pitan76.assetbridge.convert.AssetConverter;
 import net.pitan76.assetbridge.convert.AtlasSources;
 import net.pitan76.assetbridge.convert.BlockStateConverter;
+import net.pitan76.assetbridge.convert.ForgeBlockStateExpander;
 import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.ModelReferenceResolver;
 import net.pitan76.assetbridge.feature.Features;
@@ -15,12 +16,17 @@ import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
+import net.pitan76.assetbridge.parse.LegacyLangKey;
+import net.pitan76.assetbridge.parse.MetaVariants;
 import net.pitan76.assetbridge.util.Json;
 import net.pitan76.assetbridge.util.IdUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +55,8 @@ public class AssetPipeline {
         Set<String> seenBlocks = new HashSet<>();
         Set<String> skippedNamespaces = new HashSet<>();
         ItemCandidates itemCandidates = new ItemCandidates();
+        Map<String, JsonObject> blockStateJson = new LinkedHashMap<>();
+        MetaVariants metaVariants = new MetaVariants();
 
         for (AssetArchive archive : archives) {
             archive.modNames().forEach((namespace, name) -> {
@@ -64,17 +72,25 @@ public class AssetPipeline {
                     }
                     continue;
                 }
-                read(assets, archive, path, entry.getValue(), seenBlocks, itemCandidates);
+                read(assets, archive, path, entry.getValue(), seenBlocks, itemCandidates, blockStateJson, metaVariants);
             }
         }
 
+        // Before the items are resolved, because a sub-block that cannot be given a state of
+        // its own falls back to being one more item candidate.
+        expandBlockMetaVariants(assets, metaVariants, blockStateJson, itemCandidates);
+
         Set<String> blockIds = new HashSet<>();
         for (BridgedBlockDefinition block : assets.blocks()) {
-            generateItemModel(assets, block);
-            // The block's own item owns this id, so it is not a standalone item.
             blockIds.add(block.id());
         }
         itemCandidates.resolve(blockIds).forEach(assets::addItem);
+        expandItemMetaVariants(assets, metaVariants, blockIds);
+
+        // After both expansions, so the sub-entries get their item model too.
+        for (BridgedBlockDefinition block : assets.blocks()) {
+            generateItemModel(assets, block);
+        }
 
         // Last, because a model may inherit from one that another archive supplies.
         int repaired = ModelReferenceResolver.resolve(assets);
@@ -104,12 +120,13 @@ public class AssetPipeline {
 
     /** Routes one archive entry to whatever its category needs, if anything. */
     private static void read(BridgedAssetManager assets, AssetArchive archive, AssetPath path, AssetSource source,
-                             Set<String> seenBlocks, ItemCandidates itemCandidates) {
+                             Set<String> seenBlocks, ItemCandidates itemCandidates,
+                             Map<String, JsonObject> blockStateJson, MetaVariants metaVariants) {
         AssetVersion version = archive.version();
 
         switch (path.category()) {
             case BLOCKSTATE:
-                readBlockState(assets, archive, version, path, source, seenBlocks);
+                readBlockState(assets, archive, version, path, source, seenBlocks, blockStateJson);
                 break;
             case ITEM_DEFINITION:
                 // The file itself means nothing to this Minecraft version, so it is not
@@ -143,9 +160,13 @@ public class AssetPipeline {
                     if (target.path().endsWith(".lang")) {
                         String newPath = target.path().substring(0, target.path().length() - ".lang".length()) + ".json";
                         AssetPath jsonTarget = target.withPath(newPath);
-                        if (!assets.hasResource(jsonTarget)) {
-                            byte[] raw = readBytes(source, path, archive);
-                            if (raw != null) {
+                        byte[] raw = readBytes(source, path, archive);
+                        if (raw != null) {
+                            // Read even when another archive already claimed this locale: the
+                            // metadata sub-entries are collected from every language file there
+                            // is, so a locale we do not serve still tells us what exists.
+                            metaVariants.scan(jsonTarget.namespace(), new String(raw, StandardCharsets.UTF_8));
+                            if (!assets.hasResource(jsonTarget)) {
                                 byte[] jsonBytes = convertLangToJson(raw, jsonTarget.namespace());
                                 AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
                                 assets.putResource(jsonTarget, jsonBytes);
@@ -231,13 +252,23 @@ public class AssetPipeline {
     }
 
     private static void readBlockState(BridgedAssetManager assets, AssetArchive archive, AssetVersion version,
-                                       AssetPath path, AssetSource source, Set<String> seenBlocks) {
+                                       AssetPath path, AssetSource source, Set<String> seenBlocks,
+                                       Map<String, JsonObject> blockStateJson) {
         String name = path.blockStateName();
         if (name == null) return;
         String id = path.namespace() + ":" + name;
 
         byte[] data = readBytes(source, path, archive);
         if (data == null) return;
+
+        // Forge's own blockstate format hides the models one level deeper than vanilla looks,
+        // so without this the whole file reads as "no model" and the block is dropped.
+        ForgeBlockStateExpander.Result forge = null;
+        JsonObject raw = Json.parse(new String(data, StandardCharsets.UTF_8));
+        if (ForgeBlockStateExpander.isForgeFormat(raw)) {
+            forge = ForgeBlockStateExpander.expand(raw, path.namespace(), name);
+            data = Json.toString(forge.blockState()).getBytes(StandardCharsets.UTF_8);
+        }
 
         byte[] converted = BLOCKSTATES.convert(path, data, version);
         JsonObject json = converted == null ? null : Json.parse(new String(converted, StandardCharsets.UTF_8));
@@ -254,6 +285,14 @@ public class AssetPipeline {
         if (!seenBlocks.add(id)) {
             AssetBridge.LOGGER.warn("Skipping duplicate block {} from {}", id, archive.fileName());
             return;
+        }
+
+        // Only now that the block is definitely ours: a duplicate must not leave its
+        // generated models behind for the archive that actually won the id.
+        if (forge != null) {
+            storeForgeExtras(assets, forge, path.namespace(), name, version);
+            AssetBridge.LOGGER.info("Expanded Forge blockstate {} in {} into {} variant(s) and {} generated model(s)",
+                    id, archive.fileName(), forge.variantCount(), forge.generatedModels().size());
         }
 
         BridgedStateDefinition states = BlockStatePropertyParser.parse(json);
@@ -279,8 +318,36 @@ public class AssetPipeline {
                     .getBytes(StandardCharsets.UTF_8));
         }
 
+        // Kept so the metadata expansion can pick a single sub-variant out of it later, once
+        // the language files that say how many sub-blocks there are have all been read.
+        blockStateJson.put(id, json);
+
         assets.addBlock(new BridgedBlockDefinition(path.namespace(), name, qualify(model, path.namespace()),
                 states, archive.fileName(), version));
+    }
+
+    /**
+     * Registers the assets a Forge blockstate needed synthesising to be expressible in vanilla:
+     * the derived models standing in for its per-variant retexturing, and the item model its
+     * {@code inventory} variant described.
+     */
+    private static void storeForgeExtras(BridgedAssetManager assets, ForgeBlockStateExpander.Result forge,
+                                         String namespace, String blockName, AssetVersion version) {
+        for (Map.Entry<String, JsonObject> generated : forge.generatedModels().entrySet()) {
+            putModel(assets, AssetPath.blockModel(namespace, generated.getKey()), generated.getValue(), version);
+        }
+        if (forge.inventoryModel() != null) {
+            putModel(assets, AssetPath.itemModel(namespace, blockName), forge.inventoryModel(), version);
+        }
+    }
+
+    /** Writes a model Asset Bridge built itself, through the same conversion an archive's own gets. */
+    private static void putModel(BridgedAssetManager assets, AssetPath path, JsonObject model, AssetVersion version) {
+        if (assets.hasResource(path)) return;
+
+        byte[] data = Json.toString(model).getBytes(StandardCharsets.UTF_8);
+        byte[] converted = MODELS.convert(path, data, version);
+        assets.putResource(path, converted == null ? data : converted);
     }
 
     private static boolean convertInto(BridgedAssetManager assets, AssetConverter converter, AssetPath path, AssetSource source,
@@ -297,6 +364,136 @@ public class AssetPipeline {
         if (assets.hasResource(path)) return false;
         assets.putResource(path, converted);
         return true;
+    }
+
+    /**
+     * Registers the extra blocks a pre-1.13 archive packed behind one block id as metadata.
+     *
+     * <p>Metadata 0 is the block that was already registered from the blockstate file. For each
+     * further value the language file described, a sub-block is registered under
+     * {@code <name>_meta<n>} &mdash; the same name {@link LegacyLangKey} rewrites the translation
+     * to, so it comes out named rather than as a raw key.
+     *
+     * <p>Which state a metadata value stood for is decided by the mod's Java code and is not in
+     * the assets, so it is only recoverable when the blockstate leaves exactly one reading: a
+     * single property whose values line up one-to-one with the metadata values found. Then
+     * metadata <i>n</i> is that property's <i>n</i>-th value, and the sub-block is registered
+     * property-free with that variant as its only state. When the shapes do not line up there is
+     * nothing to place, so the sub-entry becomes an item instead &mdash; the id still exists, is
+     * named, and shows the block's model.
+     */
+    private static void expandBlockMetaVariants(BridgedAssetManager assets, MetaVariants metaVariants,
+                                                Map<String, JsonObject> blockStateJson, ItemCandidates itemCandidates) {
+        int blocks = 0;
+        int items = 0;
+        // Snapshotted: the sub-blocks are appended to the same list we are walking.
+        for (BridgedBlockDefinition block : new ArrayList<>(assets.blocks())) {
+            List<Integer> metas = metaVariants.blockMetas(block.id());
+            if (metas.isEmpty()) continue;
+
+            List<JsonElement> variants = singlePropertyVariants(blockStateJson.get(block.id()), metas.size());
+            for (int index = 0; index < metas.size(); index++) {
+                int meta = metas.get(index);
+                if (meta <= 0) continue;
+
+                String name = MetaVariants.nameFor(block.path(), meta);
+                AssetPath statePath = AssetPath.blockState(block.namespace(), name);
+                // An archive that spells the sub-entry out itself always wins.
+                if (assets.hasResource(statePath)) continue;
+
+                JsonElement variant = variants == null ? null : variants.get(index);
+                String model = BlockStateParser.modelOf(variant);
+                if (model == null) {
+                    itemCandidates.addModel(block.namespace(), name, block.sourceArchive(), block.version());
+                    putAliasItemModel(assets, block.namespace(), name, block.namespace() + ":item/" + block.path(),
+                            block.version());
+                    items++;
+                    continue;
+                }
+
+                assets.putResource(statePath, Json.toString(BlockStateConverter.singleVariant(variant))
+                        .getBytes(StandardCharsets.UTF_8));
+                assets.addBlock(new BridgedBlockDefinition(block.namespace(), name, model,
+                        BridgedStateDefinition.empty(), block.sourceArchive(), block.version()));
+                blocks++;
+            }
+        }
+        if (blocks > 0 || items > 0) {
+            AssetBridge.LOGGER.info("Expanded pre-1.13 metadata into {} sub-block(s) and {} sub-item(s)", blocks, items);
+        }
+    }
+
+    /** The same for items, which have no state to recover and so are always items. */
+    private static void expandItemMetaVariants(BridgedAssetManager assets, MetaVariants metaVariants,
+                                               Set<String> blockIds) {
+        Set<String> taken = new HashSet<>(blockIds);
+        for (BridgedItemDefinition item : assets.items()) {
+            taken.add(item.id());
+        }
+
+        int added = 0;
+        for (BridgedItemDefinition item : new ArrayList<>(assets.items())) {
+            List<Integer> metas = metaVariants.itemMetas(item.id());
+            if (metas.isEmpty()) continue;
+
+            for (int meta : metas) {
+                if (meta <= 0) continue;
+
+                String name = MetaVariants.nameFor(item.path(), meta);
+                if (!taken.add(item.namespace() + ":" + name)) continue;
+
+                putAliasItemModel(assets, item.namespace(), name, item.namespace() + ":item/" + item.path(),
+                        item.version());
+                assets.addItem(new BridgedItemDefinition(item.namespace(), name, item.sourceArchive(), item.version()));
+                added++;
+            }
+        }
+        if (added > 0) {
+            AssetBridge.LOGGER.info("Expanded pre-1.13 metadata into {} sub-item(s)", added);
+        }
+    }
+
+    /**
+     * Reads a blockstate as a list of variants indexed by metadata value.
+     *
+     * @return one variant per metadata value in ascending order, or {@code null} when the file
+     *         cannot be read that way: anything but a flat set of single-property keys, or a
+     *         count that does not match, means the mapping would be a guess
+     */
+    @Nullable
+    private static List<JsonElement> singlePropertyVariants(@Nullable JsonObject blockState, int expected) {
+        if (blockState == null) return null;
+        JsonObject variants = Json.object(blockState, "variants");
+        if (variants == null || variants.size() != expected) return null;
+
+        String property = null;
+        List<JsonElement> ordered = new ArrayList<>(expected);
+        for (Map.Entry<String, JsonElement> entry : variants.entrySet()) {
+            String key = entry.getKey();
+            int equals = key.indexOf('=');
+            if (equals <= 0 || key.indexOf(',') >= 0) return null;
+
+            String name = key.substring(0, equals);
+            if (property == null) {
+                property = name;
+            } else if (!property.equals(name)) {
+                return null;
+            }
+            if (BlockStateParser.modelOf(entry.getValue()) == null) return null;
+            ordered.add(entry.getValue());
+        }
+        return ordered;
+    }
+
+    /** An item model for a sub-entry that has none of its own: it looks like the entry it came from. */
+    private static void putAliasItemModel(BridgedAssetManager assets, String namespace, String name,
+                                          String parent, AssetVersion version) {
+        AssetPath path = AssetPath.itemModel(namespace, name);
+        if (assets.hasResource(path)) return;
+
+        JsonObject model = new JsonObject();
+        model.addProperty("parent", parent);
+        putModel(assets, path, model, version);
     }
 
     /** Only generated when the archive did not already ship an item model for the block. */
@@ -441,48 +638,23 @@ public class AssetPipeline {
         return 1;
     }
 
+    /**
+     * Rewrites a pre-1.13 translation key to its modern form.
+     *
+     * <pre>
+     * tile.example.name    -&gt; block.&lt;modid&gt;.example
+     * tile.example.0.name  -&gt; block.&lt;modid&gt;.example        (metadata 0 is the entry itself)
+     * tile.example.1.name  -&gt; block.&lt;modid&gt;.example_meta1  (matches the id the sub-block gets)
+     * item.example.name    -&gt; item.&lt;modid&gt;.example
+     * </pre>
+     *
+     * <p>Anything that is not a legacy name key is left exactly as it was: a modern key is
+     * already right, and a legacy non-name key such as {@code tile.example.tooltip} has no
+     * modern counterpart to rewrite it to.
+     */
     private static String convertLangKey(String key, String modid) {
-        /*
-        #ja_JP
-        tile.example.name=Example Block -> block.<modid>.example=Example Block
-        tile.exam.0.name=Example 0 Block -> block.<modid>.exam=Example 0 Block
-        tile.exam.1.name=Example 1 Block // TODO: meta値に対応していないため、とりあえず保留
-        item.example.name=Example Item
-        item.exam.0.name=Example 0 Item
-        item.exam.1.name=Example 1 Item
-         */
-
-        if (key.startsWith("tile.")) {
-            key = key.substring("tile.".length());
-            int dotIndex = key.indexOf('.');
-            if (dotIndex != -1) {
-                String blockName = key.substring(0, dotIndex);
-                String suffix = key.substring(dotIndex + 1);
-                if (suffix.equals("name")) {
-                    key = "block." + modid + "." + blockName;
-                } else if (suffix.equals("0.name")) {
-                    // TODO: meta値に対応していないため、とりあえず0の場合はそのまま変換する
-                    key = "block." + modid + "." + blockName;
-                } else {
-                    // TODO: meta値に対応していないため、とりあえず保留
-                    key = "block." + modid + "." + blockName + suffix;
-                }
-            }
-        } else if (key.startsWith("item.")) {
-            key = key.substring("item.".length());
-            int dotIndex = key.indexOf('.');
-            if (dotIndex != -1) {
-                String itemName = key.substring(0, dotIndex);
-                String suffix = key.substring(dotIndex + 1);
-                if (suffix.equals("name")) {
-                    key = "item." + modid + "." + itemName;
-                } else {
-                    key = "item." + modid + "." + itemName + suffix;
-                }
-            }
-        }
-
-        return key;
+        LegacyLangKey parsed = LegacyLangKey.parse(key);
+        return parsed == null ? key : parsed.modernKey(modid);
     }
 
     private static byte[] convertLangToJson(byte[] raw, String modid) {

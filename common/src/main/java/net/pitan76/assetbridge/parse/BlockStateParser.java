@@ -64,8 +64,14 @@ public class BlockStateParser {
         return null;
     }
 
+    /**
+     * The model a variant value names, following a weighted list to its first entry.
+     *
+     * <p>Public because the meta expansion picks a single sub-variant out of a blockstate and
+     * needs the same reading of it that {@link #findModel} applies to the representative one.
+     */
     @Nullable
-    private static String modelOf(@Nullable JsonElement element) {
+    public static String modelOf(@Nullable JsonElement element) {
         if (element == null) return null;
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
