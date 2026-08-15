@@ -7,6 +7,7 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
 import net.pitan76.assetbridge.util.Json;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -80,13 +81,6 @@ public class ModelConverter implements AssetConverter {
         return changed;
     }
 
-    private static final Map<String, String> VANILLA_REMAP = new HashMap<>();
-
-    static {
-        VANILLA_REMAP.put("block/glass_white", "block/white_stained_glass");
-        VANILLA_REMAP.put("block/anvil_base", "block/anvil");
-    }
-
     /**
      * A texture reference. {@code blocks/} and {@code items/} are flattened whatever the
      * namespace: the sprite files themselves are relocated the same way when the archive is
@@ -94,18 +88,68 @@ public class ModelConverter implements AssetConverter {
      * {@code textures/block/} and would never stitch a sprite left behind in the plural
      * directory. See {@code AssetPath#flattened()}.
      *
-     * <p>The path portion is also lowercased: {@code ResourceLocation} and 26.1's
-     * {@code TextureSlots} both reject uppercase characters. The referenced texture file
-     * was already stored under its lowercased name when the archive was read.
+     * <p>The reference is also lowercased, namespace included: {@code ResourceLocation} and
+     * 26.1's {@code TextureSlots} both reject uppercase characters anywhere. Mod ids only became
+     * case-sensitive-by-rule in 1.13, so a pre-1.13 archive happily writes
+     * {@code BambooMod:blocks/bamboo} and 1.13+ rejects the whole model for it. The archive's own
+     * files were lowercased on the way in ({@code AssetPath}), so this is also what makes the
+     * reference match where the file actually went.
      */
     private static String renameTexture(String reference) {
-        String renamed = rename(reference, true);
-        // Lowercase the path portion only; the namespace is already required to be lowercase.
+        String renamed = rename(reference, true).toLowerCase(Locale.ROOT);
         int colon = renamed.indexOf(':');
-        if (colon < 0) {
-            return renamed.toLowerCase(Locale.ROOT);
+        String namespace = colon < 0 ? "" : renamed.substring(0, colon + 1);
+        String path = renamed.substring(colon + 1);
+
+        // A pre-1.13 mod borrows vanilla sprites by their pre-1.13 names, which 1.13 renamed as
+        // well as relocated. Only vanilla's own names are touched: a mod is free to have a
+        // texture called planks_oak and it means its own file.
+        if (namespace.isEmpty() || namespace.equals("minecraft:")) {
+            String legacy = LegacyVanillaTextures.rename(path);
+            if (legacy != null) path = legacy;
         }
-        return renamed.substring(0, colon + 1) + renamed.substring(colon + 1).toLowerCase(Locale.ROOT);
+        return namespace + path;
+    }
+
+    /**
+     * Vanilla model templates that a mod may still name by an id this version no longer has.
+     *
+     * <p>{@code ModelReferenceResolver} takes a {@code minecraft:} parent on trust, because
+     * checking it would mean shipping a list of every vanilla model. That trust is misplaced
+     * exactly here: these templates were renamed between versions, so the reference resolves
+     * on the version the mod was built for and nowhere else. Minecraft then substitutes the
+     * missing model, and the child inherits elements pointing at {@code #missingno} &mdash; the
+     * whole block renders as the missing texture.
+     *
+     * <p>Only renames apply here. A template that was removed outright has no replacement to
+     * name and is left alone.
+     */
+    private static final Map<String, String> VANILLA_PARENT_REMAP = new HashMap<>();
+
+    static {
+        // 1.13 flattening renamed the slab templates.
+        VANILLA_PARENT_REMAP.put("block/half_slab", "block/slab");
+        VANILLA_PARENT_REMAP.put("block/upper_slab", "block/slab_top");
+        // Same texture slots (#end, #side), and the name says it is the sideways one.
+        VANILLA_PARENT_REMAP.put("block/column_side", "block/cube_column_horizontal");
+    }
+
+    /**
+     * 1.20 replaced the four door templates with eight, folding the open states in. A mod built
+     * for 1.20 or later names the eight; before it, an open door was the opposite hinge template
+     * plus a rotation, which such a mod's blockstate already carries.
+     */
+    private static final Map<String, String> PRE_1_20_DOOR_TEMPLATES = new HashMap<>();
+
+    static {
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_bottom_left", "block/door_bottom");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_bottom_left_open", "block/door_bottom_rh");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_bottom_right", "block/door_bottom_rh");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_bottom_right_open", "block/door_bottom");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_top_left", "block/door_top");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_top_left_open", "block/door_top_rh");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_top_right", "block/door_top_rh");
+        PRE_1_20_DOOR_TEMPLATES.put("block/door_top_right_open", "block/door_top");
     }
 
     /**
@@ -114,12 +158,36 @@ public class ModelConverter implements AssetConverter {
      * has them there and rewriting the reference would break it.
      */
     private static String renameParent(String reference) {
-        String renamed = rename(reference, false);
+        // Lowercased whole, namespace included: see renameTexture.
+        String renamed = rename(reference, false).toLowerCase(Locale.ROOT);
         int colon = renamed.indexOf(':');
-        if (colon < 0) {
-            return renamed.toLowerCase(Locale.ROOT);
+        String namespace = colon < 0 ? "" : renamed.substring(0, colon + 1);
+        String path = renamed.substring(colon + 1);
+
+        if (namespace.isEmpty() || namespace.equals("minecraft:")) {
+            String replacement = vanillaParentFor(path);
+            if (replacement != null) path = replacement;
         }
-        return renamed.substring(0, colon + 1) + renamed.substring(colon + 1).toLowerCase(Locale.ROOT);
+        return namespace + path;
+    }
+
+    /** @return what this version calls that template, or {@code null} if it is fine as it is */
+    @Nullable
+    private static String vanillaParentFor(String path) {
+        String renamed = VANILLA_PARENT_REMAP.get(path);
+        if (renamed != null) return renamed;
+        return usesPre1_20DoorTemplates() ? PRE_1_20_DOOR_TEMPLATES.get(path) : null;
+    }
+
+    /**
+     * Whether this build's Minecraft still has the four pre-1.20 door templates.
+     *
+     * <p>Asked of the pack format rather than {@link AssetVersion}, whose boundaries sit at
+     * 1.19.3 and 1.20.5 and so cannot express "before 1.20". 15 is the resource pack format
+     * 1.20 shipped with.
+     */
+    private static boolean usesPre1_20DoorTemplates() {
+        return net.pitan76.assetbridge.asset.RuntimePack.resourcePackFormat() < 15;
     }
 
     private static String rename(String reference, boolean anyNamespace) {
@@ -134,13 +202,6 @@ public class ModelConverter implements AssetConverter {
         } else if (path.startsWith("items/")) {
             path = "item/" + path.substring("items/".length());
         }
-
-        // Apply legacy vanilla name mapping
-        if (vanilla) {
-            String remapped = VANILLA_REMAP.get(path);
-            if (remapped != null) path = remapped;
-        }
-
         return namespace + path;
     }
 

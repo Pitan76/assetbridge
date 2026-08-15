@@ -123,16 +123,18 @@ public class BlockStateConverter implements AssetConverter {
         return qualify(model);
     }
 
+    /**
+     * The namespace is lowercased along with the path: mod ids only became lower-case-by-rule
+     * in 1.13, so a pre-1.13 archive may name itself {@code BambooMod:} here, which 1.13+
+     * rejects as an invalid resource location. The archive's own files were lowercased on the
+     * way in, so this is also what makes the reference match where the file went.
+     */
     private static String qualify(String model) {
         int colon = model.indexOf(':');
         String namespace = colon < 0 ? "" : model.substring(0, colon + 1);
         String path = model.substring(colon + 1);
         String qualified = path.indexOf('/') < 0 ? namespace + "block/" + path : model;
-        int qColon = qualified.indexOf(':');
-        if (qColon < 0) {
-            return qualified.toLowerCase(java.util.Locale.ROOT);
-        }
-        return qualified.substring(0, qColon + 1) + qualified.substring(qColon + 1).toLowerCase(java.util.Locale.ROOT);
+        return qualified.toLowerCase(java.util.Locale.ROOT);
     }
 
     /** Exposed so the pipeline can build the fallback for blockstates it cannot pass through. */

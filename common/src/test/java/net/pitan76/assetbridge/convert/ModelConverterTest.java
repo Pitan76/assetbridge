@@ -20,6 +20,64 @@ class ModelConverterTest {
 
     private final ModelConverter converter = new ModelConverter();
 
+    /**
+     * A vanilla template a mod names by an id this version no longer has is the one case where
+     * trusting the {@code minecraft:} namespace goes wrong: the reference resolves on the
+     * version the mod was built for, and here the whole block renders as the missing texture.
+     */
+    @Test
+    void renamesVanillaTemplatesThatWereRenamed() {
+        assertEquals("block/slab", parentOf("block/half_slab"));
+        assertEquals("block/slab_top", parentOf("block/upper_slab"));
+        assertEquals("block/cube_column_horizontal", parentOf("block/column_side"));
+        // Explicitly namespaced is the same reference.
+        assertEquals("minecraft:block/slab", parentOf("minecraft:block/half_slab"));
+    }
+
+    /**
+     * 1.20 replaced four door templates with eight. On this build (1.18.2) the four are what
+     * exists, so a 1.20+ mod's door has to be pointed back at them; the open states were the
+     * opposite hinge plus a rotation the mod's blockstate already carries.
+     */
+    @Test
+    void mapsPost1_20DoorTemplatesBackToTheFourThisVersionHas() {
+        assertEquals("block/door_bottom", parentOf("block/door_bottom_left"));
+        assertEquals("block/door_bottom_rh", parentOf("block/door_bottom_left_open"));
+        assertEquals("block/door_bottom_rh", parentOf("block/door_bottom_right"));
+        assertEquals("block/door_bottom", parentOf("block/door_bottom_right_open"));
+        assertEquals("block/door_top", parentOf("block/door_top_left"));
+        assertEquals("block/door_top_rh", parentOf("block/door_top_left_open"));
+        assertEquals("block/door_top_rh", parentOf("block/door_top_right"));
+        assertEquals("block/door_top", parentOf("block/door_top_right_open"));
+    }
+
+    @Test
+    void leavesVanillaTemplatesThisVersionStillHasAlone() {
+        assertEquals("block/cube_all", parentOf("block/cube_all"));
+        assertEquals("block/door_bottom", parentOf("block/door_bottom"));
+        assertEquals("builtin/generated", parentOf("builtin/generated"));
+        // A mod may have a model of its own by that name; only vanilla's is remapped.
+        assertEquals("examplemod:block/half_slab", parentOf("examplemod:block/half_slab"));
+    }
+
+    private String parentOf(String parent) {
+        return convert("{\"parent\": \"" + parent + "\"}", AssetVersion.LEGACY).get("parent").getAsString();
+    }
+
+    /**
+     * Mod ids only became lower-case-by-rule in 1.13, so a pre-1.13 archive writes its own name
+     * however it likes. 1.13+ rejects the whole model as an invalid resource location for it,
+     * and the archive's files were lowercased on the way in anyway.
+     */
+    @Test
+    void lowercasesTheNamespaceOfAReferenceAsWellAsThePath() {
+        JsonObject result = convert("{\"parent\": \"BambooMod:block/Foo\","
+                + " \"textures\": {\"cross\": \"BambooMod:blocks/Bamboo\"}}", AssetVersion.LEGACY);
+
+        assertEquals("bamboomod:block/foo", result.get("parent").getAsString());
+        assertEquals("bamboomod:block/bamboo", result.getAsJsonObject("textures").get("cross").getAsString());
+    }
+
     @Test
     void renamesPreFlatteningDirectories() {
         JsonObject result = convert("\n                {\"parent\": \"blocks/cube_all\", \"textures\": {\"all\": \"examplemod:blocks/foo\"}}",
