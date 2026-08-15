@@ -158,9 +158,10 @@ mods/
    └─ ccc.zip
 ```
 
-Blocks found in `assets/<namespace>/blockstates/*.json` and items found in `assets/<namespace>/models/item/*.json` will be registered under their original namespace and can be accessed from the creative tabs "Asset Bridge: Blocks" and "Asset Bridge: Items".
+Register blocks and items from `/blockstates/*.json` and `/models/item/*.json`.<br />
+Registered items can be accessed from creative tabs for each mod (namespace) or from "Asset Bridge: Blocks" and "Asset Bridge: Items" tabs. (Set either option with `feature.split_tab_by_namespace`)
 
-## Configuration (Config)
+## Config
 You can configure Asset Bridge in `config/assetbridge.properties`. The configuration file will be created inside the config folder on the first launch.
 
 ### assetbridge.properties
