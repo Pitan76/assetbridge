@@ -82,7 +82,21 @@ public class LegacyLangKey {
 
     /** The modern translation key, e.g. {@code block.examplemod.example_meta1}. */
     public String modernKey(String namespace) {
-        return (block ? "block." : "item.") + namespace + "." + registryName();
+        return prefix() + namespace + "." + registryName();
+    }
+
+    /**
+     * The modern translation key with the metadata value ignored, so every sub-entry names the
+     * one registry entry that exists. For when the metadata expansion is switched off: the
+     * suffixed keys would then match nothing, and a block showing a raw key is worse than a
+     * block wearing the last of its sub-entries' names.
+     */
+    public String baseKey(String namespace) {
+        return prefix() + namespace + "." + base;
+    }
+
+    private String prefix() {
+        return block ? "block." : "item.";
     }
 
     /** @return the parsed value, or {@code -1} when the text is not a plain decimal number */

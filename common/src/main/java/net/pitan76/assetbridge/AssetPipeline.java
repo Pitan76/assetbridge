@@ -13,6 +13,7 @@ import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.ModelReferenceResolver;
 import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
+import net.pitan76.assetbridge.feature.builtin.MetaVariantsFeature;
 import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,16 +78,31 @@ public class AssetPipeline {
             }
         }
 
+        boolean expandMeta = Features.isEnabled(MetaVariantsFeature.ID);
+
+        // Ids a metadata sub-entry took over, so the same model is not also registered under
+        // its own name. Filled by both expansions, spent when the item candidates resolve.
+        Set<String> claimed = new HashSet<>();
+
         // Before the items are resolved, because a sub-block that cannot be given a state of
         // its own falls back to being one more item candidate.
-        expandBlockMetaVariants(assets, metaVariants, blockStateJson, itemCandidates);
+        if (expandMeta) {
+            expandBlockMetaVariants(assets, metaVariants, blockStateJson, itemCandidates, claimed);
+        }
 
         Set<String> blockIds = new HashSet<>();
         for (BridgedBlockDefinition block : assets.blocks()) {
             blockIds.add(block.id());
         }
-        itemCandidates.resolve(blockIds).forEach(assets::addItem);
-        expandItemMetaVariants(assets, metaVariants, blockIds);
+        claimed.addAll(blockIds);
+
+        // Planned before the candidates resolve so the models it takes over can be excluded,
+        // but added after, so an item the archive named itself keeps the order it was found in.
+        List<BridgedItemDefinition> metaItems = expandMeta
+                ? planItemMetaVariants(assets, metaVariants, claimed)
+                : Collections.<BridgedItemDefinition>emptyList();
+        itemCandidates.resolve(claimed).forEach(assets::addItem);
+        metaItems.forEach(assets::addItem);
 
         // After both expansions, so the sub-entries get their item model too.
         for (BridgedBlockDefinition block : assets.blocks()) {
@@ -165,7 +182,8 @@ public class AssetPipeline {
                             // Read even when another archive already claimed this locale: the
                             // metadata sub-entries are collected from every language file there
                             // is, so a locale we do not serve still tells us what exists.
-                            metaVariants.scan(jsonTarget.namespace(), new String(raw, StandardCharsets.UTF_8));
+                            metaVariants.scan(jsonTarget.namespace(), new String(raw, StandardCharsets.UTF_8),
+                                    archive.fileName(), version);
                             if (!assets.hasResource(jsonTarget)) {
                                 byte[] jsonBytes = convertLangToJson(raw, jsonTarget.namespace());
                                 AssetBridge.LOGGER.info("Converted .lang to json: namespace={}, path={}, bytes={}", jsonTarget.namespace(), jsonTarget.path(), jsonBytes.length);
@@ -383,7 +401,8 @@ public class AssetPipeline {
      * named, and shows the block's model.
      */
     private static void expandBlockMetaVariants(BridgedAssetManager assets, MetaVariants metaVariants,
-                                                Map<String, JsonObject> blockStateJson, ItemCandidates itemCandidates) {
+                                                Map<String, JsonObject> blockStateJson, ItemCandidates itemCandidates,
+                                                Set<String> claimed) {
         int blocks = 0;
         int items = 0;
         // Snapshotted: the sub-blocks are appended to the same list we are walking.
@@ -404,9 +423,18 @@ public class AssetPipeline {
                 JsonElement variant = variants == null ? null : variants.get(index);
                 String model = BlockStateParser.modelOf(variant);
                 if (model == null) {
+                    // No state to place, so it survives as an item. Its own item model if the
+                    // archive has one, the block's otherwise.
+                    String dedicated = dedicatedItemModel(assets, block.namespace(), block.path(), meta);
+                    if (dedicated != null && dedicated.equals(name)) continue;
+
+                    String parent = dedicated != null
+                            ? block.namespace() + ":item/" + dedicated
+                            : block.namespace() + ":item/" + block.path();
+                    if (dedicated != null) claimed.add(block.namespace() + ":" + dedicated);
+
                     itemCandidates.addModel(block.namespace(), name, block.sourceArchive(), block.version());
-                    putAliasItemModel(assets, block.namespace(), name, block.namespace() + ":item/" + block.path(),
-                            block.version());
+                    putAliasItemModel(assets, block.namespace(), name, parent, block.version());
                     items++;
                     continue;
                 }
@@ -423,34 +451,77 @@ public class AssetPipeline {
         }
     }
 
-    /** The same for items, which have no state to recover and so are always items. */
-    private static void expandItemMetaVariants(BridgedAssetManager assets, MetaVariants metaVariants,
-                                               Set<String> blockIds) {
-        Set<String> taken = new HashSet<>(blockIds);
-        for (BridgedItemDefinition item : assets.items()) {
-            taken.add(item.id());
-        }
+    /**
+     * Plans the extra items a pre-1.13 archive packed behind one item name as metadata values.
+     *
+     * <p>Items have no blockstate, so there is no equivalent of the property mapping the blocks
+     * get: which model a metadata value used was bound in the mod's Java code, to a name of the
+     * author's choosing. Two of those choices are recoverable, because they are spelled out in
+     * the file names and can be confirmed rather than guessed:
+     * {@code models/item/<base>_meta<n>.json} and {@code models/item/<base>_<n>.json}. Where one
+     * of those exists the sub-entry gets its real model, and that model is claimed so it is not
+     * <em>also</em> registered as a standalone item under its own name.
+     *
+     * <p>Any other naming &mdash; {@code models/item/dust_copper.json} for metadata 0 of
+     * {@code dust}, say &mdash; cannot be tied back to a metadata value from the assets. Those
+     * models are already registered as items in their own right with the right texture, so
+     * nothing is lost but the display name, and inventing a mapping to recover it would risk
+     * putting the wrong name on the wrong item.
+     *
+     * @param claimed ids that must not resolve as standalone items; added to here
+     * @return the items to register, which the caller adds after the candidates resolve
+     */
+    private static List<BridgedItemDefinition> planItemMetaVariants(BridgedAssetManager assets,
+                                                                    MetaVariants metaVariants, Set<String> claimed) {
+        List<BridgedItemDefinition> planned = new ArrayList<>();
+        for (MetaVariants.Entry entry : metaVariants.itemEntries()) {
+            String namespace = entry.namespace();
+            String base = entry.base();
+            boolean hasBaseModel = assets.hasResource(AssetPath.itemModel(namespace, base));
 
-        int added = 0;
-        for (BridgedItemDefinition item : new ArrayList<>(assets.items())) {
-            List<Integer> metas = metaVariants.itemMetas(item.id());
-            if (metas.isEmpty()) continue;
+            for (int meta : entry.metas()) {
+                String name = MetaVariants.nameFor(base, meta);
+                String dedicated = dedicatedItemModel(assets, namespace, base, meta);
+                // The model is already named exactly what the sub-entry would be; it is the
+                // sub-entry, and gets registered from its own model like any other item.
+                if (dedicated != null && dedicated.equals(name)) continue;
 
-            for (int meta : metas) {
-                if (meta <= 0) continue;
+                String parent;
+                if (dedicated != null) {
+                    parent = namespace + ":item/" + dedicated;
+                    claimed.add(namespace + ":" + dedicated);
+                } else if (hasBaseModel) {
+                    parent = namespace + ":item/" + base;
+                } else {
+                    // Nothing in the archive to show for this value.
+                    continue;
+                }
+                // Metadata 0 is the base name, which its own item model already registers.
+                if (meta == 0 && hasBaseModel) continue;
+                if (!claimed.add(namespace + ":" + name)) continue;
 
-                String name = MetaVariants.nameFor(item.path(), meta);
-                if (!taken.add(item.namespace() + ":" + name)) continue;
-
-                putAliasItemModel(assets, item.namespace(), name, item.namespace() + ":item/" + item.path(),
-                        item.version());
-                assets.addItem(new BridgedItemDefinition(item.namespace(), name, item.sourceArchive(), item.version()));
-                added++;
+                putAliasItemModel(assets, namespace, name, parent, entry.version());
+                planned.add(new BridgedItemDefinition(namespace, name, entry.sourceArchive(), entry.version()));
             }
         }
-        if (added > 0) {
-            AssetBridge.LOGGER.info("Expanded pre-1.13 metadata into {} sub-item(s)", added);
+        if (!planned.isEmpty()) {
+            AssetBridge.LOGGER.info("Expanded pre-1.13 metadata into {} sub-item(s)", planned.size());
         }
+        return planned;
+    }
+
+    /**
+     * An item model named after a metadata value of {@code base}, if the archive shipped one.
+     *
+     * @return the name under {@code models/item/}, or {@code null} when there is none
+     */
+    @Nullable
+    private static String dedicatedItemModel(BridgedAssetManager assets, String namespace, String base, int meta) {
+        String[] candidates = {base + "_meta" + meta, base + "_" + meta};
+        for (String candidate : candidates) {
+            if (assets.hasResource(AssetPath.itemModel(namespace, candidate))) return candidate;
+        }
+        return null;
     }
 
     /**
@@ -651,10 +722,15 @@ public class AssetPipeline {
      * <p>Anything that is not a legacy name key is left exactly as it was: a modern key is
      * already right, and a legacy non-name key such as {@code tile.example.tooltip} has no
      * modern counterpart to rewrite it to.
+     *
+     * <p>With the metadata expansion switched off there is no {@code example_meta1} to name, so
+     * every sub-entry names {@code example} instead. The last one in the file wins, which beats
+     * pointing at a registry entry that does not exist.
      */
     private static String convertLangKey(String key, String modid) {
         LegacyLangKey parsed = LegacyLangKey.parse(key);
-        return parsed == null ? key : parsed.modernKey(modid);
+        if (parsed == null) return key;
+        return Features.isEnabled(MetaVariantsFeature.ID) ? parsed.modernKey(modid) : parsed.baseKey(modid);
     }
 
     private static byte[] convertLangToJson(byte[] raw, String modid) {

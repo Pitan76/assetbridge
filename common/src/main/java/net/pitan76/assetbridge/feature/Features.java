@@ -11,6 +11,7 @@ import net.pitan76.assetbridge.feature.builtin.RecipeFeature;
 import net.pitan76.assetbridge.feature.builtin.ResourcePackFeature;
 import net.pitan76.assetbridge.feature.builtin.SplitTabByNamespaceFeature;
 import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
+import net.pitan76.assetbridge.feature.builtin.MetaVariantsFeature;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -26,6 +27,9 @@ public class Features {
     private static final List<Feature> REGISTERED = new ArrayList<>(Arrays.asList(
             new SplitTabByNamespaceFeature(),
             new CutoutBlocksFeature(),
+            // Read by AssetPipeline while the bundle is built, so it must be registered even
+            // though its own apply() has nothing to do.
+            new MetaVariantsFeature(),
             new BlockFeature(),
             new ItemFeature(),
             // Runs after the blocks it generates tables for, before the packs that serve them.

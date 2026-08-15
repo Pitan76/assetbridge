@@ -10,11 +10,15 @@ import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.asset.BridgedItemDefinition;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
+import net.pitan76.assetbridge.feature.Features;
 import net.pitan76.assetbridge.test.TestArchives;
 import net.pitan76.assetbridge.util.Json;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -27,6 +31,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AssetPipelineTest {
     private static final Predicate<String> NOTHING_LOADED = namespace -> false;
+
+    /**
+     * The pipeline asks {@code Features} whether the metadata expansion is on, and nothing is
+     * on until a config has been read. In the game {@code AssetBridge.init} reads one before
+     * building; here that has to be done by hand, or every feature reads as switched off.
+     */
+    @BeforeAll
+    static void loadDefaultFeatureConfig(@TempDir Path gameDir) {
+        Features.loadConfig(gameDir);
+    }
 
     @Test
     void discoversABlockAndItsResources() {
@@ -542,8 +556,73 @@ class AssetPipelineTest {
 
         assertEquals(new HashSet<>(Arrays.asList("examplemod:bar", "examplemod:bar_meta1", "examplemod:bar_meta2")),
                 assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toSet()));
+        // Nothing in the archive ties a model to a metadata value, so they share the base one.
         assertEquals("examplemod:item/bar",
                 json(assets, AssetPath.itemModel("examplemod", "bar_meta2")).get("parent").getAsString());
+    }
+
+    /**
+     * Where a mod named its models after the metadata values, the mapping is spelled out in the
+     * file names and each sub-item can have its real model rather than the base one.
+     */
+    @Test
+    void givesASubItemItsOwnModelWhenTheArchiveNamedItAfterTheMetadataValue() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/models/item/bar.json", "{\"parent\": \"item/generated\"}");
+        resources.put("assets/examplemod/models/item/bar_1.json",
+                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:items/bar_1\"}}");
+        resources.put("assets/examplemod/lang/en_us.lang", "item.bar.0.name=Bar\nitem.bar.1.name=Other Bar\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        assertEquals("examplemod:item/bar_1",
+                json(assets, AssetPath.itemModel("examplemod", "bar_meta1")).get("parent").getAsString());
+        // bar_1 is that sub-item, so it must not also be registered under its own name.
+        assertEquals(new HashSet<>(Arrays.asList("examplemod:bar", "examplemod:bar_meta1")),
+                assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toSet()));
+    }
+
+    /** Mods using that naming often ship no base model at all; metadata 0 is then a model too. */
+    @Test
+    void registersTheBaseEntryFromItsMetadataZeroModel() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/models/item/bar_0.json",
+                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:items/bar_0\"}}");
+        resources.put("assets/examplemod/models/item/bar_1.json",
+                "{\"parent\": \"item/generated\", \"textures\": {\"layer0\": \"examplemod:items/bar_1\"}}");
+        resources.put("assets/examplemod/lang/en_us.lang", "item.bar.0.name=Bar\nitem.bar.1.name=Other Bar\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        assertEquals(new HashSet<>(Arrays.asList("examplemod:bar", "examplemod:bar_meta1")),
+                assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toSet()));
+        assertEquals("examplemod:item/bar_0",
+                json(assets, AssetPath.itemModel("examplemod", "bar")).get("parent").getAsString());
+        assertEquals("examplemod:item/bar_1",
+                json(assets, AssetPath.itemModel("examplemod", "bar_meta1")).get("parent").getAsString());
+
+        JsonObject lang = json(assets, AssetPath.lang("examplemod", "en_us"));
+        assertEquals("Bar", lang.get("item.examplemod.bar").getAsString());
+        assertEquals("Other Bar", lang.get("item.examplemod.bar_meta1").getAsString());
+    }
+
+    /**
+     * A metadata value whose model the mod bound in code to a name of its own choosing cannot be
+     * tied back to that value from the assets. The model is still registered as an item in its
+     * own right, so the texture is there; only the display name is beyond reach.
+     */
+    @Test
+    void leavesModelsItCannotTieToAMetadataValueAsTheirOwnItems() {
+        Map<String, String> resources = new HashMap<>();
+        resources.put("assets/examplemod/models/item/dust_copper.json", "{\"parent\": \"item/generated\"}");
+        resources.put("assets/examplemod/models/item/dust_tin.json", "{\"parent\": \"item/generated\"}");
+        resources.put("assets/examplemod/lang/en_us.lang", "item.dust.0.name=Copper Dust\nitem.dust.1.name=Tin Dust\n");
+
+        BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.LEGACY, resources));
+
+        // No 'dust' and no 'dust_meta1' were invented out of a language file alone.
+        assertEquals(new HashSet<>(Arrays.asList("examplemod:dust_copper", "examplemod:dust_tin")),
+                assets.items().stream().map(BridgedItemDefinition::id).collect(Collectors.toSet()));
     }
 
     /**
