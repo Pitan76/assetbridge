@@ -3,6 +3,7 @@ package net.pitan76.assetbridge.convert;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.AssetVersion;
+import net.pitan76.assetbridge.asset.RuntimePack;
 import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
 
@@ -41,14 +42,25 @@ class ModelConverterTest {
      */
     @Test
     void mapsPost1_20DoorTemplatesBackToTheFourThisVersionHas() {
-        assertEquals("block/door_bottom", parentOf("block/door_bottom_left"));
-        assertEquals("block/door_bottom_rh", parentOf("block/door_bottom_left_open"));
-        assertEquals("block/door_bottom_rh", parentOf("block/door_bottom_right"));
-        assertEquals("block/door_bottom", parentOf("block/door_bottom_right_open"));
-        assertEquals("block/door_top", parentOf("block/door_top_left"));
-        assertEquals("block/door_top_rh", parentOf("block/door_top_left_open"));
-        assertEquals("block/door_top_rh", parentOf("block/door_top_right"));
-        assertEquals("block/door_top", parentOf("block/door_top_right_open"));
+        if (RuntimePack.resourcePackFormat() < 15) {
+            assertEquals("block/door_bottom", parentOf("block/door_bottom_left"));
+            assertEquals("block/door_bottom_rh", parentOf("block/door_bottom_left_open"));
+            assertEquals("block/door_bottom_rh", parentOf("block/door_bottom_right"));
+            assertEquals("block/door_bottom", parentOf("block/door_bottom_right_open"));
+            assertEquals("block/door_top", parentOf("block/door_top_left"));
+            assertEquals("block/door_top_rh", parentOf("block/door_top_left_open"));
+            assertEquals("block/door_top_rh", parentOf("block/door_top_right"));
+            assertEquals("block/door_top", parentOf("block/door_top_right_open"));
+        } else {
+            assertEquals("block/door_bottom_left", parentOf("block/door_bottom_left"));
+            assertEquals("block/door_bottom_left_open", parentOf("block/door_bottom_left_open"));
+            assertEquals("block/door_bottom_right", parentOf("block/door_bottom_right"));
+            assertEquals("block/door_bottom_right_open", parentOf("block/door_bottom_right_open"));
+            assertEquals("block/door_top_left", parentOf("block/door_top_left"));
+            assertEquals("block/door_top_left_open", parentOf("block/door_top_left_open"));
+            assertEquals("block/door_top_right", parentOf("block/door_top_right"));
+            assertEquals("block/door_top_right_open", parentOf("block/door_top_right_open"));
+        }
     }
 
     @Test
