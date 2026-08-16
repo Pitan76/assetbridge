@@ -23,11 +23,10 @@ import java.util.function.Supplier;
 public class AssetBridgeFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        // Load config first to check enabled features during tab setup
         Features.loadConfig(FabricLoader.getInstance().getGameDir());
 
-        // The tabs have to exist before the items are built.
         if (Features.isDisabled(SplitTabByNamespaceFeature.ID)) {
+            // 2 only Creative tabs: "Asset Bridge: Item", "Asset Bridge: Block"
             BridgedItemGroup.setBlocksTab(createTab(
                     BridgedItemGroup.BLOCKS, BridgedItemGroup::blocksIcon,
                     () -> BridgedItemGroup.sharedTabContents(true)));
@@ -36,6 +35,7 @@ public class AssetBridgeFabric implements ModInitializer {
                     () -> BridgedItemGroup.sharedTabContents(false)));
         }
 
+        // Creative tabs split by namespace: "Asset Bridge: <MOD NAME>"
         BridgedItemGroup.setTabFactory(
                 (namespace, iconSupplier) ->
                 createTab(namespace, iconSupplier,
@@ -51,7 +51,7 @@ public class AssetBridgeFabric implements ModInitializer {
                 namespace -> FabricLoader.getInstance().isModLoaded(namespace));
 
         // Mod initialisation runs before the registries freeze, so direct registration is fine.
-        int registeredBlocks = 0;
+        int registeredBlocks = 0, registeredItems = 0;
         for (Map.Entry<ResourceLocation, Block> entry : BridgedBlocks.blocks().entrySet()) {
             // Mod init order is not controllable, so a mod loaded after us can still claim the
             // same id. That is the desired outcome anyway: the real mod should win.
@@ -63,9 +63,9 @@ public class AssetBridgeFabric implements ModInitializer {
             Registry.register(blockRegistry(), entry.getKey(), entry.getValue());
             Registry.register(itemRegistry(), entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
             registeredBlocks++;
+//            registeredItems++;
         }
 
-        int registeredItems = 0;
         for (Map.Entry<ResourceLocation, Item> entry : BridgedItems.items().entrySet()) {
             if (itemRegistry().containsKey(entry.getKey())) {
                 AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
@@ -124,14 +124,9 @@ public class AssetBridgeFabric implements ModInitializer {
     }
 
     /** Up to 1.19.2 a tab only needs to exist; the items name it themselves. */
-    private static CreativeModeTab createTab(
-            String path,
-            Supplier<ItemStack> icon,
-            Supplier<List<Item>> contents) {
+    private static CreativeModeTab createTab(String path, Supplier<ItemStack> icon, Supplier<List<Item>> contents) {
         return net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder
-                .create(modId(path))
-                .icon(icon)
-                .build();
+                .create(modId(path)).icon(icon).build();
     }
     //?}
 

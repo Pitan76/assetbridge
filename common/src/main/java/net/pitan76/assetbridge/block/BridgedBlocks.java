@@ -8,6 +8,7 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.shape.BlockAnalysis;
+import net.pitan76.assetbridge.shape.BlockKind;
 import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.Collections;
@@ -65,8 +66,9 @@ public class BridgedBlocks {
         BlockAnalysis analysis = asset.analysis();
         if (analysis == null) return BridgedBlock.create(id, asset.states(), null);
 
-        if (analysis.kind() != null) {
-            Block block = BridgedBlockTypes.create(analysis.kind(), id);
+        BlockKind kind = analysis.kind();
+        if (kind != null) {
+            Block block = BridgedBlockTypes.create(kind, id);
             if (block != null) return block;
         }
         return BridgedBlock.create(id, asset.states(), analysis.shape());

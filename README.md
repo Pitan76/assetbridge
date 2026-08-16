@@ -72,14 +72,15 @@ block_resistance=6.0
 block_hardness.examplemod:heavy_stone=5.0
 block_resistance.examplemod:example_block=30.0
 
-# カリング（ブロックの隣接面が透けてしまう現象）を無効化する設定
-# true (階段やチェストなどの非フルキューブ形状を自動判定し無効化), false (一律有効), またはカンマ区切りのブロックID
+# カリング（ブロックの隣接面が透けてしまう現象）を無効化する
+# true (階段やチェストなど自動判定し無効化), false (無効化しない), またはカンマ区切りでブロックIDを指定
 no_occlusion_blocks=true
+# no_occlusion_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ### ブロックの種類推測と形状生成
-`feature.block_kinds` は、ブロックのモデルが継承しているバニラモデルからそのブロックの種類を判断します。<br />
-`block/stairs` を継承していれば階段、`block/slab` ならハーフブロック、という具合です。対象は階段・ハーフブロック・フェンス・塀・板ガラス・フェンスゲート・ドア・トラップドア・はしごで、それぞれバニラのブロックとして登録されるため、角の形状や設置・開閉といった挙動もバニラと同じになります。<br />
+`feature.block_kinds` は、ブロックのモデルが継承しているバニラのモデルからそのブロックの種類を判断します。<br />
+`block/stairs` を継承していれば階段、`block/slab` ならハーフブロック、という感じです。対象は階段、ハーフブロック、フェンス、塀、板ガラス、フェンスゲート、ドア、トラップドア、はしごで、それぞれバニラのブロックとして登録されるため、角の形状や設置、開閉といった挙動もバニラと同様になります。<br />
 ただし、blockstateのプロパティ（名前と値）がバニラ側のブロックに無いものを含む場合は、blockstateをそのまま配信できなくなるため、通常のブロックとして登録されます。
 
 `feature.model_shapes` は、blockstateが参照するモデルの `elements` から当たり判定・選択範囲を生成します。<br />
@@ -223,9 +224,10 @@ block_resistance=6.0
 block_hardness.examplemod:heavy_stone=5.0
 block_resistance.examplemod:example_block=30.0
 
-# Disable occlusion culling (prevents faces from disappearing behind non-full-cube blocks)
-# true = auto-detect by keyword (stairs, slab, chest, etc.), false = disable all, or comma-separated block IDs
+# Disable culling (prevents adjacent faces from being culled)
+# true (auto-detect for stairs, chests, etc.), false (do not disable), or specify block IDs in a comma-separated list
 no_occlusion_blocks=true
+# no_occlusion_blocks=examplemod:example_block,examplemod:example_block2
 ```
 
 ### Block kinds and generated shapes

@@ -105,8 +105,7 @@ public class AssetBridgeNeoForge {
                 }
                 event.register(Registries.BLOCK, entry.getKey(), entry::getValue);
             }
-            AssetBridge.LOGGER.info("Registered {} bridged blocks",
-                    BridgedBlocks.blocks().size() - skipped.size());
+            AssetBridge.LOGGER.info("Registered {} bridged blocks", BridgedBlocks.blocks().size() - skipped.size());
             return;
         }
         if (event.getRegistryKey().equals(Registries.ITEM)) {
