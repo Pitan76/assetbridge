@@ -1,10 +1,14 @@
 package net.pitan76.assetbridge.asset;
 
+import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
+import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.util.IdUtil;
+import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -18,12 +22,6 @@ public class BridgedAssetManager {
     private final List<BridgedItemDefinition> items = new ArrayList<>();
     /** Namespace to the display name its archive declared, when it declared one. */
     private final Map<String, String> modNames = new LinkedHashMap<>();
-    /**
-     * Block id to what the models said about it. Kept beside the definitions rather than on
-     * them: it is worked out at the very end of the pipeline, once every model is final, and
-     * only some blocks have anything to record.
-     */
-    private final Map<String, net.pitan76.assetbridge.shape.BlockAnalysis> analyses = new LinkedHashMap<>();
 
     /** For resources Asset Bridge produced itself; they exist nowhere on disk. */
     public void putResource(AssetPath path, byte[] data) {
@@ -58,16 +56,6 @@ public class BridgedAssetManager {
         return modNames;
     }
 
-    public void putAnalysis(String blockId, net.pitan76.assetbridge.shape.BlockAnalysis analysis) {
-        analyses.put(blockId, analysis);
-    }
-
-    /** What the models said about a block, or {@code null} when they said nothing useful. */
-    @Nullable
-    public net.pitan76.assetbridge.shape.BlockAnalysis analysis(String blockId) {
-        return analyses.get(blockId);
-    }
-
     public boolean hasResource(AssetPath path) {
         return resources.containsKey(path);
     }
@@ -85,6 +73,23 @@ public class BridgedAssetManager {
     public byte[] readResource(AssetPath path) throws IOException {
         AssetSource source = resources.get(path);
         return source == null ? null : source.readAll();
+    }
+
+    /**
+     * Reads a resource as JSON. Everything that inspects the bundle rather than serving it
+     * wants exactly this, so how a missing, unreadable or malformed file is answered is
+     * decided once here: with {@code null}, and a line in the log for the file that was there
+     * but could not be read.
+     */
+    @Nullable
+    public JsonObject readJson(AssetPath path) {
+        try {
+            byte[] data = readResource(path);
+            return data == null ? null : Json.parse(new String(data, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            AssetBridge.LOGGER.error("Could not read {}", path, e);
+            return null;
+        }
     }
 
     public List<BridgedBlockDefinition> blocks() {

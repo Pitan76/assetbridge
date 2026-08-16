@@ -3,14 +3,11 @@ package net.pitan76.assetbridge.shape;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,14 +18,19 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Reads the boxes a block model is drawn out of, so a block can be given the shape it looks
- * like it has instead of the full cube every bridged block would otherwise be.
+ * Reads what a block model says about the block it draws: the boxes it is made of, and the
+ * chain of models it inherited them from.
  *
  * <p>A model that describes no geometry of its own inherits it, so the {@code parent} chain is
  * followed until one does. A chain that ends in the {@code minecraft} namespace ends outside
  * the bundle: those models are not in the archives and cannot be read, so the handful whose
  * shape is worth having is listed in {@link #VANILLA} and everything else is answered with "no
  * shape", which leaves the block a full cube — the same result as before this existed.
+ *
+ * <p>One instance serves one analysis run and is dropped afterwards. It remembers what it has
+ * already resolved, because a model is shared: every block of a mod's stone family inherits
+ * from the same handful of parents, and without this each of them would be read out of the
+ * archive and parsed again.
  */
 public class ModelGeometry {
     /** Beyond this a shape costs more to test against than it is worth; the outer box stands in. */
@@ -43,68 +45,79 @@ public class ModelGeometry {
      */
     private static final Map<String, List<ShapeBox>> VANILLA = vanillaShapes();
 
-    private ModelGeometry() {
+    private final BridgedAssetManager assets;
+    private final Map<String, Resolved> resolved = new HashMap<>();
+
+    public ModelGeometry(BridgedAssetManager assets) {
+        this.assets = assets;
     }
 
-    /**
-     * The boxes {@code modelId} is drawn out of.
-     *
-     * @return the boxes, or {@code null} when the model is a full cube or nothing about it can
-     *         be worked out — both of which mean "leave the block as it is"
-     */
-    @Nullable
-    public static List<ShapeBox> boxesOf(BridgedAssetManager assets, String modelId) {
-        String current = modelId;
-        Set<String> seen = new HashSet<>();
+    /** What one model turned out to be, once its parents had been followed. */
+    public static class Resolved {
+        /** The models walked through, the model itself first and its furthest ancestor last. */
+        private final List<String> chain;
+        @Nullable
+        private final List<ShapeBox> boxes;
 
-        for (int depth = 0; depth < MAX_DEPTH; depth++) {
-            if (!seen.add(current)) return null;
-
-            AssetPath path = AssetPath.fromModelId(current);
-            if (path == null) return null;
-            if (path.namespace().equals("minecraft")) return vanillaBoxes(current);
-
-            JsonObject model = read(assets, path);
-            if (model == null) return null;
-
-            JsonArray elements = Json.array(model, "elements");
-            if (elements != null) return boxesOf(elements);
-
-            String parent = Json.string(model, "parent");
-            if (parent == null) return null;
-            current = parent;
+        Resolved(List<String> chain, @Nullable List<ShapeBox> boxes) {
+            this.chain = chain;
+            this.boxes = boxes;
         }
-        return null;
+
+        public List<String> chain() {
+            return chain;
+        }
+
+        /**
+         * The boxes the model is drawn out of, or {@code null} when it is a full cube or
+         * nothing about it could be worked out — both of which mean "leave the block as it is".
+         */
+        @Nullable
+        public List<ShapeBox> boxes() {
+            return boxes;
+        }
     }
 
     /**
-     * The name of the model the {@code parent} chain ends at, which is what says what kind of
-     * block this is: a mod's stairs model is its own, but it inherits from
-     * {@code minecraft:block/stairs}.
-     *
-     * @return every name in the chain, the model itself first and its furthest ancestor last
+     * Follows {@code modelId} to the model that carries the geometry, in one walk: what kind of
+     * block this is and what shape it has are both decided by the same chain, and reading it
+     * twice would mean reading every file in it twice.
      */
-    public static List<String> parentChain(BridgedAssetManager assets, String modelId) {
+    public Resolved resolve(String modelId) {
+        Resolved cached = resolved.get(modelId);
+        if (cached != null) return cached;
+
+        Resolved answer = walk(modelId);
+        resolved.put(modelId, answer);
+        return answer;
+    }
+
+    private Resolved walk(String modelId) {
         List<String> chain = new ArrayList<>();
-        String current = modelId;
         Set<String> seen = new HashSet<>();
+        String current = modelId;
 
         for (int depth = 0; depth < MAX_DEPTH; depth++) {
             if (!seen.add(current)) break;
             chain.add(current);
 
             AssetPath path = AssetPath.fromModelId(current);
-            // The vanilla model is the end of the chain: its own parent is not in the bundle.
-            if (path == null || path.namespace().equals("minecraft")) break;
+            if (path == null) break;
+            // The vanilla model ends the chain: it is not in the bundle, so neither its
+            // elements nor its own parent can be read.
+            if (path.namespace().equals("minecraft")) return new Resolved(chain, vanillaBoxes(current));
 
-            JsonObject model = read(assets, path);
+            JsonObject model = assets.readJson(path);
             if (model == null) break;
+
+            JsonArray elements = Json.array(model, "elements");
+            if (elements != null) return new Resolved(chain, boxesOf(elements));
 
             String parent = Json.string(model, "parent");
             if (parent == null) break;
             current = parent;
         }
-        return chain;
+        return new Resolved(chain, null);
     }
 
     /** @return the boxes an {@code elements} array describes, or {@code null} for a full cube */
@@ -227,9 +240,7 @@ public class ModelGeometry {
 
     @Nullable
     private static List<ShapeBox> vanillaBoxes(String modelId) {
-        int slash = modelId.lastIndexOf('/');
-        String name = slash < 0 ? modelId : modelId.substring(slash + 1);
-        return VANILLA.get(name);
+        return VANILLA.get(AssetPath.modelName(modelId));
     }
 
     private static Map<String, List<ShapeBox>> vanillaShapes() {
@@ -250,16 +261,5 @@ public class ModelGeometry {
                 new ShapeBox(0, 0, 0, 16, 8, 16),
                 new ShapeBox(0, 8, 8, 16, 16, 16)));
         return shapes;
-    }
-
-    @Nullable
-    private static JsonObject read(BridgedAssetManager assets, AssetPath path) {
-        try {
-            byte[] data = assets.readResource(path);
-            return data == null ? null : Json.parse(new String(data, StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            AssetBridge.LOGGER.warn("Could not read {} while working out a block shape", path, e);
-            return null;
-        }
     }
 }

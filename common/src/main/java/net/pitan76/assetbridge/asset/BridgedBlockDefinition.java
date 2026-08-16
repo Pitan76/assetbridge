@@ -1,5 +1,8 @@
 package net.pitan76.assetbridge.asset;
 
+import net.pitan76.assetbridge.shape.BlockAnalysis;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Internal, version-neutral description of one block discovered in an external archive.
  */
@@ -10,6 +13,16 @@ public class BridgedBlockDefinition {
     public final BridgedStateDefinition states;
     public final String sourceArchive;
     public final AssetVersion version;
+
+    /**
+     * What the block's models turned out to say about it. Filled in at the end of the
+     * pipeline, once every model is final, and left null for a block whose models said
+     * nothing beyond "it is a block". Not part of the block's identity, so it stays out of
+     * {@link #equals}: two definitions describing the same block are the same block whether
+     * or not they have been analysed yet.
+     */
+    @Nullable
+    private BlockAnalysis analysis;
 
     /**
      * @param modelId    a representative model in {@code namespace:block/name} form, used for the
@@ -53,6 +66,16 @@ public class BridgedBlockDefinition {
 
     public String id() {
         return namespace + ":" + path;
+    }
+
+    public void setAnalysis(@Nullable BlockAnalysis analysis) {
+        this.analysis = analysis;
+    }
+
+    /** What the models said about this block, or {@code null} when they said nothing useful. */
+    @Nullable
+    public BlockAnalysis analysis() {
+        return analysis;
     }
 
     @Override

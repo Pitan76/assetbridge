@@ -246,6 +246,16 @@ public class AssetPath {
         return new AssetPath(PackKind.CLIENT, namespace, "models/" + path + ".json");
     }
 
+    /**
+     * The bare name a model reference ends in, e.g. {@code cube_all} for
+     * {@code minecraft:block/cube_all}. That name is what says what a model is, which is why
+     * it is worth having apart from the path the reference resolves to.
+     */
+    public static String modelName(String modelId) {
+        int slash = modelId.lastIndexOf('/');
+        return slash < 0 ? modelId : modelId.substring(slash + 1);
+    }
+
     @Override
     public @NotNull String toString() {
         return toFullPath();

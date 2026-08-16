@@ -5,20 +5,21 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
-import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
  * What could be worked out about one bridged block beyond "it is a block": which vanilla kind
- * it is, if any, and what shape it has.
+ * it is, or else what shape it has.
+ *
+ * <p>Never both. A block recognised as a vanilla kind is registered as that class, which brings
+ * shapes of its own — better ones, because they cover the states the model cannot show, such as
+ * which way a stair corner turns. So the kind is looked for first and the shape is only worked
+ * out when there is none, which leaves the block layer with nothing left to decide.
  *
  * <p>Both are read out of the assets while the bundle is built, because that is where the
- * models are; the block layer only spends the answer. Either half can be absent, and a block
- * with neither is registered exactly as it was before this existed.
+ * models are; the block layer only spends the answer.
  */
 public class BlockAnalysis {
     @Nullable
@@ -26,27 +27,25 @@ public class BlockAnalysis {
     @Nullable
     private final BlockShape shape;
 
-    public BlockAnalysis(@Nullable BlockKind kind, @Nullable BlockShape shape) {
+    private BlockAnalysis(@Nullable BlockKind kind, @Nullable BlockShape shape) {
         this.kind = kind;
         this.shape = shape;
     }
 
+    /** The vanilla class this block should be registered as, or {@code null} for a plain one. */
     @Nullable
     public BlockKind kind() {
         return kind;
     }
 
+    /** The shape a plain block should be given; always {@code null} when {@link #kind} is set. */
     @Nullable
     public BlockShape shape() {
         return shape;
     }
 
-    public boolean isEmpty() {
-        return kind == null && shape == null;
-    }
-
     /**
-     * Analyses every block in the bundle and stores the result on it.
+     * Analyses every block in the bundle and records the result on it.
      *
      * <p>Must run after the models are final: a model whose parent was missing has been
      * replaced by then, so the shape read here is the one the game will draw.
@@ -57,23 +56,28 @@ public class BlockAnalysis {
     public static void run(BridgedAssetManager assets, boolean inferKinds, boolean buildShapes) {
         if (!inferKinds && !buildShapes) return;
 
+        // Lives no longer than the run: every model it remembers is already in the bundle, and
+        // once the blocks are built nothing asks about the geometry again.
+        ModelGeometry models = new ModelGeometry(assets);
         int kinds = 0;
         int shapes = 0;
+
         for (BridgedBlockDefinition block : assets.blocks()) {
-            JsonObject blockState = read(assets, AssetPath.blockState(block.namespace(), block.path()));
+            BlockKind kind = inferKinds ? kindOf(models, block) : null;
+            if (kind != null) {
+                block.setAnalysis(new BlockAnalysis(kind, null));
+                kinds++;
+                continue;
+            }
+            if (!buildShapes) continue;
 
-            BlockKind kind = inferKinds ? kindOf(assets, block) : null;
-            // A vanilla class brings its own shape, and a better one: it knows about the
-            // states the model cannot show, such as which way a stair corner turns.
-            BlockShape shape = buildShapes && kind == null && blockState != null
-                    ? BlockShapes.of(assets, blockState)
-                    : null;
+            // Only now: a block that is a vanilla kind never needs its blockstate read.
+            JsonObject blockState = assets.readJson(AssetPath.blockState(block.namespace(), block.path()));
+            BlockShape shape = blockState == null ? null : BlockShapes.of(models, blockState);
+            if (shape == null) continue;
 
-            if (kind == null && shape == null) continue;
-            if (kind != null) kinds++;
-            if (shape != null) shapes++;
-
-            assets.putAnalysis(block.id(), new BlockAnalysis(kind, shape));
+            block.setAnalysis(new BlockAnalysis(null, shape));
+            shapes++;
         }
         if (kinds > 0) {
             AssetBridge.LOGGER.info("Registering {} block(s) as the vanilla kind their models describe", kinds);
@@ -92,14 +96,10 @@ public class BlockAnalysis {
      * inherits from {@code minecraft:block/stairs} is stairs.
      */
     @Nullable
-    private static BlockKind kindOf(BridgedAssetManager assets, BridgedBlockDefinition block) {
-        List<String> chain = ModelGeometry.parentChain(assets, block.modelId());
+    private static BlockKind kindOf(ModelGeometry models, BridgedBlockDefinition block) {
+        List<String> chain = models.resolve(block.modelId()).chain();
         for (int i = chain.size() - 1; i >= 0; i--) {
-            String reference = chain.get(i);
-            int slash = reference.lastIndexOf('/');
-            String name = slash < 0 ? reference : reference.substring(slash + 1);
-
-            BlockKind kind = BlockKind.byModelName(name);
+            BlockKind kind = BlockKind.byModelName(AssetPath.modelName(chain.get(i)));
             if (kind == null) continue;
             if (kind.accepts(block.states())) return kind;
 
@@ -108,16 +108,5 @@ public class BlockAnalysis {
             return null;
         }
         return null;
-    }
-
-    @Nullable
-    private static JsonObject read(BridgedAssetManager assets, AssetPath path) {
-        try {
-            byte[] data = assets.readResource(path);
-            return data == null ? null : Json.parse(new String(data, StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            AssetBridge.LOGGER.warn("Could not read {} while analysing a block", path, e);
-            return null;
-        }
     }
 }

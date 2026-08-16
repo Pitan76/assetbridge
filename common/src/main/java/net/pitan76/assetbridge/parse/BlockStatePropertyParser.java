@@ -59,15 +59,11 @@ public class BlockStatePropertyParser {
 
     /** Variant keys look like {@code facing=north,half=bottom}; the empty key means "any state". */
     private static boolean collectFromVariantKey(String key, Map<String, Set<String>> collected) {
-        if (key.isEmpty()) return true;
+        Map<String, String> conditions = VariantKey.parse(key);
+        if (conditions == null) return false;
 
-        for (String pair : key.split(",")) {
-            if (pair.trim().isEmpty()) continue;
-            int equals = pair.indexOf('=');
-            // A key without '=' is not a property assignment. Pre-1.13 packs used "normal"
-            // here, which the converter rewrites; anything else we cannot interpret.
-            if (equals < 0) return false;
-            add(collected, pair.substring(0, equals).trim(), pair.substring(equals + 1).trim());
+        for (Map.Entry<String, String> condition : conditions.entrySet()) {
+            add(collected, condition.getKey(), condition.getValue());
         }
         return true;
     }

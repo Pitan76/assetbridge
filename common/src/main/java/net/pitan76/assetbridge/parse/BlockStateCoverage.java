@@ -126,16 +126,7 @@ public class BlockStateCoverage {
     }
 
     private static boolean matchesVariantKey(String key, Map<String, String> state) {
-        if (key.isEmpty()) return true;
-
-        for (String pair : key.split(",")) {
-            if (pair.trim().isEmpty()) continue;
-            int equals = pair.indexOf('=');
-            if (equals < 0) return false;
-            String name = pair.substring(0, equals).trim();
-            if (!pair.substring(equals + 1).trim().equals(state.get(name))) return false;
-        }
-        return true;
+        return VariantKey.matches(key, state);
     }
 
     /**

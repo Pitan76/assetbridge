@@ -3,13 +3,12 @@ package net.pitan76.assetbridge.shape;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.pitan76.assetbridge.asset.BridgedAssetManager;
+import net.pitan76.assetbridge.parse.VariantKey;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,18 +32,18 @@ public class BlockShapes {
      *         read — either way the block is left exactly as it was
      */
     @Nullable
-    public static BlockShape of(BridgedAssetManager assets, JsonObject blockState) {
+    public static BlockShape of(ModelGeometry models, JsonObject blockState) {
         JsonObject variants = Json.object(blockState, "variants");
-        if (variants != null) return fromVariants(assets, variants);
+        if (variants != null) return fromVariants(models, variants);
 
         JsonArray multipart = Json.array(blockState, "multipart");
-        if (multipart != null) return fromMultipart(assets, multipart);
+        if (multipart != null) return fromMultipart(models, multipart);
 
         return null;
     }
 
     @Nullable
-    private static BlockShape fromVariants(BridgedAssetManager assets, JsonObject variants) {
+    private static BlockShape fromVariants(ModelGeometry models, JsonObject variants) {
         List<BlockShape.Variant> built = new ArrayList<>();
         boolean shaped = false;
 
@@ -52,10 +51,10 @@ public class BlockShapes {
             JsonObject variant = firstObject(entry.getValue());
             if (variant == null) return null;
 
-            Map<String, String> conditions = conditionsOf(entry.getKey());
+            Map<String, String> conditions = VariantKey.parse(entry.getKey());
             if (conditions == null) return null;
 
-            List<ShapeBox> boxes = boxesOf(assets, variant);
+            List<ShapeBox> boxes = boxesOf(models, variant);
             if (boxes == null) {
                 // This state really is a full cube. It still has to be listed, so a state it
                 // covers is not claimed by a later variant that happens to be shaped.
@@ -75,7 +74,7 @@ public class BlockShapes {
      * neighbour, which is exactly the kind of thing the player should not be blocked by.
      */
     @Nullable
-    private static BlockShape fromMultipart(BridgedAssetManager assets, JsonArray multipart) {
+    private static BlockShape fromMultipart(ModelGeometry models, JsonArray multipart) {
         List<ShapeBox> boxes = new ArrayList<>();
         for (JsonElement element : multipart) {
             if (!element.isJsonObject()) continue;
@@ -89,7 +88,7 @@ public class BlockShapes {
             JsonObject variant = firstObject(apply);
             if (variant == null) continue;
 
-            List<ShapeBox> partBoxes = boxesOf(assets, variant);
+            List<ShapeBox> partBoxes = boxesOf(models, variant);
             if (partBoxes == null) return null; // an unconditional full cube: nothing to narrow
             boxes.addAll(partBoxes);
         }
@@ -101,11 +100,11 @@ public class BlockShapes {
 
     /** The boxes one variant object describes, turned the way that variant turns its model. */
     @Nullable
-    private static List<ShapeBox> boxesOf(BridgedAssetManager assets, JsonObject variant) {
+    private static List<ShapeBox> boxesOf(ModelGeometry models, JsonObject variant) {
         String model = Json.string(variant, "model");
         if (model == null) return null;
 
-        List<ShapeBox> boxes = ModelGeometry.boxesOf(assets, model);
+        List<ShapeBox> boxes = models.resolve(model).boxes();
         if (boxes == null) return null;
 
         int x = intOf(variant, "x");
@@ -117,24 +116,6 @@ public class BlockShapes {
             turned.add(box.rotateX(x).rotateY(y));
         }
         return turned;
-    }
-
-    /**
-     * The properties a variant key requires, e.g. {@code facing=north,half=top}.
-     *
-     * @return the conditions, or {@code null} when the key is not of that shape
-     */
-    @Nullable
-    static Map<String, String> conditionsOf(String key) {
-        Map<String, String> conditions = new LinkedHashMap<>();
-        if (key.isEmpty() || key.equals("normal")) return conditions;
-
-        for (String part : key.split(",")) {
-            int equals = part.indexOf('=');
-            if (equals <= 0) return null;
-            conditions.put(part.substring(0, equals).trim(), part.substring(equals + 1).trim());
-        }
-        return conditions;
     }
 
     /** A variant is an object, or a weighted list of them; the first one is representative. */
