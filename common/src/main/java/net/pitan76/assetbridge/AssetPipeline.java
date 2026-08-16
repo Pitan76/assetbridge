@@ -115,6 +115,12 @@ public class AssetPipeline {
             AssetBridge.LOGGER.info("Replaced {} model(s) whose parent was not available", repaired);
         }
 
+        // After that, so a model it points a variant at has already been repaired itself.
+        int repointed = ModelReferenceResolver.resolveBlockStates(assets);
+        if (repointed > 0) {
+            AssetBridge.LOGGER.info("Repointed {} blockstate variant(s) whose model was not available", repointed);
+        }
+
         // After the models are final, so a stand-in's textures are the ones declared.
         AtlasSources.declare(assets);
 

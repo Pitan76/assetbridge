@@ -102,6 +102,89 @@ class ModelReferenceResolverTest {
                 read(assets, "examplemod", "models/block/leaf.json").get("parent").getAsString());
     }
 
+    @Test
+    void leavesABlockStateWhoseModelsAreThere() {
+        BridgedAssetManager assets = new BridgedAssetManager();
+        put(assets, "examplemod", "models/block/foo.json", "{\"parent\":\"block/cube_all\"}");
+        put(assets, "examplemod", "blockstates/foo.json",
+                "{\"variants\":{\"\":{\"model\":\"examplemod:block/foo\"}}}");
+
+        assertEquals(0, ModelReferenceResolver.resolveBlockStates(assets));
+    }
+
+    /**
+     * A block the archive genuinely cannot draw &mdash; a Forge fluid, whose model, textures and
+     * all live in a loader we do not have &mdash; is left saying so. An untextured cube renders
+     * exactly as magenta as the missing model while claiming to have loaded, and costs a warning
+     * per face on the way.
+     */
+    @Test
+    void leavesAVariantAloneWhenTheArchiveOffersNoStandIn() throws IOException {
+        BridgedAssetManager assets = new BridgedAssetManager();
+        put(assets, "examplemod", "blockstates/foo.json",
+                "{\"variants\":{\"\":{\"model\":\"forge:block/fluid\"}}}");
+
+        assertEquals(0, ModelReferenceResolver.resolveBlockStates(assets));
+        assertEquals("forge:block/fluid", modelOfEmptyVariant(assets));
+    }
+
+    /** The block's own working model keeps the family look where only some variants broke. */
+    @Test
+    void prefersAWorkingModelFromTheSameBlockState() throws IOException {
+        BridgedAssetManager assets = new BridgedAssetManager();
+        put(assets, "examplemod", "models/block/foo_open.json", "{\"parent\":\"block/cube_all\"}");
+        put(assets, "examplemod", "blockstates/foo.json",
+                "{\"variants\":{\"open=true\":{\"model\":\"examplemod:block/foo_open\"},"
+                        + "\"open=false\":{\"model\":\"missingmod:block/base\"}}}");
+
+        assertEquals(1, ModelReferenceResolver.resolveBlockStates(assets));
+
+        JsonObject variants = read(assets, "examplemod", "blockstates/foo.json").getAsJsonObject("variants");
+        assertEquals("examplemod:block/foo_open", variants.getAsJsonObject("open=false").get("model").getAsString());
+        assertEquals("examplemod:block/foo_open", variants.getAsJsonObject("open=true").get("model").getAsString());
+    }
+
+    /**
+     * Looked up, not guessed: a block whose sprite the archive did ship comes out recognisable
+     * rather than magenta, and one whose sprite it did not is left to the plain vanilla cube.
+     */
+    @Test
+    void dressesTheStandInWithTheBlocksOwnTextureWhenThereIsOne() throws IOException {
+        BridgedAssetManager assets = new BridgedAssetManager();
+        put(assets, "examplemod", "textures/block/foo.png", "png bytes");
+        put(assets, "examplemod", "blockstates/foo.json",
+                "{\"variants\":{\"\":{\"model\":\"forge:block/fluid\"}}}");
+
+        assertEquals(1, ModelReferenceResolver.resolveBlockStates(assets));
+        assertEquals("examplemod:block/foo", modelOfEmptyVariant(assets));
+
+        JsonObject standIn = read(assets, "examplemod", "models/block/foo.json");
+        assertEquals("minecraft:block/cube_all", standIn.get("parent").getAsString());
+        assertEquals("examplemod:block/foo", standIn.getAsJsonObject("textures").get("all").getAsString());
+    }
+
+    @Test
+    void repairsWeightedAndMultipartReferencesToo() throws IOException {
+        BridgedAssetManager assets = new BridgedAssetManager();
+        put(assets, "examplemod", "models/block/post.json", "{\"parent\":\"block/cube_all\"}");
+        put(assets, "examplemod", "blockstates/fence.json",
+                "{\"multipart\":[{\"apply\":{\"model\":\"examplemod:block/post\"}},"
+                        + "{\"when\":{\"north\":\"true\"},\"apply\":[{\"model\":\"missingmod:block/side\",\"weight\":3},"
+                        + "{\"model\":\"missingmod:block/side2\"}]}]}");
+
+        assertEquals(2, ModelReferenceResolver.resolveBlockStates(assets));
+
+        JsonObject blockState = read(assets, "examplemod", "blockstates/fence.json");
+        String repaired = blockState.getAsJsonArray("multipart").get(1).getAsJsonObject()
+                .getAsJsonArray("apply").get(0).getAsJsonObject().get("model").getAsString();
+        assertEquals("examplemod:block/post", repaired);
+    }
+
+    private static String modelOfEmptyVariant(BridgedAssetManager assets) throws IOException {
+        return read(assets, "examplemod", "blockstates/foo.json")
+                .getAsJsonObject("variants").getAsJsonObject("").get("model").getAsString();
+    }
+
     private static void put(BridgedAssetManager assets, String namespace, String path, String json) {
         assets.putResource(new AssetPath(AssetPath.PackKind.CLIENT, namespace, path),
                 json.getBytes(StandardCharsets.UTF_8));

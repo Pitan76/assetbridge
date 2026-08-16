@@ -98,6 +98,7 @@ class AssetPipelineTest {
         Map<String, String> resources = new HashMap<>();
         resources.put("assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"facing=north-east\": {\"model\": \"examplemod:block/foo\"}}}");
+        resources.put("assets/examplemod/models/block/foo.json", "{\"parent\": \"block/cube_all\"}");
         
         BridgedAssetManager assets = build(TestArchives.archive("example-mod.jar", AssetVersion.MODERN, resources));
 
@@ -485,6 +486,8 @@ class AssetPipelineTest {
         resources.put("assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"variant=red\": {\"model\": \"examplemod:block/red\"},"
                         + " \"variant=blue\": {\"model\": \"examplemod:block/blue\"}}}");
+        resources.put("assets/examplemod/models/block/red.json", "{\"parent\": \"block/cube_all\"}");
+        resources.put("assets/examplemod/models/block/blue.json", "{\"parent\": \"block/cube_all\"}");
         resources.put("assets/examplemod/lang/en_us.lang",
                 "tile.foo.0.name=Red Foo\ntile.foo.1.name=Blue Foo\n");
 
@@ -509,6 +512,8 @@ class AssetPipelineTest {
         resources.put("assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"variant=red\": {\"model\": \"examplemod:block/red\"},"
                         + " \"variant=blue\": {\"model\": \"examplemod:block/blue\"}}}");
+        resources.put("assets/examplemod/models/block/red.json", "{\"parent\": \"block/cube_all\"}");
+        resources.put("assets/examplemod/models/block/blue.json", "{\"parent\": \"block/cube_all\"}");
         resources.put("assets/examplemod/lang/en_us.lang",
                 "tile.foo.0.name=Red Foo\ntile.foo.1.name=Blue Foo\ntile.foo.tooltip=Some prose\n");
 
@@ -651,6 +656,8 @@ class AssetPipelineTest {
         resources.put("assets/examplemod/blockstates/foo.json",
                 "{\"variants\": {\"variant=red\": {\"model\": \"examplemod:block/red\"},"
                         + " \"variant=blue\": {\"model\": \"examplemod:block/blue\"}}}");
+        resources.put("assets/examplemod/models/block/red.json", "{\"parent\": \"block/cube_all\"}");
+        resources.put("assets/examplemod/models/block/blue.json", "{\"parent\": \"block/cube_all\"}");
         resources.put("assets/examplemod/blockstates/foo_meta1.json",
                 "{\"variants\": {\"\": {\"model\": \"examplemod:block/handwritten\"}}}");
         resources.put("assets/examplemod/lang/en_us.lang",
