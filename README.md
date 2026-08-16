@@ -163,7 +163,7 @@ Load assets from imported mods and use them as blocks, items, etc.
 Perfect for when you want to add visual elements from other mods, even across different game versions or platforms.
 
 Note that the code from imported mods is not executed; only assets are used, so specific features will not function.
-Supports Fabric/Forge 1.16.5/1.18.2/1.19.2/1.20.1 and Fabric/NeoForge 1.21.1/26.1.2.
+Supports Fabric/Forge 1.12.2/1.16.5/1.18.2/1.19.2/1.20.1 and Fabric/NeoForge 1.21.1/26.1.2/26.2.
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
