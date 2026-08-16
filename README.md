@@ -1,8 +1,7 @@
 # Asset Bridge
-取り込んだMODからブロックなどのアセットを読み込み、機能を持たず見た目だけのブロック、アイテムを利用するMOD<br />
-ゲームバージョンやプラットフォームが異なっていても、見た目だけでもいいから追加したい場合に使えます。
+取り込んだMODからアセット/データを読み込み、無機能ブロック/アイテムとして追加するMOD<br />
+ゲームバージョンやプラットフォームが異なっていても、見た目だけのみを追加したい場合に使えます。
 
-なお、取り込んだMODのコードは実行せず、アセットだけを利用するため、特定の機能などは動作しません。<br />
 Fabric/Forge 1.12.2/1.16.5/1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2/26.2対応です。
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
@@ -162,10 +161,13 @@ git push origin v1.0.0
 - ビルドツール: Gradle
 
 # Asset Bridge (English)
-Load assets from imported mods and use them as blocks, items, etc.
-Perfect for when you want to add visual elements from other mods, even across different game versions or platforms.
+<!-- Load assets from imported mods and use them as blocks, items, etc.
+Perfect for when you want to add visual elements from other mods, even across different game versions or platforms. -->
 
-Note that the code from imported mods is not executed; only assets are used, so specific features will not function.
+A mod that loads assets only such as blocks from other mods and makes them available visually without their original functionality.
+It can be used when you want to add the appearance of blocks or other assets even when the original mod targets a different game version or platform.
+
+<!-- Note that the code from imported mods is not executed; only assets are used, so specific features will not function. -->
 Supports Fabric/Forge 1.12.2/1.16.5/1.18.2/1.19.2/1.20.1 and Fabric/NeoForge 1.21.1/26.1.2/26.2.
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
