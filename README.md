@@ -9,6 +9,9 @@ Fabric/Forge 1.12.2/1.16.5/1.18.2/1.19.2/1.20.1, Fabric/NeoForge 1.21.1/26.1.2/2
 - Modrinth: https://modrinth.com/mod/assetbridge
 - ModParks: https://modparks.pitan76.net/projects/assetbridge
 
+## 前提MOD
+- Fabric API (Fabricのみ)
+
 ## 使い方
 ゲームディレクトリの`mods/`に`assetbridge/`を作り、その中に読み込むMODのjarやzipを置きます。
 （なお、初回起動時にAsset Bridgeが`assetbridge/`を自動で生成する）
@@ -168,6 +171,9 @@ Supports Fabric/Forge 1.12.2/1.16.5/1.18.2/1.19.2/1.20.1 and Fabric/NeoForge 1.2
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/assetbridge
 - Modrinth: https://modrinth.com/mod/assetbridge
 - ModParks: https://modparks.pitan76.net/projects/assetbridge
+
+## Requirements
+- Fabric API (Fabric only)
 
 ## Usage
 Create an `assetbridge/` folder inside your game directory's `mods/` folder and place the mods you want to import inside it.
