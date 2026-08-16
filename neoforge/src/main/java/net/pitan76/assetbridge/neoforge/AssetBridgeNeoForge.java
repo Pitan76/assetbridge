@@ -54,7 +54,8 @@ public class AssetBridgeNeoForge {
     private static void ensureFeaturesApplied() {
         if (featuresApplied) return;
         featuresApplied = true;
-        AssetBridge.applyFeatures(FMLPaths.GAMEDIR.get(), namespace -> ModList.get().isLoaded(namespace));
+        AssetBridge.applyFeatures(FMLPaths.GAMEDIR.get(),
+                namespace -> ModList.get().isLoaded(namespace));
     }
 
     public AssetBridgeNeoForge(IEventBus modBus) {

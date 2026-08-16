@@ -29,19 +29,17 @@ public class AssetBridgeFabric implements ModInitializer {
         // The tabs have to exist before the items are built.
         if (Features.isDisabled(SplitTabByNamespaceFeature.ID)) {
             BridgedItemGroup.setBlocksTab(createTab(
-                    BridgedItemGroup.BLOCKS,
-                    BridgedItemGroup::blocksIcon,
+                    BridgedItemGroup.BLOCKS, BridgedItemGroup::blocksIcon,
                     () -> BridgedItemGroup.sharedTabContents(true)));
             BridgedItemGroup.setItemsTab(createTab(
-                    BridgedItemGroup.ITEMS,
-                    BridgedItemGroup::itemsIcon,
+                    BridgedItemGroup.ITEMS, BridgedItemGroup::itemsIcon,
                     () -> BridgedItemGroup.sharedTabContents(false)));
         }
 
-        BridgedItemGroup.setTabFactory((namespace, iconSupplier) -> createTab(
-                namespace,
-                iconSupplier,
-                () -> BridgedItemGroup.namespaceTabContents(namespace)));
+        BridgedItemGroup.setTabFactory(
+                (namespace, iconSupplier) ->
+                createTab(namespace, iconSupplier,
+                        () -> BridgedItemGroup.namespaceTabContents(namespace)));
 
         BridgedItemGroup.setModNameProvider(namespace -> FabricLoader.getInstance().getModContainer(namespace)
                 .map(container -> container.getMetadata().getName())
@@ -61,6 +59,7 @@ public class AssetBridgeFabric implements ModInitializer {
                 AssetBridge.LOGGER.info("Skipping {}: already registered by another mod", entry.getKey());
                 continue;
             }
+
             Registry.register(blockRegistry(), entry.getKey(), entry.getValue());
             Registry.register(itemRegistry(), entry.getKey(), BridgedBlocks.items().get(entry.getKey()));
             registeredBlocks++;
@@ -72,6 +71,7 @@ public class AssetBridgeFabric implements ModInitializer {
                 AssetBridge.LOGGER.info("Skipping item {}: already registered by another mod", entry.getKey());
                 continue;
             }
+
             Registry.register(itemRegistry(), entry.getKey(), entry.getValue());
             registeredItems++;
         }

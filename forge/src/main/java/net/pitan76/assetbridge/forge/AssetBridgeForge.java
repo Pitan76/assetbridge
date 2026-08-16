@@ -36,12 +36,10 @@ public class AssetBridgeForge {
     private static boolean featuresApplied = false;
 
     private static void ensureFeaturesApplied() {
-        if (!featuresApplied) {
-            featuresApplied = true;
-            AssetBridge.applyFeatures(
-                    FMLPaths.GAMEDIR.get(),
-                    namespace -> ModList.get().isLoaded(namespace));
-        }
+        if (featuresApplied) return;
+        featuresApplied = true;
+        AssetBridge.applyFeatures(FMLPaths.GAMEDIR.get(),
+                namespace -> ModList.get().isLoaded(namespace));
     }
 
     //? if >=1.20.1 {
@@ -71,7 +69,7 @@ public class AssetBridgeForge {
 
     public AssetBridgeForge() {
         // Load config first to check enabled features during tab setup
-        Features.loadConfig(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get());
+        Features.loadConfig(FMLPaths.GAMEDIR.get());
 
         // Forge patches a String constructor into CreativeModeTab; the label becomes the
         // translation key suffix, so it is kept identical to Fabric's tab ids.
