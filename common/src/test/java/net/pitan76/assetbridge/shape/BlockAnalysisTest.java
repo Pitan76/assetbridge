@@ -54,7 +54,9 @@ class BlockAnalysisTest {
 
         BlockAnalysis.run(assets, true, true);
 
-        assertNull(odd.analysis());
+        // Not stairs; it keeps whatever shape the model describes, as a plain block.
+        assertNotNull(odd.analysis());
+        assertNull(odd.analysis().kind());
     }
 
     @Test
