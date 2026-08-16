@@ -3,6 +3,7 @@ package net.pitan76.assetbridge.shape;
 import com.google.gson.JsonObject;
 import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
+import net.pitan76.assetbridge.parse.VariantKey;
 import net.pitan76.assetbridge.util.Json;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ class BlockShapesTest {
         putModel(assets, "examplemod", "block/pipe",
                 "{\"elements\":[{\"from\":[4,0,4],\"to\":[12,16,12]}]}");
 
-        BlockShape shape = BlockShapes.of(assets, blockState("{\"variants\":{\"\":{\"model\":\"examplemod:block/pipe\"}}}"));
+        BlockShape shape = BlockShapes.of(new ModelGeometry(assets), blockState("{\"variants\":{\"\":{\"model\":\"examplemod:block/pipe\"}}}"));
 
         assertNotNull(shape);
         assertEquals(Collections.singletonList(new ShapeBox(4, 0, 4, 12, 16, 12)),
@@ -38,7 +39,7 @@ class BlockShapesTest {
         putModel(assets, "examplemod", "block/derived",
                 "{\"parent\":\"examplemod:block/base\",\"textures\":{\"all\":\"examplemod:block/derived\"}}");
 
-        BlockShape shape = BlockShapes.of(assets,
+        BlockShape shape = BlockShapes.of(new ModelGeometry(assets),
                 blockState("{\"variants\":{\"\":{\"model\":\"examplemod:block/derived\"}}}"));
 
         assertNotNull(shape);
@@ -52,7 +53,7 @@ class BlockShapesTest {
         putModel(assets, "examplemod", "block/stone",
                 "{\"parent\":\"minecraft:block/cube_all\",\"textures\":{\"all\":\"examplemod:block/stone\"}}");
 
-        assertNull(BlockShapes.of(assets, blockState("{\"variants\":{\"\":{\"model\":\"examplemod:block/stone\"}}}")));
+        assertNull(BlockShapes.of(new ModelGeometry(assets), blockState("{\"variants\":{\"\":{\"model\":\"examplemod:block/stone\"}}}")));
     }
 
     @Test
@@ -61,7 +62,7 @@ class BlockShapesTest {
         putModel(assets, "examplemod", "block/rung",
                 "{\"elements\":[{\"from\":[0,0,13],\"to\":[16,16,16]}]}");
 
-        BlockShape shape = BlockShapes.of(assets, blockState("{\"variants\":{"
+        BlockShape shape = BlockShapes.of(new ModelGeometry(assets), blockState("{\"variants\":{"
                 + "\"facing=north\":{\"model\":\"examplemod:block/rung\"},"
                 + "\"facing=east\":{\"model\":\"examplemod:block/rung\",\"y\":90}}}"));
 
@@ -81,7 +82,7 @@ class BlockShapesTest {
         putModel(assets, "examplemod", "block/closed",
                 "{\"parent\":\"minecraft:block/cube_all\"}");
 
-        BlockShape shape = BlockShapes.of(assets, blockState("{\"variants\":{"
+        BlockShape shape = BlockShapes.of(new ModelGeometry(assets), blockState("{\"variants\":{"
                 + "\"open=false\":{\"model\":\"examplemod:block/closed\"},"
                 + "\"open=true\":{\"model\":\"examplemod:block/open\"}}}"));
 
@@ -100,7 +101,7 @@ class BlockShapesTest {
         putModel(assets, "examplemod", "block/side",
                 "{\"elements\":[{\"from\":[7,6,0],\"to\":[9,15,6]}]}");
 
-        BlockShape shape = BlockShapes.of(assets, blockState("{\"multipart\":["
+        BlockShape shape = BlockShapes.of(new ModelGeometry(assets), blockState("{\"multipart\":["
                 + "{\"apply\":{\"model\":\"examplemod:block/post\"}},"
                 + "{\"when\":{\"north\":\"true\"},\"apply\":{\"model\":\"examplemod:block/side\"}}]}"));
 
@@ -117,7 +118,7 @@ class BlockShapesTest {
                 "{\"elements\":[{\"from\":[0,0,7],\"to\":[16,16,9],"
                 + "\"rotation\":{\"origin\":[8,8,8],\"axis\":\"y\",\"angle\":45}}]}");
 
-        BlockShape shape = BlockShapes.of(assets,
+        BlockShape shape = BlockShapes.of(new ModelGeometry(assets),
                 blockState("{\"variants\":{\"\":{\"model\":\"examplemod:block/blade\"}}}"));
 
         assertNotNull(shape);
@@ -136,10 +137,10 @@ class BlockShapesTest {
 
     @Test
     void readsAVariantKeyIntoTheConditionsItSpellsOut() {
-        assertEquals(values("facing", "north"), BlockShapes.conditionsOf("facing=north"));
-        assertEquals(Collections.emptyMap(), BlockShapes.conditionsOf(""));
-        assertEquals(Collections.emptyMap(), BlockShapes.conditionsOf("normal"));
-        assertNull(BlockShapes.conditionsOf("facing"));
+        assertEquals(values("facing", "north"), VariantKey.parse("facing=north"));
+        assertEquals(Collections.emptyMap(), VariantKey.parse(""));
+        assertNull(VariantKey.parse("normal"));
+        assertNull(VariantKey.parse("facing"));
     }
 
     private static Map<String, String> values(String name, String value) {

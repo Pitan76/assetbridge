@@ -62,7 +62,7 @@ public class BridgedBlocks {
      * everywhere else.
      */
     private static Block blockFor(BridgedAssetManager assets, BridgedBlockDefinition asset, ResourceLocation id) {
-        BlockAnalysis analysis = assets.analysis(asset.id());
+        BlockAnalysis analysis = asset.analysis();
         if (analysis == null) return BridgedBlock.create(id, asset.states(), null);
 
         if (analysis.kind() != null) {

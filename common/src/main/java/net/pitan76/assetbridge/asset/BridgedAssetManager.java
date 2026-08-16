@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.util.IdUtil;
 import net.pitan76.assetbridge.util.Json;
+import net.pitan76.assetbridge.shape.BlockAnalysis;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -115,5 +116,13 @@ public class BridgedAssetManager {
 
     public boolean isEmpty() {
         return resources.isEmpty() && blocks.isEmpty() && items.isEmpty();
+    }
+
+    @Nullable
+    public BlockAnalysis analysis(String id) {
+        for (BridgedBlockDefinition block : blocks) {
+            if (block.id().equals(id)) return block.analysis();
+        }
+        return null;
     }
 }
