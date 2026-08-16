@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.Block;
 import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
+import net.pitan76.assetbridge.shape.BlockAnalysis;
 import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.Collections;
@@ -35,7 +36,7 @@ public class BridgedBlocks {
                 AssetBridge.LOGGER.warn("Skipping block with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
             }
-            Block block = BridgedBlock.create(id, asset.states());
+            Block block = blockFor(assets, asset, id);
             createdBlocks.put(id, block);
             //? if >=26 {
             /*// 26.1 derives the translation key from the item's own id and throws if it was never
@@ -53,6 +54,22 @@ public class BridgedBlocks {
 
         blocks = Collections.unmodifiableMap(createdBlocks);
         items = Collections.unmodifiableMap(createdItems);
+    }
+
+    /**
+     * The block instance for one bridged asset: the vanilla class its model was recognised as
+     * where there is one, and the generic block — with the shape its model has, if any —
+     * everywhere else.
+     */
+    private static Block blockFor(BridgedAssetManager assets, BridgedBlockDefinition asset, ResourceLocation id) {
+        BlockAnalysis analysis = assets.analysis(asset.id());
+        if (analysis == null) return BridgedBlock.create(id, asset.states(), null);
+
+        if (analysis.kind() != null) {
+            Block block = BridgedBlockTypes.create(analysis.kind(), id);
+            if (block != null) return block;
+        }
+        return BridgedBlock.create(id, asset.states(), analysis.shape());
     }
 
     public static Map<ResourceLocation, Block> blocks() {

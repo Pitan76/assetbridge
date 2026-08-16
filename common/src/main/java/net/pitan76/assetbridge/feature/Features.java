@@ -4,6 +4,8 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.archive.AssetArchive;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.feature.builtin.BlockFeature;
+import net.pitan76.assetbridge.feature.builtin.BlockKindsFeature;
+import net.pitan76.assetbridge.feature.builtin.ModelShapesFeature;
 import net.pitan76.assetbridge.feature.builtin.DataPackFeature;
 import net.pitan76.assetbridge.feature.builtin.ItemFeature;
 import net.pitan76.assetbridge.feature.builtin.LootTableFeature;
@@ -30,6 +32,10 @@ public class Features {
             // Read by AssetPipeline while the bundle is built, so it must be registered even
             // though its own apply() has nothing to do.
             new MetaVariantsFeature(),
+            // Read by AssetPipeline as well: what a block is and what shape it has is worked
+            // out from the models, while they are still being assembled.
+            new BlockKindsFeature(),
+            new ModelShapesFeature(),
             new BlockFeature(),
             new ItemFeature(),
             // Runs after the blocks it generates tables for, before the packs that serve them.

@@ -12,8 +12,11 @@ import net.pitan76.assetbridge.convert.ForgeBlockStateExpander;
 import net.pitan76.assetbridge.convert.ModelConverter;
 import net.pitan76.assetbridge.convert.ModelReferenceResolver;
 import net.pitan76.assetbridge.feature.Features;
+import net.pitan76.assetbridge.feature.builtin.BlockKindsFeature;
 import net.pitan76.assetbridge.feature.builtin.CutoutBlocksFeature;
 import net.pitan76.assetbridge.feature.builtin.MetaVariantsFeature;
+import net.pitan76.assetbridge.feature.builtin.ModelShapesFeature;
+import net.pitan76.assetbridge.shape.BlockAnalysis;
 import net.pitan76.assetbridge.parse.BlockStateCoverage;
 import net.pitan76.assetbridge.parse.BlockStateParser;
 import net.pitan76.assetbridge.parse.BlockStatePropertyParser;
@@ -135,6 +138,12 @@ public class AssetPipeline {
 
         // Generate 1.21.4+ standalone item definition JSONs from item models.
         generateItemDefinitions(assets);
+
+        // Last of all: what a block is and what shape it has are read off the finished models,
+        // so a model that had to be replaced along the way is not analysed as it arrived.
+        BlockAnalysis.run(assets,
+                Features.isEnabled(BlockKindsFeature.ID),
+                Features.isEnabled(ModelShapesFeature.ID));
 
         AssetBridge.LOGGER.info("Prepared {} bridged blocks, {} items and {} resources from {} archive(s)",
                 assets.blocks().size(), assets.items().size(), assets.resources().size(), archives.size());

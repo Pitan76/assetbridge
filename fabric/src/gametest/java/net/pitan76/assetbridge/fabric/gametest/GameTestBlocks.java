@@ -50,7 +50,7 @@ public class GameTestBlocks implements ModInitializer {
 
     /** The id is now part of a block's properties, so it has to be known before construction. */
     private static Block create(String name, BridgedProperty... properties) {
-        return BridgedBlock.create(id(name), new BridgedStateDefinition(List.of(properties)));
+        return BridgedBlock.create(id(name), new BridgedStateDefinition(List.of(properties)), null);
     }
 
     private static ResourceLocation id(String name) {

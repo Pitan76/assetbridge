@@ -56,6 +56,12 @@ feature.data_pack=true
 #feature.cutout_blocks=true
 feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 
+# モデルの継承元からブロックの種類を推測し、バニラのブロックとして登録する
+feature.block_kinds=true
+
+# モデルの形状から当たり判定・選択範囲を生成する
+feature.model_shapes=true
+
 # ブリッジブロック全体のデフォルトの硬さ（破壊時間）
 block_hardness=1.5
 
@@ -70,6 +76,15 @@ block_resistance.examplemod:example_block=30.0
 # true (階段やチェストなどの非フルキューブ形状を自動判定し無効化), false (一律有効), またはカンマ区切りのブロックID
 no_occlusion_blocks=true
 ```
+
+### ブロックの種類推測と形状生成
+`feature.block_kinds` は、ブロックのモデルが継承しているバニラモデルからそのブロックの種類を判断します。<br />
+`block/stairs` を継承していれば階段、`block/slab` ならハーフブロック、という具合です。対象は階段・ハーフブロック・フェンス・塀・板ガラス・フェンスゲート・ドア・トラップドア・はしごで、それぞれバニラのブロックとして登録されるため、角の形状や設置・開閉といった挙動もバニラと同じになります。<br />
+ただし、blockstateのプロパティ（名前と値）がバニラ側のブロックに無いものを含む場合は、blockstateをそのまま配信できなくなるため、通常のブロックとして登録されます。
+
+`feature.model_shapes` は、blockstateが参照するモデルの `elements` から当たり判定・選択範囲を生成します。<br />
+variantの `x` / `y` 回転にも追従し、multipartの場合は `when` の無いパーツ（＝本体）のみを使います。<br />
+フルキューブのモデルは従来どおり何もしません。また `feature.block_kinds` で種類が判明したブロックは、より正確なバニラ側の形状を使うためこちらの対象外です。
 
 ## 対応アセット形式
 Asset Bridgeは取り込むMODのJARに含まれる `pack.mcmeta` の `pack_format` 値や、MODメタデータ（`fabric.mod.json` / `mods.toml`）のMinecraftバージョン記述から、アセットの世代を自動判別します。
@@ -192,6 +207,12 @@ feature.data_pack=true
 #feature.cutout_blocks=true
 feature.cutout_blocks=examplemod:example_block,examplemod:example_block2
 
+# Register a block as the vanilla block its model inherits from
+feature.block_kinds=true
+
+# Derive collision and outline shapes from the block's model
+feature.model_shapes=true
+
 # Default hardness (destroy time) for all bridged blocks
 block_hardness=1.5
 
@@ -206,6 +227,13 @@ block_resistance.examplemod:example_block=30.0
 # true = auto-detect by keyword (stairs, slab, chest, etc.), false = disable all, or comma-separated block IDs
 no_occlusion_blocks=true
 ```
+
+### Block kinds and generated shapes
+`feature.block_kinds` decides what a block is from the vanilla model its own model inherits from: inheriting `block/stairs` makes it a staircase, `block/slab` a slab, and so on for fences, walls, panes, fence gates, doors, trapdoors and ladders. Those are registered as the vanilla block itself, so the corner shapes, the placement and the opening all behave the way the player expects.<br />
+A blockstate that uses a property, or a value, the vanilla block does not have is registered as a plain block instead, because the file has to be served unchanged.
+
+`feature.model_shapes` builds the collision and outline shapes from the `elements` of the models the blockstate names, following a variant's `x` / `y` rotation. For a multipart blockstate only the parts with no `when` — the body of the block — are used.<br />
+Models that are full cubes are left exactly as they were, and a block recognised by `feature.block_kinds` is skipped here, since that vanilla block brings more accurate shapes.
 
 ## Supported Asset Formats
 Asset Bridge automatically detects the asset generation of the imported mod's JAR from the `pack_format` value in `pack.mcmeta` or the Minecraft version declared in the mod metadata (`fabric.mod.json` / `mods.toml`).

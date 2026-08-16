@@ -18,6 +18,12 @@ public class BridgedAssetManager {
     private final List<BridgedItemDefinition> items = new ArrayList<>();
     /** Namespace to the display name its archive declared, when it declared one. */
     private final Map<String, String> modNames = new LinkedHashMap<>();
+    /**
+     * Block id to what the models said about it. Kept beside the definitions rather than on
+     * them: it is worked out at the very end of the pipeline, once every model is final, and
+     * only some blocks have anything to record.
+     */
+    private final Map<String, net.pitan76.assetbridge.shape.BlockAnalysis> analyses = new LinkedHashMap<>();
 
     /** For resources Asset Bridge produced itself; they exist nowhere on disk. */
     public void putResource(AssetPath path, byte[] data) {
@@ -50,6 +56,16 @@ public class BridgedAssetManager {
 
     public Map<String, String> modNames() {
         return modNames;
+    }
+
+    public void putAnalysis(String blockId, net.pitan76.assetbridge.shape.BlockAnalysis analysis) {
+        analyses.put(blockId, analysis);
+    }
+
+    /** What the models said about a block, or {@code null} when they said nothing useful. */
+    @Nullable
+    public net.pitan76.assetbridge.shape.BlockAnalysis analysis(String blockId) {
+        return analyses.get(blockId);
     }
 
     public boolean hasResource(AssetPath path) {

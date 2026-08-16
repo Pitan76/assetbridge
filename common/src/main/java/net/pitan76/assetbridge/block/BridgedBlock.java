@@ -1,7 +1,11 @@
 package net.pitan76.assetbridge.block;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -13,7 +17,11 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.pitan76.assetbridge.asset.BridgedProperty;
 import net.pitan76.assetbridge.asset.BridgedStateDefinition;
+import net.pitan76.assetbridge.shape.BlockShape;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * A block that carries the properties recovered from an external blockstate file, so that
@@ -39,15 +47,29 @@ public class BridgedBlock extends Block {
     @Nullable
     private final EnumProperty<Direction.Axis> axis;
 
-    private BridgedBlock(ResourceLocation id, BridgedStateDefinition states) {
-        super(propertiesFor(id));
+    /**
+     * The shape of each state that has one of its own, worked out from the models the
+     * blockstate names. Empty when the block is a plain cube, which is every block when the
+     * shape feature is off.
+     */
+    private final Map<BlockState, VoxelShape> shapes;
+
+    private BridgedBlock(ResourceLocation id, BridgedStateDefinition states, @Nullable BlockShape shape) {
+        super(propertiesFor(id, shape != null));
 
         this.facing = directionProperty();
         this.axis = axisProperty();
         registerDefaultState(defaultStateOf(states));
+        this.shapes = shape == null
+                ? Collections.<BlockState, VoxelShape>emptyMap()
+                : BridgedShapes.build(getStateDefinition(), shape);
     }
 
-    private static Properties propertiesFor(ResourceLocation id) {
+    /**
+     * @param customShape whether the block will be drawn as something other than a full cube,
+     *                    in which case it must not cull the faces of its neighbours
+     */
+    static Properties propertiesFor(ResourceLocation id, boolean customShape) {
         Properties properties;
         //? if >=26 {
         /*// 26.1 derives the loot table and the translation key from the block's own id, and throws
@@ -66,16 +88,16 @@ public class BridgedBlock extends Block {
         float resistance = BlockConfig.getResistance(id);
 
         properties = properties.strength(hardness, resistance);
-        if (BlockConfig.shouldDisableOcclusion(id)) {
+        if (customShape || BlockConfig.shouldDisableOcclusion(id)) {
             properties = properties.noOcclusion();
         }
         return properties;
     }
 
-    public static BridgedBlock create(ResourceLocation id, BridgedStateDefinition states) {
+    public static BridgedBlock create(ResourceLocation id, BridgedStateDefinition states, @Nullable BlockShape shape) {
         PENDING.set(states);
         try {
-            return new BridgedBlock(id, states);
+            return new BridgedBlock(id, states, shape);
         } finally {
             PENDING.remove();
         }
@@ -89,6 +111,16 @@ public class BridgedBlock extends Block {
         for (BridgedProperty property : states.properties()) {
             builder.add(toVanilla(property));
         }
+    }
+
+    /**
+     * The outline and, through it, the collision the block is given. A state with no shape of
+     * its own falls through to the full cube every bridged block used to be.
+     */
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape shape = shapes.get(state);
+        return shape == null ? super.getShape(state, level, pos, context) : shape;
     }
 
     @Override
