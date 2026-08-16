@@ -1,5 +1,7 @@
 package net.pitan76.assetbridge.shape;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,14 @@ public class BlockShape {
         return variants;
     }
 
+    @Nullable
+    public List<ShapeBox> boxesFor(Map<String, String> values) {
+        for (Variant variant : variants) {
+            if (variant.matches(values)) return variant.boxes();
+        }
+        return null;
+    }
+
     /** One entry of a blockstate's {@code variants}, reduced to what a shape needs. */
     public static class Variant {
         private final Map<String, String> conditions;
@@ -43,6 +53,19 @@ public class BlockShape {
 
         public List<ShapeBox> boxes() {
             return boxes;
+        }
+
+        /**
+         * A variant key names only the properties it cares about, so a state matches when it
+         * agrees on those and is free in the rest. A property the block does not have at all
+         * never matches, which drops a variant left over from a file we could not register in
+         * full rather than letting it claim every state.
+         */
+        public boolean matches(Map<String, String> values) {
+            for (Map.Entry<String, String> condition : conditions.entrySet()) {
+                if (!condition.getValue().equals(values.get(condition.getKey()))) return false;
+            }
+            return true;
         }
     }
 }
