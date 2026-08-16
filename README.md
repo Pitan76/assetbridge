@@ -123,7 +123,14 @@ Asset Bridgeは取り込むMODのJARに含まれる `pack.mcmeta` の `pack_form
 
 ## ビルド
 ```sh
+# 現在のMCバージョンをビルド
 ./gradlew build
+
+# 特定のローダ/MCバージョンをビルド
+./gradlew :fabric:1.20.1:build
+
+# 一括ビルド
+./gradlew chiseledBuild
 ```
 
 ## テスト
@@ -273,7 +280,14 @@ This project is structured to build mods for multiple Minecraft versions and pla
 
 ## Build
 ```sh
+# Build the current MC version
 ./gradlew build
+
+# Build a specific loader/MC version
+./gradlew :fabric:1.20.1:build
+
+# Build all versions
+./gradlew chiseledBuild
 ```
 
 ## Testing
