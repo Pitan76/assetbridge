@@ -1,7 +1,6 @@
 package net.pitan76.assetbridge.feature.builtin;
 
 import net.pitan76.assetbridge.feature.Feature;
-import net.pitan76.assetbridge.feature.FeatureContext;
 
 /**
  * Registers the extra blocks and items a pre-1.13 archive packed behind one registry name as
@@ -28,11 +27,5 @@ public class MetaVariantsFeature implements Feature {
     public String description() {
         return "Register the extra blocks and items that pre-1.13 mods packed behind one id as metadata values. "
                 + "Turning this off leaves only the first of each such group.";
-    }
-
-    @Override
-    public void apply(FeatureContext context) {
-        // Already applied: AssetPipeline reads this while it builds the bundle, before
-        // features run. Nothing left to do here.
     }
 }

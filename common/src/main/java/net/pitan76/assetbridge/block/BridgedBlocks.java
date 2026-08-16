@@ -8,7 +8,6 @@ import net.pitan76.assetbridge.AssetBridge;
 import net.pitan76.assetbridge.asset.BridgedAssetManager;
 import net.pitan76.assetbridge.asset.BridgedBlockDefinition;
 import net.pitan76.assetbridge.shape.BlockAnalysis;
-import net.pitan76.assetbridge.shape.BlockKind;
 import net.pitan76.assetbridge.util.IdUtil;
 
 import java.util.Collections;
@@ -37,7 +36,7 @@ public class BridgedBlocks {
                 AssetBridge.LOGGER.warn("Skipping block with invalid id '{}' from {}", asset.id(), asset.sourceArchive());
                 continue;
             }
-            Block block = blockFor(assets, asset, id);
+            Block block = blockFor(asset, id);
             createdBlocks.put(id, block);
             //? if >=26 {
             /*// 26.1 derives the translation key from the item's own id and throws if it was never
@@ -60,18 +59,14 @@ public class BridgedBlocks {
     /**
      * The block instance for one bridged asset: the vanilla class its model was recognised as
      * where there is one, and the generic block — with the shape its model has, if any —
-     * everywhere else.
+     * everywhere else. Which of the two applies was decided by the analysis; there is nothing
+     * left to weigh up here.
      */
-    private static Block blockFor(BridgedAssetManager assets, BridgedBlockDefinition asset, ResourceLocation id) {
+    private static Block blockFor(BridgedBlockDefinition asset, ResourceLocation id) {
         BlockAnalysis analysis = asset.analysis();
-        if (analysis == null) return BridgedBlock.create(id, asset.states(), null);
+        if (analysis != null && analysis.kind() != null) return BridgedBlockTypes.create(analysis.kind(), id);
 
-        BlockKind kind = analysis.kind();
-        if (kind != null) {
-            Block block = BridgedBlockTypes.create(kind, id);
-            if (block != null) return block;
-        }
-        return BridgedBlock.create(id, asset.states(), analysis.shape());
+        return BridgedBlock.create(id, asset.states(), analysis == null ? null : analysis.shape());
     }
 
     public static Map<ResourceLocation, Block> blocks() {

@@ -27,6 +27,11 @@ public interface Feature {
      * Runs once during mod construction, right after the bundle has been built, in
      * registration order. Registering into the game's registries is still the platform's
      * job; a feature only prepares what the platform then picks up.
+     *
+     * <p>Not every feature has work of its own here. Some are consulted where they apply
+     * instead — while the bundle is built, or by the platform's client code — and for those
+     * the switch and its description are the whole feature. They leave this as it is.
      */
-    void apply(FeatureContext context);
+    default void apply(FeatureContext context) {
+    }
 }

@@ -1,7 +1,6 @@
 package net.pitan76.assetbridge.feature.builtin;
 
 import net.pitan76.assetbridge.feature.Feature;
-import net.pitan76.assetbridge.feature.FeatureContext;
 
 /**
  * Gives a bridged block the shape the model it is drawn with has, instead of the full cube
@@ -25,10 +24,5 @@ public class ModelShapesFeature implements Feature {
     public String description() {
         return "Give each bridged block the collision and outline shape of its model, instead of a full cube. "
                 + "Blocks whose model is a full cube are unaffected.";
-    }
-
-    @Override
-    public void apply(FeatureContext context) {
-        // Already applied: AssetPipeline reads this while it builds the bundle.
     }
 }

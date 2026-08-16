@@ -1,7 +1,6 @@
 package net.pitan76.assetbridge.feature.builtin;
 
 import net.pitan76.assetbridge.feature.Feature;
-import net.pitan76.assetbridge.feature.FeatureContext;
 
 /**
  * Registers a bridged block as the vanilla block class its model describes: a model that
@@ -28,10 +27,5 @@ public class BlockKindsFeature implements Feature {
     public String description() {
         return "Register a bridged block as the vanilla block its model inherits from (stairs, slab, fence, "
                 + "wall, pane, gate, door, trapdoor, ladder), so it behaves like one. Off: every block is a plain block.";
-    }
-
-    @Override
-    public void apply(FeatureContext context) {
-        // Already applied: AssetPipeline reads this while it builds the bundle.
     }
 }

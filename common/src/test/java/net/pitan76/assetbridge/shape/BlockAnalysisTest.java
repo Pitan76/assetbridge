@@ -25,14 +25,15 @@ class BlockAnalysisTest {
         put(assets, "examplemod", "models/block/marble_stairs.json", "{\"parent\":\"minecraft:block/stairs\"}");
         put(assets, "examplemod", "blockstates/marble_stairs.json",
                 "{\"variants\":{\"facing=north,half=bottom\":{\"model\":\"examplemod:block/marble_stairs\"}}}");
-        assets.addBlock(block("marble_stairs",
+        BridgedBlockDefinition stairs = block("marble_stairs",
                 property("facing", "north", "south", "west", "east"),
                 property("half", "top", "bottom"),
-                property("shape", "straight", "inner_left", "inner_right", "outer_left", "outer_right")));
+                property("shape", "straight", "inner_left", "inner_right", "outer_left", "outer_right"));
+        assets.addBlock(stairs);
 
         BlockAnalysis.run(assets, true, true);
 
-        BlockAnalysis analysis = assets.analysis("examplemod:marble_stairs");
+        BlockAnalysis analysis = stairs.analysis();
         assertNotNull(analysis);
         assertEquals(BlockKind.STAIRS, analysis.kind());
         // A vanilla staircase brings a better shape than the model could describe.
@@ -46,14 +47,14 @@ class BlockAnalysisTest {
         put(assets, "examplemod", "blockstates/odd_stairs.json",
                 "{\"variants\":{\"facing=up\":{\"model\":\"examplemod:block/odd_stairs\"}}}");
         // A staircase cannot face up, so the file could not be served against a StairBlock.
-        assets.addBlock(block("odd_stairs",
+        BridgedBlockDefinition odd = block("odd_stairs",
                 property("facing", "north", "south", "west", "east", "up", "down"),
-                property("half", "top", "bottom")));
+                property("half", "top", "bottom"));
+        assets.addBlock(odd);
 
         BlockAnalysis.run(assets, true, true);
 
-        BlockAnalysis analysis = assets.analysis("examplemod:odd_stairs");
-        assertNull(analysis == null ? null : analysis.kind());
+        assertNull(odd.analysis());
     }
 
     @Test
@@ -63,14 +64,14 @@ class BlockAnalysisTest {
                 "{\"elements\":[{\"from\":[4,0,4],\"to\":[12,16,12]}]}");
         put(assets, "examplemod", "blockstates/pipe.json",
                 "{\"variants\":{\"\":{\"model\":\"examplemod:block/pipe\"}}}");
-        assets.addBlock(block("pipe"));
+        BridgedBlockDefinition pipe = block("pipe");
+        assets.addBlock(pipe);
 
         BlockAnalysis.run(assets, true, true);
 
-        BlockAnalysis analysis = assets.analysis("examplemod:pipe");
-        assertNotNull(analysis);
-        assertNull(analysis.kind());
-        assertNotNull(analysis.shape());
+        assertNotNull(pipe.analysis());
+        assertNull(pipe.analysis().kind());
+        assertNotNull(pipe.analysis().shape());
     }
 
     @Test
@@ -80,11 +81,12 @@ class BlockAnalysisTest {
                 "{\"elements\":[{\"from\":[4,0,4],\"to\":[12,16,12]}]}");
         put(assets, "examplemod", "blockstates/pipe.json",
                 "{\"variants\":{\"\":{\"model\":\"examplemod:block/pipe\"}}}");
-        assets.addBlock(block("pipe"));
+        BridgedBlockDefinition pipe = block("pipe");
+        assets.addBlock(pipe);
 
         BlockAnalysis.run(assets, false, false);
 
-        assertNull(assets.analysis("examplemod:pipe"));
+        assertNull(pipe.analysis());
     }
 
     @Test

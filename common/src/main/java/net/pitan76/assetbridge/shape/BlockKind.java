@@ -5,10 +5,8 @@ import net.pitan76.assetbridge.asset.BridgedStateDefinition;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -98,8 +96,8 @@ public enum BlockKind {
     private final Set<String> required;
 
     BlockKind(Spec spec, String... required) {
-        this.allowed = Collections.unmodifiableMap(spec.allowed);
-        this.required = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(required)));
+        this.allowed = spec.allowed;
+        this.required = new HashSet<>(Arrays.asList(required));
     }
 
     /**
@@ -141,16 +139,11 @@ public enum BlockKind {
 
     /** Builder for the enum constants; readable enough to keep the table honest. */
     private static class Spec {
-        private final Map<String, Set<String>> allowed = new LinkedHashMap<>();
+        private final Map<String, Set<String>> allowed = new HashMap<>();
 
         Spec with(String name, String... values) {
-            allowed.put(name, Collections.unmodifiableSet(new HashSet<>(Arrays.asList(values))));
+            allowed.put(name, new HashSet<>(Arrays.asList(values)));
             return this;
         }
-    }
-
-    /** Exposed for the block layer, which has to build the right vanilla class for the kind. */
-    public List<String> requiredProperties() {
-        return Collections.unmodifiableList(new java.util.ArrayList<>(required));
     }
 }

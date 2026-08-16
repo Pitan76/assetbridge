@@ -8,7 +8,6 @@ import net.pitan76.assetbridge.asset.AssetPath;
 import net.pitan76.assetbridge.util.Json;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +42,7 @@ public class ModelReferenceResolver {
         for (AssetPath path : new ArrayList<>(assets.resources().keySet())) {
             if (!isModel(path)) continue;
 
-            JsonObject model = read(assets, path);
+            JsonObject model = assets.readJson(path);
             if (model == null) continue;
 
             String parent = Json.string(model, "parent");
@@ -88,7 +87,7 @@ public class ModelReferenceResolver {
             String name = path.blockStateName();
             if (name == null) continue;
 
-            JsonObject blockState = read(assets, path);
+            JsonObject blockState = assets.readJson(path);
             if (blockState == null || !namesAnUnavailableModel(assets, blockState)) continue;
 
             String replacement = firstResolvingModel(assets, blockState);
@@ -296,14 +295,4 @@ public class ModelReferenceResolver {
         return path.startsWith("item/") || path.startsWith("items/");
     }
 
-    @Nullable
-    private static JsonObject read(BridgedAssetManager assets, AssetPath path) {
-        try {
-            byte[] data = assets.readResource(path);
-            return data == null ? null : Json.parse(new String(data, StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            AssetBridge.LOGGER.error("Could not read {}", path, e);
-            return null;
-        }
-    }
 }

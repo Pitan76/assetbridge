@@ -50,9 +50,17 @@ public class BridgedBlock extends Block {
     /**
      * The shape of each state that has one of its own, worked out from the models the
      * blockstate names. Empty when the block is a plain cube, which is every block when the
-     * shape feature is off.
+     * shape feature is off, and also when {@link #uniformShape} holds for every state.
      */
     private final Map<BlockState, VoxelShape> shapes;
+
+    /**
+     * The one shape every state has, for the ordinary block that is drawn the same way
+     * whatever it is doing. Keeps a lookup out of {@code getShape}, which the game asks on
+     * every state it draws, walks into or points at.
+     */
+    @Nullable
+    private final VoxelShape uniformShape;
 
     private BridgedBlock(ResourceLocation id, BridgedStateDefinition states, @Nullable BlockShape shape) {
         super(propertiesFor(id, shape != null));
@@ -60,9 +68,30 @@ public class BridgedBlock extends Block {
         this.facing = directionProperty();
         this.axis = axisProperty();
         registerDefaultState(defaultStateOf(states));
-        this.shapes = shape == null
+        Map<BlockState, VoxelShape> built = shape == null
                 ? Collections.<BlockState, VoxelShape>emptyMap()
                 : BridgedShapes.build(getStateDefinition(), shape);
+        this.uniformShape = uniformShapeOf(built);
+        this.shapes = uniformShape == null ? built : Collections.<BlockState, VoxelShape>emptyMap();
+    }
+
+    /**
+     * @return the shape every state was given, or {@code null} when they differ — or when some
+     *         state was left as the full cube, which is a difference too
+     */
+    @Nullable
+    private VoxelShape uniformShapeOf(Map<BlockState, VoxelShape> built) {
+        if (built.isEmpty() || built.size() != getStateDefinition().getPossibleStates().size()) return null;
+
+        VoxelShape first = null;
+        for (VoxelShape shape : built.values()) {
+            if (first == null) {
+                first = shape;
+            } else if (first != shape) {
+                return null;
+            }
+        }
+        return first;
     }
 
     /**
@@ -119,6 +148,8 @@ public class BridgedBlock extends Block {
      */
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (uniformShape != null) return uniformShape;
+
         VoxelShape shape = shapes.get(state);
         return shape == null ? super.getShape(state, level, pos, context) : shape;
     }

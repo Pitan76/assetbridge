@@ -1,7 +1,6 @@
 package net.pitan76.assetbridge.feature.builtin;
 
 import net.pitan76.assetbridge.feature.Feature;
-import net.pitan76.assetbridge.feature.FeatureContext;
 
 /** Configure blocks with cutout rendering (transparent parts render properly). */
 public class CutoutBlocksFeature implements Feature {
@@ -15,10 +14,5 @@ public class CutoutBlocksFeature implements Feature {
     @Override
     public String description() {
         return "Configure transparent blocks (leaves, glass, etc.) with cutout rendering so they do not render with black backgrounds.";
-    }
-
-    @Override
-    public void apply(FeatureContext context) {
-        // Platform client logic will query Features.isEnabled(ID) and perform setup.
     }
 }

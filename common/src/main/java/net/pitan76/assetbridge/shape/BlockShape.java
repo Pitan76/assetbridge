@@ -2,6 +2,9 @@ package net.pitan76.assetbridge.shape;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.pitan76.assetbridge.parse.VariantKey;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -28,13 +31,33 @@ public class BlockShape {
         return variants;
     }
 
+    /**
+     * @param values the state's property values by name
+     * @return the first variant that claims the state, or {@code null} when none does and the
+     *         state should stay the full cube
+     */
     @Nullable
-    public List<ShapeBox> boxesFor(Map<String, String> values) {
+    public Variant variantFor(Map<String, String> values) {
         for (Variant variant : variants) {
-            if (variant.matches(values)) return variant.boxes();
+            if (VariantKey.matches(variant.conditions(), values)) return variant;
         }
         return null;
     }
+
+    /** The boxes {@link #variantFor} settles on, for a caller that wants nothing else. */
+    @Nullable
+    public List<ShapeBox> boxesFor(Map<String, String> values) {
+        Variant variant = variantFor(values);
+        return variant == null ? null : variant.boxes();
+    }
+
+//    @Nullable
+//    public List<ShapeBox> boxesFor(Map<String, String> values) {
+//        for (Variant variant : variants) {
+//            if (variant.matches(values)) return variant.boxes();
+//        }
+//        return null;
+//    }
 
     /** One entry of a blockstate's {@code variants}, reduced to what a shape needs. */
     public static class Variant {
